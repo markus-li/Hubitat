@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0503T
+ *  Version: v1.0.2.0512Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,30 +14,28 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ *  NOTE: This is an auto-generated file and most comments have been removed!
+ *
  */
 
 // BEGIN:getDefaultParentImports()
-/** Default Imports */
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
-// Used for MD5 calculations
+ 
 import java.security.MessageDigest
-/* Default Parent Imports */
 // END:  getDefaultParentImports()
 
-
 metadata {
-	definition (name: "Tasmota - Universal Parent", namespace: "tasmota", author: "Markus Liljergren", vid: "generic-switch", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-parent-expanded.groovy") {
+	definition (name: "Tasmota - Universal Parent", namespace: "tasmota", author: "Markus Liljergren", vid: "generic-switch", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-parent-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilities()
-        // Default Capabilities
         capability "Refresh"
         capability "Configuration"
         // END:  getDefaultMetadataCapabilities()
         capability "PresenceSensor"
-        capability "Initialize"         // This makes initialize() run on hub start, only needed in the Parent
+        capability "Initialize"
         
         // BEGIN:getDefaultParentMetadataAttributes()
-        // Default Parent Attributes
         attribute   "ip", "string"
         attribute   "ipLink", "string"
         attribute   "module", "string"
@@ -45,21 +43,19 @@ metadata {
         attribute   "wifiSignal", "string"
         // END:  getDefaultParentMetadataAttributes()
         // BEGIN:getDefaultMetadataAttributes()
-        // Default Attributes
         attribute   "driver", "string"
         // END:  getDefaultMetadataAttributes()
+        // BEGIN:getMetadataAttributesForLastCheckin()
+        attribute "lastCheckin", "Date"
+        attribute "lastCheckinEpoch", "String"
+        // END:  getMetadataAttributesForLastCheckin()
         attribute "commandSent", "string"
         attribute "commandResult", "string"
 
         // BEGIN:getMetadataCommandsForHandlingChildDevices()
-        // Commands for handling Child Devices
-        //command "childOn"
-        //command "childOff"
-        //command "recreateChildDevices"
         command "deleteChildren"
         // END:  getMetadataCommandsForHandlingChildDevices()
         // BEGIN:getDefaultMetadataCommands()
-        // Default Commands
         command "reboot"
         // END:  getDefaultMetadataCommands()
         command "sendCommand", [[name:"Command*", type: "STRING", description: "Tasmota Command"],
@@ -70,47 +66,45 @@ metadata {
 
 	preferences {
         // BEGIN:getDefaultParentMetadataPreferences()
-        // Default Parent Preferences
-        input(name: "runReset", description: addDescriptionDiv("For details and guidance, see the release thread in the <a href=\"https://community.hubitat.com/t/release-tasmota-7-x-firmware-with-hubitat-support/29368\"> Hubitat Forum</a>. For settings marked as ADVANCED, make sure you understand what they do before activating them. If settings are not reflected on the device, press the Configure button in this driver. Also make sure all settings really are saved and correct."), title: addTitleDiv("Settings"), displayDuringSetup: false, type: "paragraph", element: "paragraph")
-        input(name: "debugLogging", type: "bool", title: addTitleDiv("Enable debug logging"), description: "" , defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
-        input(name: "infoLogging", type: "bool", title: addTitleDiv("Enable descriptionText logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
+        input(name: "runReset", description: styling_addDescriptionDiv("For details and guidance, see the release thread in the <a href=\"https://community.hubitat.com/t/release-tasmota-7-x-firmware-with-hubitat-support/29368\"> Hubitat Forum</a>. For settings marked as ADVANCED, make sure you understand what they do before activating them. If settings are not reflected on the device, press the Configure button in this driver. Also make sure all settings really are saved and correct."), title: styling_addTitleDiv("Settings"), displayDuringSetup: false, type: "paragraph", element: "paragraph")
+        input(name: "debugLogging", type: "bool", title: styling_addTitleDiv("Enable debug logging"), description: "" , defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
+        input(name: "infoLogging", type: "bool", title: styling_addTitleDiv("Enable info logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
         // END:  getDefaultParentMetadataPreferences()
-        input(name: "deviceConfig", type: "enum", title: addTitleDiv("Device Configuration"), 
-            description: addDescriptionDiv("Select a Device Configuration (default: Generic Device)<br/>'Generic Device' doesn't configure device Template and/or Module on Tasmota. Child devices and types are auto-detected as well as auto-created and does NOT depend on this setting."), 
+        // BEGIN:getMetadataPreferencesForLastCheckin()
+        input(name: "lastCheckinEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Date"), description: styling_addDescriptionDiv("Records Date events if enabled"), defaultValue: true)
+        input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
+        input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
+        // END:  getMetadataPreferencesForLastCheckin()
+        input(name: "deviceConfig", type: "enum", title: styling_addTitleDiv("Device Configuration"), 
+            description: styling_addDescriptionDiv("Select a Device Configuration (default: Generic Device)<br/>'Generic Device' doesn't configure device Template and/or Module on Tasmota. Child devices and types are auto-detected as well as auto-created and does NOT depend on this setting."), 
             options: getDeviceConfigurationsAsListOption(), defaultValue: "01generic-device", 
             displayDuringSetup: true, required: false)
 
         // BEGIN:getMetadataPreferencesForHiding()
-        // Preferences for Hiding
-        input(name: "hideExtended", type: "bool", title: addTitleDiv("Hide Extended Settings"), description: addDescriptionDiv("Hides extended settings, usually not needed."), defaultValue: true, displayDuringSetup: false, required: false)
-        input(name: "hideAdvanced", type: "bool", title: addTitleDiv("Hide Advanced Settings"), description: addDescriptionDiv("Hides advanced settings, usually not needed anyway."), defaultValue: true, displayDuringSetup: false, required: false)
+        input(name: "hideExtended", type: "bool", title: styling_addTitleDiv("Hide Extended Settings"), description: styling_addDescriptionDiv("Hides extended settings, usually not needed."), defaultValue: true, displayDuringSetup: false, required: false)
+        input(name: "hideAdvanced", type: "bool", title: styling_addTitleDiv("Hide Advanced Settings"), description: styling_addDescriptionDiv("Hides advanced settings, usually not needed anyway."), defaultValue: true, displayDuringSetup: false, required: false)
         // END:  getMetadataPreferencesForHiding()
 
         // BEGIN:getDefaultMetadataPreferencesForTasmota(True) # False = No TelePeriod setting
-        // Default Preferences for Tasmota
-        input("password", "password", title: addTitleDiv("Device Password"), description: addDescriptionDiv("REQUIRED if set on the Device! Otherwise leave empty."))
-        input(name: "ipAddress", type: "string", title: addTitleDiv("Device IP Address"), description: addDescriptionDiv("Set this as a default fallback for the auto-discovery feature."), displayDuringSetup: true, required: false)
-        input(name: "port", type: "number", title: addTitleDiv("Device Port"), description: addDescriptionDiv("The http Port of the Device (default: 80)"), displayDuringSetup: true, required: false, defaultValue: 80)
-        input(name: "override", type: "bool", title: addTitleDiv("Override IP"), description: addDescriptionDiv("Override the automatically discovered IP address and disable auto-discovery."), displayDuringSetup: true, required: false)
-        input(name: "useIPAsID", type: "bool", title: addTitleDiv("IP as Network ID"), description: addDescriptionDiv("Not needed under normal circumstances. Setting this when not needed can break updates. This requires the IP to be static or set to not change in your DHCP server. It will force the use of IP as network ID. When in use, set Override IP to true and input the correct Device IP Address. See the release thread in the Hubitat forum for details and guidance."), displayDuringSetup: true, required: false)
-        input(name: "telePeriod", type: "string", title: addTitleDiv("Update Frequency"), description: addDescriptionDiv("Tasmota sensor value update interval, set this to any value between 10 and 3600 seconds. See the Tasmota docs concerning telePeriod for details. This is NOT a poll frequency. Button/switch changes are immediate and are NOT affected by this. This ONLY affects SENSORS and reporting of data such as UPTIME. (default = 300)"), displayDuringSetup: true, required: false)
-        input(name: "disableModuleSelection", type: "bool", title: addTitleDiv("Disable Automatically Setting Module and Template"), description: "ADVANCED: " + addDescriptionDiv("Disable automatically setting the Module Type and Template in Tasmota. Enable for using custom Module or Template settings directly on the device. With this disabled, you need to set these settings manually on the device."), displayDuringSetup: true, required: false)
-        input(name: "moduleNumber", type: "number", title: addTitleDiv("Module Number"), description: "ADVANCED: " + addDescriptionDiv("Module Number used in Tasmota. If Device Template is set, this value is IGNORED. (default: -1 (use the default for the driver))"), displayDuringSetup: true, required: false, defaultValue: -1)
-        input(name: "deviceTemplateInput", type: "string", title: addTitleDiv("Device Template"), description: "ADVANCED: " + addDescriptionDiv("Set this to a Device Template for Tasmota, leave it EMPTY to use the Device Configuration Default. Set it to 0 to NOT use a Template. NAME can be maximum 14 characters! (Example: {\"NAME\":\"S120\",\"GPIO\":[0,0,0,0,0,21,0,0,0,52,90,0,0],\"FLAG\":0,\"BASE\":18})"), displayDuringSetup: true, required: false)
-        
+        input("password", "password", title: styling_addTitleDiv("Device Password"), description: styling_addDescriptionDiv("REQUIRED if set on the Device! Otherwise leave empty."))
+        input(name: "ipAddress", type: "string", title: styling_addTitleDiv("Device IP Address"), description: styling_addDescriptionDiv("Set this as a default fallback for the auto-discovery feature."), displayDuringSetup: true, required: false)
+        input(name: "port", type: "number", title: styling_addTitleDiv("Device Port"), description: styling_addDescriptionDiv("The http Port of the Device (default: 80)"), displayDuringSetup: true, required: false, defaultValue: 80)
+        input(name: "override", type: "bool", title: styling_addTitleDiv("Override IP"), description: styling_addDescriptionDiv("Override the automatically discovered IP address and disable auto-discovery."), displayDuringSetup: true, required: false)
+        input(name: "useIPAsID", type: "bool", title: styling_addTitleDiv("IP as Network ID"), description: styling_addDescriptionDiv("Not needed under normal circumstances. Setting this when not needed can break updates. This requires the IP to be static or set to not change in your DHCP server. It will force the use of IP as network ID. When in use, set Override IP to true and input the correct Device IP Address. See the release thread in the Hubitat forum for details and guidance."), displayDuringSetup: true, required: false)
+        input(name: "telePeriod", type: "string", title: styling_addTitleDiv("Update Frequency"), description: styling_addDescriptionDiv("Tasmota sensor value update interval, set this to any value between 10 and 3600 seconds. See the Tasmota docs concerning telePeriod for details. This is NOT a poll frequency. Button/switch changes are immediate and are NOT affected by this. This ONLY affects SENSORS and reporting of data such as UPTIME. (default = 300)"), displayDuringSetup: true, required: false)
+        input(name: "disableModuleSelection", type: "bool", title: styling_addTitleDiv("Disable Automatically Setting Module and Template"), description: "ADVANCED: " + styling_addDescriptionDiv("Disable automatically setting the Module Type and Template in Tasmota. Enable for using custom Module or Template settings directly on the device. With this disabled, you need to set these settings manually on the device."), displayDuringSetup: true, required: false)
+        input(name: "moduleNumber", type: "number", title: styling_addTitleDiv("Module Number"), description: "ADVANCED: " + styling_addDescriptionDiv("Module Number used in Tasmota. If Device Template is set, this value is IGNORED. (default: -1 (use the default for the driver))"), displayDuringSetup: true, required: false, defaultValue: -1)
+        input(name: "deviceTemplateInput", type: "string", title: styling_addTitleDiv("Device Template"), description: "ADVANCED: " + styling_addDescriptionDiv("Set this to a Device Template for Tasmota, leave it EMPTY to use the Device Configuration Default. Set it to 0 to NOT use a Template. NAME can be maximum 14 characters! (Example: {\"NAME\":\"S120\",\"GPIO\":[0,0,0,0,0,21,0,0,0,52,90,0,0],\"FLAG\":0,\"BASE\":18})"), displayDuringSetup: true, required: false)
         // END:  getDefaultMetadataPreferencesForTasmota(True) # False = No TelePeriod setting
-        input(name: "invertPowerNumber", type: "bool", title: addTitleDiv("Send POWER1 events to POWER2, and vice versa"), description: addDescriptionDiv("Use this if you have a dimmer AND a switch in the same device and on/off is not sent/received correctly. Normally this is NOT needed."), defaultValue: false, displayDuringSetup: false, required: false)
-        input(name: "useAlternateColorCommand", type: "bool", title: addTitleDiv("Use Alternate Color command in Tasmota"), description: addDescriptionDiv("When enabled, this will use \"Var1\" instead of \"Color1\" in order to be able to catch the command in rules. Normally this is NOT needed."), defaultValue: false, displayDuringSetup: false, required: false)
+        input(name: "invertPowerNumber", type: "bool", title: styling_addTitleDiv("Send POWER1 events to POWER2, and vice versa"), description: styling_addDescriptionDiv("Use this if you have a dimmer AND a switch in the same device and on/off is not sent/received correctly. Normally this is NOT needed."), defaultValue: false, displayDuringSetup: false, required: false)
+        input(name: "useAlternateColorCommand", type: "bool", title: styling_addTitleDiv("Use Alternate Color command in Tasmota"), description: styling_addDescriptionDiv("When enabled, this will use \"Var1\" instead of \"Color1\" in order to be able to catch the command in rules. Normally this is NOT needed."), defaultValue: false, displayDuringSetup: false, required: false)
         // BEGIN:getDefaultMetadataPreferencesLast()
-        // Default Preferences - Last
-        input(name: "hideDangerousCommands", type: "bool", title: addTitleDiv("Hide Dangerous Commands"), description: addDescriptionDiv("Hides Dangerous Commands, such as 'Delete Children'."), defaultValue: true, displayDuringSetup: false, required: false)
-        input(name: "disableCSS", type: "bool", title: addTitleDiv("Disable CSS"), description: addDescriptionDiv("CSS makes the driver more user friendly. Disable the use of CSS in the driver by enabling this. Does NOT affect HE resource usage either way."), defaultValue: false, displayDuringSetup: false, required: false)
+        input(name: "hideDangerousCommands", type: "bool", title: styling_addTitleDiv("Hide Dangerous Commands"), description: styling_addDescriptionDiv("Hides Dangerous Commands, such as 'Delete Children'."), defaultValue: true, displayDuringSetup: false, required: false)
+        input(name: "disableCSS", type: "bool", title: styling_addTitleDiv("Disable CSS"), description: styling_addDescriptionDiv("CSS makes the driver more user friendly. Disable the use of CSS in the driver by enabling this. Does NOT affect HE resource usage either way."), defaultValue: false, displayDuringSetup: false, required: false)
         // END:  getDefaultMetadataPreferencesLast()
 	}
 
-    // The below line needs to exist in ALL drivers for custom CSS to work!
     // BEGIN:getMetadataCustomizationMethods()
-    // Here getPreferences() can be used to get the above preferences
     metaDataExporter()
     if(isCSSDisabled() == false) {
         preferences {
@@ -122,29 +116,15 @@ metadata {
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
-    // DO NOT EDIT: This is generated from the metadata!
-    // TODO: Figure out how to get this from Hubitat instead of generating this?
-    Map deviceInfo = ['name': 'Tasmota - Universal Parent', 'namespace': 'tasmota', 'author': 'Markus Liljergren', 'vid': 'generic-switch', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-parent-expanded.groovy']
-    //logging("deviceInfo[${infoName}] = ${deviceInfo[infoName]}", 1)
+     
+    Map deviceInfo = ['name': 'Tasmota - Universal Parent', 'namespace': 'tasmota', 'author': 'Markus Liljergren', 'vid': 'generic-switch', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-parent-expanded.groovy']
+     
     return(deviceInfo[infoName])
 }
 // END:  getDeviceInfoFunction()
 
-
-/**
- * DEVICE CONFIGURATIONS METHODS (helpers-device-configurations)
- *
- *   Device configurations and functions for using them
- */
+// BEGIN:getHelperFunctions('device-configurations')
 TreeMap getDeviceConfigurations() {
-    // To add more devices, just add them below ;)
-    // Don't forget that BOTH the App and the Universal driver needs to have this configuration.
-    // If you add a device and it works well for you, please share your
-    // configuration in the Hubitat Community Forum.
-    //
-    // typeId HAS to be unique
-    // 
-    // For the rest of the settings, see below to figure it out :P
     List deviceConfigurations = [
         [typeId: 'sonoff-basic-r3', 
          name: 'Sonoff Basic R3',
@@ -155,7 +135,7 @@ TreeMap getDeviceConfigurations() {
         [typeId: 'tuyamcu-ce-wf500d-dimmer',
          name: 'TuyaMCU CE Smart Home WF500D Dimmer',
          template: '{"NAME":"CE WF500D","GPIO":[255,255,255,255,255,255,0,0,255,108,255,107,255],"FLAG":0,"BASE":54}',
-         installCommands: [["SetOption66", "0"], // Set publishing TuyaReceived to MQTT to DISABLED
+         installCommands: [["SetOption66", "0"],
          ],
          deviceLink: 'https://templates.blakadder.com/ce_smart_home-WF500D.html'],
 
@@ -240,35 +220,18 @@ TreeMap getDeviceConfigurations() {
         [typeId: 'sonoff-ifan02',
          name: 'Sonoff iFan02',
          module: 44,
-         //template: '{"NAME":"Sonoff iFan02","GPIO":[17,255,0,255,23,22,18,19,21,56,20,24,0],"FLAG":0,"BASE":44}',
          installCommands: [['Rule1', '0']],
          deviceLink: 'https://templates.blakadder.com/sonoff_ifan02.html'],
-
-        /*[typeId: 'sonoff-ifan03-no_beep-m44',
-         name: 'Sonoff iFan03 (No Beep) M44',
-         template: '{"NAME":"Sonoff iFan03","GPIO":[17,255,0,255,0,0,29,33,23,56,22,24,0],"FLAG":0,"BASE":44}',
-         installCommands: [["SetOption67", "0"], ['Rule1', '0']],
-         deviceLink: 'https://templates.blakadder.com/sonoff_ifan03.html'],
-
-        [typeId: 'sonoff-ifan03-beep-m44',
-         name: 'Sonoff iFan03 (Beep) M44',
-         template: '{"NAME":"Sonoff iFan03","GPIO":[17,255,0,255,0,0,29,33,23,56,22,24,0],"FLAG":0,"BASE":44}',
-         installCommands: [["SetOption67", "0"],
-                           ['Rule1', 'ON Fanspeed#Data>=1 DO Buzzer %value%; ENDON ON Fanspeed#Data==0 DO Buzzer 1; ENDON'],
-                           ['Rule1', '1']],
-         deviceLink: 'https://templates.blakadder.com/sonoff_ifan03.html'],*/
 
         [typeId: 'sonoff-ifan03-no_beep-m71',
          name: 'Sonoff iFan03 (No Beep)',
          module: 71,
-         //template: '{"NAME":"SonoffiFan03","GPIO":[17,148,0,149,0,0,29,161,23,56,22,24,0],"FLAG":0,"BASE":71}',
          installCommands: [["SetOption67", "0"], ['Rule1', '0']],
          deviceLink: 'https://templates.blakadder.com/sonoff_ifan03.html'],
 
         [typeId: 'sonoff-ifan03-beep-m71',
          name: 'Sonoff iFan03 (Beep)',
          module: 71,
-         //template: '{"NAME":"SonoffiFan03","GPIO":[17,148,0,149,0,0,29,161,23,56,22,24,0],"FLAG":0,"BASE":71}',
          installCommands: [["SetOption67", "1"], 
                            ['Rule1', 'ON Fanspeed#Data>=1 DO Buzzer %value%; ENDON ON Fanspeed#Data==0 DO Buzzer 1; ENDON'],
                            ['Rule1', '1']],
@@ -330,7 +293,6 @@ TreeMap getDeviceConfigurations() {
                           ["TuyaMCU", "13,0"], ["TuyaMCU", "14,0"]],
         deviceLink: ''],
 
-        // {"NAME":"Lucci Fan","GPIO":[0,107,0,108,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":44}
         [typeId: 'tuyamcu-lucci-connect-remote-as-switches',
         name: 'TuyaMCU Lucci Connect Remote',
         template: '{"NAME":"Lucci Fan","GPIO":[0,0,0,0,0,0,0,0,0,108,0,107,0],"FLAG":0,"BASE":54}',
@@ -467,7 +429,7 @@ TreeMap getDeviceConfigurations() {
         [typeId: 'tuyamcu-wifi-dimmer', 
         name: 'TuyaMCU Wifi Dimmer',
         module: 54,
-        installCommands: [["SetOption66", "0"], // Set publishing TuyaReceived to MQTT to DISABLED
+        installCommands: [["SetOption66", "0"],
         ],
         deviceLink: ''],
 
@@ -475,7 +437,6 @@ TreeMap getDeviceConfigurations() {
         name: 'Zigbee Controller (default pinout)',
         template: '{"NAME":"Zigbee","GPIO":[0,0,0,0,0,0,0,0,0,166,0,165,0],"FLAG":0,"BASE":18}',
         installCommands: [["SerialLog", "0"],
-                          //['setoption3', '1'], // enable MQTT - REQUIRED for this Zigbee devices to work!
                           ],
         deviceLink: 'https://tasmota.github.io/docs/#/Zigbee'],
 
@@ -513,17 +474,14 @@ TreeMap getDeviceConfigurations() {
         comment: 'NOT GENERIC - read the instructions',
         name: 'TuyaMCU ZNSN Wifi Curtain Wall Panel',
         module: 54,
-        installCommands: [["WebLog", "2"], // A good idea for dimmers
-                        //SetOption66 - Set publishing TuyaReceived to MQTT  »6.7.0
-                        //0 = disable publishing TuyaReceived over MQTT (default)
-                        //1 = enable publishing TuyaReceived over MQTT
-                        ['SetOption66', "1"], // This is REQUIRED to get the Tuya Data
-                        ['Mem1', '100'],   // Updated with the current Curtain location
-                        ['Mem2', '11'],    // Step for each increase
-                        ['Mem3', '1'],     // delay in 10th of a second (1 = 100ms)
-                        ['Mem4', '9'],     // Motor startup steps
-                        ['Mem5', '1'],     // Extra step when opening
-                        ['Delay', '15'],   // Set delay between Backlog commands
+        installCommands: [["WebLog", "2"],
+                        ['SetOption66', "1"],
+                        ['Mem1', '100'],
+                        ['Mem2', '11'],
+                        ['Mem3', '1'],
+                        ['Mem4', '9'],
+                        ['Mem5', '1'],
+                        ['Delay', '15'],
                         ['Rule1', 'ON Dimmer#State DO Mem1 %value%; ENDON'],
                         ['Rule1', '+ ON TuyaReceived#Data=55AA00070005650400010277 DO Backlog Var1 %mem1%; Var2 Go; Var5 C; Add1 %mem2%; Sub1 %mem4%; Var4 %mem2%; Event Go; ENDON'],
                         ['Rule1', '+ ON Event#Go DO Backlog Dimmer %var1%; Event %var5%%var1%; Event %var2%2; ENDON'],
@@ -547,13 +505,12 @@ TreeMap getDeviceConfigurations() {
         comment: 'WITHOUT power status LED active by design',
         name: 'Martin Jerry MJ-SD02 Dimmer Switch',
         template: '{"NAME":"MJ-SD02","GPIO":[19,18,0,33,34,32,255,255,31,37,30,126,29],"FLAG":15,"BASE":18}',
-        // Possible alternative: {"NAME":"MJ-SD02","GPIO":[19,18,0,35,36,34,255,255,33,37,32,126,29],"FLAG":15,"BASE":18}
-        installCommands: [["WebLog", "2"], // A good idea for dimmers
+        installCommands: [["WebLog", "2"],
                         ['SerialLog', '0'],
-                        ['setoption3', '1'], // enable MQTT - REQUIRED for these rules to work!
-                        ['setoption1', '1'], // restrict to single, double and hold actions (i.e., disable inadvertent reset due to long press)
-                        ['setoption32', '8'],     // Number of 0.1 seconds to hold button before sending HOLD action message.
-                        ['buttontopic', '0'],   // This enables the below Rule triggers
+                        ['setoption3', '1'],
+                        ['setoption1', '1'],
+                        ['setoption32', '8'],
+                        ['buttontopic', '0'],
                         ['Rule1', 'on Button3#state=2 do dimmer + endon on Button2#state=2 do dimmer - endon '],
                         ['Rule1', '+ on Button2#state=3 do dimmer 20 endon on Button3#state=3 do dimmer 100 endon '],
                         ['Rule1', '+ on Button1#state=2 do power1 2 endon on Button1#state=3 do power1 0 endon'],
@@ -564,13 +521,12 @@ TreeMap getDeviceConfigurations() {
         comment: 'WITH power status LED active by design',
         name: 'Martin Jerry MJ-SD02 Dimmer Switch',
         template: '{"NAME":"MJ-SD02-LED","GPIO":[19,18,0,33,56,32,255,255,31,37,30,126,29],"FLAG":15,"BASE":18}',
-        // Possible alternative: {"NAME":"MJ-SD02","GPIO":[19,18,0,35,36,34,255,255,33,37,32,126,29],"FLAG":15,"BASE":18}
-        installCommands: [["WebLog", "2"], // A good idea for dimmers
+        installCommands: [["WebLog", "2"],
                         ['SerialLog', '0'],
-                        ['setoption3', '1'], // enable MQTT - REQUIRED for these rules to work!
-                        ['setoption1', '1'], // restrict to single, double and hold actions (i.e., disable inadvertent reset due to long press)
-                        ['setoption32', '8'],     // Number of 0.1 seconds to hold button before sending HOLD action message.
-                        ['buttontopic', '0'],   // This enables the below Rule triggers
+                        ['setoption3', '1'],
+                        ['setoption1', '1'],
+                        ['setoption32', '8'],
+                        ['buttontopic', '0'],
                         ['LedPower', '1'],
                         ['SetOption31', '0'],
                         ['Rule1', 'on Button3#state=2 do dimmer + endon on Button2#state=2 do dimmer - endon '],
@@ -579,32 +535,21 @@ TreeMap getDeviceConfigurations() {
                         ['Rule1', '1']],
         deviceLink: ''],
 
-        //https://templates.blakadder.com/oil_diffuser_550ml.html
-
-        
         [typeId: 'maxcio-diffuser-v1',
         comment: 'REQUIRES "Use Alternate Color command in Tasmota" to be set!',
         name: 'Maxcio Diffuser Wood Grain (v1)',
         template: '{"NAME":"MaxcioDiffuser","GPIO":[0,107,0,108,21,0,0,0,37,38,39,28,0],"FLAG":0,"BASE":54}',
-        installCommands: [["WebLog", "2"], // A good idea for dimmers
+        installCommands: [["WebLog", "2"],
                         ['SerialLog', '0'],
-                        ['setoption20', '1'], // Update of Dimmer/Color/CT without turning power on
-                        //['SetOption59', '0'],
-                        //['SwitchMode', '1'],
-                        //['SetOption66', '0'],   // Set publishing TuyaReceived to MQTT, 0 = disable, 1 = enable
-                        //['SetOption34', '100'],  // 0..255 = set Backlog inter-command delay in milliseconds (default = 200)
+                        ['setoption20', '1'],
                         ['Rule1', 'ON Var1#State DO backlog tuyasend3 8,%value%00ffff00; color %value%; rule2 0; power1 1; rule2 1; ENDON ON Scheme#Data=0 DO TuyaSend4 6,0 ENDON ON Scheme#Data>0 DO TuyaSend4 6,1 ENDON ON TuyaReceived#Data=55AA03070005050100010116 DO power1 1 ENDON ON TuyaReceived#Data=55AA03070005010100010011 DO backlog rule2 0; power2 0; rule2 1; power3 %var2%; var2 1; ENDON ON TuyaReceived#Data=55AA03070005010100010112 DO backlog rule2 0; power2 1; rule2 1; var2 0; power3 0; ENDON'],
                         ['Rule2', 'ON Power1#State DO tuyasend1 5,%value% ENDON ON Power2#State=0 DO tuyasend1 1,0 ENDON ON Power2#State=1 DO backlog var2 1; tuyasend1 1,1; ENDON'],
                         ['Rule3', 'ON TuyaReceived#Data=55AA03070005050100010015 DO power1 0 ENDON'],
-                        //['Rule1', 'ON Var1#State DO backlog tuyasend3 8,%value%00ffff00; color %value%; var7 no; power1 1; ENDON'],
-                        //['Rule2', 'ON Power1#State DO backlog var5 0; var7 1; tuyasend%var7% 5,%value%; ENDON ON Power2#State=0 DO backlog var6 0; tuyasend1 1,0; ENDON ON Power2#State=1 DO backlog var6 0; var2 1; tuyasend1 1,1; ENDON'],
-                        //['Rule3', 'ON TuyaReceived#Data=55AA03070005050100010015 DO backlog powe%var5% 0; var5 r1; ENDON ON TuyaReceived#Data=55AA03070005050100010116 DO backlog powe%var5% 1; var5 r1 ENDON ON TuyaReceived#Data=55AA03070005010100010011 DO backlog powe%var6% 0; power3 %var2%; var2 1; var6 r2; ENDON ON TuyaReceived#Data=55AA03070005010100010112 DO backlog powe%var6% 1; var2 0; power3 0; var6 r2; ENDON ON Scheme#Data=0 DO TuyaSend4 6,0 ENDON ON Scheme#Data>0 DO TuyaSend4 6,1 ENDON'],
                         ['Rule1', '1'],
                         ['Rule2', '1'],
                         ['Rule3', '1']],
         deviceLink: 'https://templates.blakadder.com/maxcio_400ml_diffuser.html'],
 
-        // https://tasmota.github.io/docs/#/devices/Sonoff-RF-Bridge-433pi 
         [typeId: 'sonoff-rf-bridge-parent' , 
         notForUniversal: true,
         comment: 'Functional - Need feedback',
@@ -621,26 +566,11 @@ TreeMap getDeviceConfigurations() {
         installCommands: [],
         deviceLink: 'http://www.rflink.nl/blog2/wiring'],
         
-        // Generic Tasmota Devices:
         [typeId: '01generic-device',
         comment: 'Works with most devices' ,
         name: 'Generic Device',
         installCommands: [],
         deviceLink: ''],
-
-        /*[typeId: '01generic-switch-plug',
-        comment: 'Works as Plug/Outlet with Alexa' ,
-        name: 'Generic Switch/Plug',
-        template: '',
-        installCommands: [],
-        deviceLink: ''],
-
-        [typeId: '01generic-switch-light',
-         comment: 'Works as Light with Alexa' ,
-        name: 'Generic Switch/Light',
-        template: '',
-        installCommands: [],
-        deviceLink: ''],*/
 
         [typeId: '01generic-rgb-rgbw-controller-bulb-dimmer', 
         comment: 'RGB+WW+CW should all work properly',
@@ -655,11 +585,6 @@ TreeMap getDeviceConfigurations() {
         installCommands: [["TempRes", (tempRes == '' || tempRes == null ? "1" : tempRes)]],
         deviceLink: ''],
 
-        /*[typeId: '01generic-dimmer' ,
-        name: 'Generic Dimmer',
-        template: '',
-        installCommands: [["WebLog", "2"]],
-        deviceLink: ''],*/
     ]
 
     TreeMap deviceConfigurationsMap = [:] as TreeMap
@@ -693,48 +618,41 @@ def getDeviceConfigurationsAsListOption() {
     }
     return items
 }
+// END:  getHelperFunctions('device-configurations')
 
-/**
- * --END-- DEVICE CONFIGURATIONS METHODS (helpers-device-configurations)
- */
+/* These methods are unique to each driver */
+def installed() {
+	logging("installed()", 100)
 
-/* These functions are unique to each driver */
+    tasmota_installedPreConfigure()
+    configurePresence()
 
-// Called from installed()
-def installedAdditional() {
-    // This runs from installed()
-	logging("installedAdditional()", 50)
-
-    // Do NOT call updatedAdditional() from here!
-
-    //createChildDevices()
 }
 
-// Called from updated()
-def updatedAdditional() {
-    logging("updatedAdditional()", 1)
-    //Runs when saving settings
+def initialize() {
+    logging("initialize()", 100)
+    generalInitialize()
+    configurePresence()
+}
+
+def updated() {
+    logging("updated()", 100)
     setDisableCSS(disableCSS)
+    configurePresence()
+    unschedule("updatePresence")
+    unschedule("tasmota_updatePresence")
+    updateNeededSettings()
+}
+
+def configure() {
+    generalInitialize()
+    updateNeededSettings()
 }
 
 def getDriverCSS() {
-    // Executed on page load, put CSS used by the driver here.
     
-    // This does NOT execute in the NORMAL scope of the driver!
-
     r = ""
-    // "Data" is available when this runs
     
-    //r += getCSSForCommandsToHide(["deleteChildren"])
-    //r += getCSSForCommandsToHide(["overSanta", "on", "off"])
-    //r += getCSSForStateVariablesToHide(["settings", "mac"])
-    //r += getCSSForStateVariablesToHide(["alertMessage", "mac", "dni", "oldLabel"])
-    //r += getCSSForCurrentStatesToHide(["templateData", "tuyaMCU", "needUpdate"])
-    //r += getCSSForDatasToHide(["metaConfig2", "preferences", "appReturn", "namespace"])
-    //r += getCSSToChangeCommandTitle("configure", "Run Configure3")
-    //r += getCSSForPreferencesToHide(["numSwitches", "deviceTemplateInput"])
-    //r += getCSSForPreferenceHiding('<none>', overrideIndex=getPreferenceIndex('<none>', returnMax=true) + 1)
-    //r += getCSSForHidingLastPreference()
     r += '''
     /*form[action*="preference"]::before {
         color: green;
@@ -798,22 +716,15 @@ def getDriverCSS() {
     return r
 }
 
-def refreshAdditional(metaConfig) {
-    
-    //logging("this.binding.variables = ${this.binding.variables}", 1)
-    //logging("settings = ${settings}", 1)
-    //logging("getDefinitionData() = ${getDefinitionData()}", 1)
-    //logging("getPreferences() = ${getPreferences()}", 1)
-    //logging("getSupportedCommands() = ${device.getSupportedCommands()}", 1)
-    //logging("Seeing these commands: ${device.getSupportedCommands()}", 1)
-    
+def refresh() {
+    def metaConfig = tasmota_refresh(metaConfig=null)
+
     metaConfig = setStateVariablesToHide(['mac'], metaConfig=metaConfig)
     logging("hideExtended=$hideExtended, hideAdvanced=$hideAdvanced", 1)
     if(hideExtended == null || hideExtended == true) {
         metaConfig = setPreferencesToHide(['hideAdvanced', 'ipAddress', 'override', 'useIPAsID', 'telePeriod', 'invertPowerNumber', 'useAlternateColorCommand'], metaConfig=metaConfig)
     }
     if(hideExtended == null || hideExtended == true || hideAdvanced == null || hideAdvanced == true) {
-        //  'deviceTemplateInput',
         metaConfig = setPreferencesToHide(['disableModuleSelection', 'port', 'disableCSS', 'moduleNumber'], metaConfig=metaConfig)
     }
     if(hideDangerousCommands == null || hideDangerousCommands == true) {
@@ -830,8 +741,6 @@ def refreshAdditional(metaConfig) {
            deviceConfigMap['comment'].length() > 0) {
             logging("Settings state.comment...", 1)
             setStateCommentInCSS(deviceConfigMap['comment'], metaConfig=metaConfig) 
-            //state.comment = "<div id=\"stateComment\"><div id=\"stateCommentInside\">${deviceConfigMap['comment']}</div></div>"
-            //metaConfig = setStateVariablesToHide(['comment'], metaConfig=metaConfig)
             state.comment = "<div id=\"stateComment\"><div id=\"stateCommentInside\"></div></div>"
         } else {
             logging("Hiding state.comment...", 1)
@@ -842,31 +751,14 @@ def refreshAdditional(metaConfig) {
         log.warn e2
         metaConfig = setStateVariablesToHide(['comment'], metaConfig=metaConfig)
     }
-
-    
-
-    /*metaConfig = setCommandsToHide(["on", "hiAgain2", "on"])
-    metaConfig = setStateVariablesToHide(["uptime"], metaConfig=metaConfig)
-    metaConfig = setCurrentStatesToHide(["needUpdate"], metaConfig=metaConfig)
-    metaConfig = setDatasToHide(["namespace"], metaConfig=metaConfig)
-    metaConfig = setPreferencesToHide(["port"], metaConfig=metaConfig)*/
-    //metaConfig = clearThingsToHide()
-    //setDisableCSS(false, metaConfig=metaConfig)
-    /*metaConfig = setCommandsToHide([])
-    metaConfig = setStateVariablesToHide([], metaConfig=metaConfig)
-    metaConfig = setCurrentStatesToHide([], metaConfig=metaConfig)
-    metaConfig = setDatasToHide([], metaConfig=metaConfig)
-    metaConfig = setPreferencesToHide([], metaConfig=metaConfig)*/
 }
 
 /* The parse(description) function is included and auto-expanded from external files */
 void parse(description) {
     // BEGIN:getGenericTasmotaNewParseHeader()
-    // parse() Generic Tasmota-device header BEGINS here
-    //logging("Parsing: ${description}", 0)
-    def descMap = parseDescriptionAsMap(description)
+    def descMap = tasmota_parseDescriptionAsMap(description)
     def body
-    logging("descMap: ${descMap}", 0)
+    //logging("descMap: ${descMap}", 0)
     
     boolean missingChild = false
     
@@ -875,7 +767,9 @@ void parse(description) {
         state.mac = descMap["mac"]
     }
     
-    prepareDNI()
+    sendlastCheckinEvent(minimumMinutesToRepeat=55)
+    
+    tasmota_prepareDNI()
     
     if (descMap["body"] && descMap["body"] != "T04=") body = new String(descMap["body"].decodeBase64())
     
@@ -885,24 +779,18 @@ void parse(description) {
             def slurper = new JsonSlurper()
             def result = slurper.parseText(body)
     
-            logging("result: ${result}",0)
-            // parse() Generic header ENDS here
-    
+            //logging("result: ${result}",0)
     // END:  getGenericTasmotaNewParseHeader()
         missingChild = parseResult(result, missingChild)
     // BEGIN:getGenericTasmotaNewParseFooter()
-    // parse() Generic Tasmota-device footer BEGINS here
     } else {
-            //log.debug "Response is not JSON: $body"
+    
         }
     }
     
     if(missingChild == true) {
         log.warn "Missing a child device, run the Refresh command from the device page!"
-        // It is dangerous to do the refresh automatically from here, it could cause an eternal loop
-        // Until a safe and non-resource hungry way can be created to do this automatically, a log message will
-        // have to be enough.
-        //refresh()
+    
     }
     if (device.currentValue("ip") == null) {
         def curIP = getDataValue("ip")
@@ -910,8 +798,6 @@ void parse(description) {
         sendEvent(name: 'ip', value: curIP, isStateChange: false)
         sendEvent(name: "ipLink", value: "<a target=\"device\" href=\"http://$curIP\">$curIP</a>", isStateChange: false)
     }
-    
-    // parse() Generic footer ENDS here
     // END:  getGenericTasmotaNewParseFooter()
 }
 
@@ -928,31 +814,27 @@ void parseJSON(jsonData) {
 }
 
 boolean parseResult(result, missingChild) {
-    //logging("Entered parseResult 1", 100)
     boolean log99 = logging("parseResult: $result", 99)
     // BEGIN:getTasmotaNewParserForStatusSTS()
-    // Get some Maps out to where we need them
     if (result.containsKey("StatusSTS")) {
         logging("StatusSTS: $result.StatusSTS",99)
         result << result.StatusSTS
     }
     // END:  getTasmotaNewParserForStatusSTS()
-    //logging("Entered parseResult 1a", 100)
     // BEGIN:getTasmotaNewParserForParentSwitch()
-    // Standard Switch Data parsing
     if (result.containsKey("POWER")  == true && result.containsKey("POWER1") == false) {
         logging("parser: POWER (child): $result.POWER",1)
-        //childSendState("1", result.POWER.toLowerCase())
+    
         missingChild = callChildParseByTypeId("POWER1", [[name:"switch", value: result.POWER.toLowerCase()]], missingChild)
     } else {
-        // each is the fastest itterator to use, evn though we can't escape it
+    
         String currentPower = ""
         (1..16).each {i->
             currentPower = "POWER$i"
-            //logging("POWER$i:${result."$currentPower"} '$result' containsKey:${result.containsKey("POWER$i")}", 1)
+    
             if(result.containsKey(currentPower) == true) {
                 if(i < 3 && invertPowerNumber == true) {
-                    // This is used when Tasmota mixes things up with a dimmer and relay in the same device
+    
                     if(i == 1) {
                         currentPower = "POWER2"
                     } else {
@@ -961,44 +843,38 @@ boolean parseResult(result, missingChild) {
                 }
                 logging("parser: $currentPower (original: POWER$i): ${result."POWER$i"}",1)
                 missingChild = callChildParseByTypeId("$currentPower", [[name:"switch", value: result."POWER$i".toLowerCase()]], missingChild)
-                //events << childSendState("1", result.POWER1.toLowerCase())
-                //sendEvent(name: "switch", value: (areAllChildrenSwitchedOn(result.POWER1.toLowerCase() == "on"?1:0) && result.POWER1.toLowerCase() == "on"? "on" : "off"))
+    
             }
         }
     }
     // END:  getTasmotaNewParserForParentSwitch()
-    //logging("Entered parseResult 1b", 100)
     // BEGIN:getTasmotaNewParserForDimmableDevice()
-    // Standard Dimmable Device Data parsing
     if(true) {
-        def childDevice = getChildDeviceByActionType("POWER1")
+        def childDevice = tasmota_getChildDeviceByActionType("POWER1")
         if(result.containsKey("Dimmer")) {
             def dimmer = result.Dimmer
             logging("Dimmer: ${dimmer}", 1)
             state.level = dimmer
             if(childDevice?.currentValue('level') != dimmer ) missingChild = callChildParseByTypeId("POWER1", [[name: "level", value: dimmer]], missingChild)
         }
-        // When handling Tuya Data directly, the dimmer is often used
+    
         if(result.containsKey("TuyaReceived") && result.TuyaReceived.containsKey("Data")) {
-            // If this is the "heartbeat", ignore it...
+    
             if(result.TuyaReceived.Data != "55AA000000010101") {
                 missingChild = callChildParseByTypeId("POWER1", [[name: "tuyaData", value: result.TuyaReceived.Data]], missingChild)
             }
         }
-        // Just if we need to log it
+    
         if(log99 == true && result.containsKey("Wakeup")) {
             logging("Wakeup: ${result.Wakeup}", 99)
-            //sendEvent(name: "wakeup", value: wakeup)
+    
         }
     }
     // END:  getTasmotaNewParserForDimmableDevice()
-    //logging("Entered parseResult 1c", 100)
     // BEGIN:getTasmotaNewParserForRGBWDevice()
-    // Standard RGBW Device Data parsing
     if(true) {
-        //[POWER:ON, Dimmer:100, Color:0,0,255,0,0, HSBColor:240,100,100, Channel:[0, 0, 100, 0, 0], CT:167]
-        //[POWER:ON, Dimmer:100, Color:0,0,0,245,10, HSBColor:240,100,0, Channel:[0, 0, 0, 96, 4], CT:167]
-        def childDevice = getChildDeviceByActionType("POWER1")
+    
+        def childDevice = tasmota_getChildDeviceByActionType("POWER1")
         String mode = "RGB"
         if (result.containsKey("Color")) {
             String color = result.Color
@@ -1017,11 +893,11 @@ boolean parseResult(result, missingChild) {
             def hsbColor = result.HSBColor.tokenize(",")
             hsbColor[0] = Math.round((hsbColor[0] as Integer) / 3.6) as Integer
             hsbColor[1] = hsbColor[1] as Integer
-            //hsbColor[2] = hsbColor[2] as Integer
+    
             logging("hsbColor: ${hsbColor}", 1)
             if(childDevice?.currentValue('hue') != hsbColor[0] ) missingChild = callChildParseByTypeId("POWER1", [[name: "hue", value: hsbColor[0]]], missingChild)
             if(childDevice?.currentValue('saturation') != hsbColor[1] ) missingChild = callChildParseByTypeId("POWER1", [[name: "saturation", value: hsbColor[1]]], missingChild)
-            String colorName = getColorNameFromHueSaturation(hsbColor[0], hsbColor[1])
+            String colorName = rgbw_getColorNameFromHueSaturation(hsbColor[0], hsbColor[1])
             if(childDevice?.currentValue('colorName') != colorName ) {
                 missingChild = callChildParseByTypeId("POWER1", [[name: "colorName", value: colorName]], missingChild)
             }
@@ -1030,7 +906,7 @@ boolean parseResult(result, missingChild) {
             if(childDevice?.currentValue('colorTemperature') != t ) {
                 missingChild = callChildParseByTypeId("POWER1", [[name: "colorTemperature", value: t]], missingChild)
             }
-            String colorName = getColorNameFromTemperature(t)
+            String colorName = rgbw_getColorNameFromTemperature(t)
             if(childDevice?.currentValue('colorName') != colorName ) {
                 missingChild = callChildParseByTypeId("POWER1", [[name: "colorName", value: colorName]], missingChild)
             }
@@ -1039,9 +915,7 @@ boolean parseResult(result, missingChild) {
     
     }
     // END:  getTasmotaNewParserForRGBWDevice()
-    //logging("Entered parseResult 1d", 100)
     // BEGIN:getTasmotaNewParserForFanMode()
-    // Fan Mode parsing
     if (result.containsKey("FanSpeed")) {
         String speed = "off"
         switch(result.FanSpeed) {
@@ -1059,10 +933,7 @@ boolean parseResult(result, missingChild) {
         missingChild = callChildParseByTypeId("FAN", [[name:"speed", value: speed]], missingChild)
     }
     // END:  getTasmotaNewParserForFanMode()
-    //logging("Entered parseResult 2", 100)
     // BEGIN:getTasmotaNewParserForBasicData()
-    // Standard Basic Data parsing
-    
     if (result.containsKey("StatusNET")) {
         logging("StatusNET: $result.StatusNET",99)
         result << result.StatusNET
@@ -1076,14 +947,13 @@ boolean parseResult(result, missingChild) {
         result << result.StatusPRM
     }
     if (false && result.containsKey("Status")) {
-        // We shouldn't do this, we don't need this data to be moved out
-        // It will only cause issues with the "Module" setting.
+    
         logging("Status: $result.Status",99)
         result << result.Status
     }
     if (result.containsKey("LoadAvg")) {
         logging("LoadAvg: $result.LoadAvg",99)
-        //if(result.LoadAvg.toInteger() > 60) log.warn "Load average of the Device is unusually high: $result.LoadAvg"
+    
     }
     if (log99 == true && result.containsKey("Sleep")) {
         logging("Sleep: $result.Sleep",99)
@@ -1100,7 +970,7 @@ boolean parseResult(result, missingChild) {
     if (result.containsKey("IPAddress") && (override == false || override == null)) {
         logging("IPAddress: $result.IPAddress",99)
         sendEvent(name: "ip", value: "$result.IPAddress", isStateChange: false)
-        //logging("ipLink: <a target=\"device\" href=\"http://$result.IPAddress\">$result.IPAddress</a>",10)
+    
         sendEvent(name: "ipLink", value: "<a target=\"device\" href=\"http://$result.IPAddress\">$result.IPAddress</a>", isStateChange: false)
         updateDataValue("ip", "$result.IPAddress")
     }
@@ -1112,18 +982,18 @@ boolean parseResult(result, missingChild) {
         updateDataValue("firmware", result.Version)
     }
     if (result.containsKey("Module") && !result.containsKey("Version")) {
-        // The check for Version is here to avoid using the wrong message
+    
         logging("Module: $result.Module",50)
         sendEvent(name: "module", value: "$result.Module", isStateChange: false)
     }
-    // When it is a Template, it looks a bit different and is NOT valid JSON...
+    
     if (result.containsKey("NAME") && result.containsKey("GPIO") && result.containsKey("FLAG") && result.containsKey("BASE")) {
         def n = result.toMapString()
         n = n.replaceAll(', ',',')
         n = n.replaceAll('\\[','{').replaceAll('\\]','}')
         n = n.replaceAll('NAME:', '"NAME":"').replaceAll(',GPIO:\\{', '","GPIO":\\[')
         n = n.replaceAll('\\},FLAG', '\\],"FLAG"').replaceAll('BASE', '"BASE"')
-        // TODO: Learn how to do this the right way in Groovy
+    
         logging("Template: $n",50)
         sendEvent(name: "templateData", value: "${n}", isStateChange: false)
     }
@@ -1142,85 +1012,73 @@ boolean parseResult(result, missingChild) {
     }
     if (result.containsKey("Uptime")) {
         logging("Uptime: $result.Uptime",99)
-        // Even with "displayed: false, archivable: false" these events still show up under events... There is no way of NOT having it that way...
-        //sendEvent(name: 'uptime', value: result.Uptime, displayed: false, archivable: false)
     
         state.uptime = result.Uptime
         updateDataValue('uptime', result.Uptime)
     }
     // END:  getTasmotaNewParserForBasicData()
     // BEGIN:getTasmotaNewParserForEnergyMonitor()
-    // Standard Energy Monitor Data parsing
     if (result.containsKey("StatusSNS")) {
         result << result.StatusSNS
     }
     if (result.containsKey("ENERGY")) {
-        //logging("Has ENERGY...", 1)
-        //if (!state.containsKey('energy')) state.energy = {}
+    
         if (result.ENERGY.containsKey("Total")) {
             logging("Total: $result.ENERGY.Total kWh",99)
-            //sendEvent(name: "energyTotal", value: "$result.ENERGY.Total kWh")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"energyTotal", value:"$result.ENERGY.Total kWh"]], missingChild)
         }
         if (result.ENERGY.containsKey("Today")) {
             logging("Today: $result.ENERGY.Today kWh",99)
-            //sendEvent(name: "energyToday", value: "$result.ENERGY.Today kWh")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"energyToday", value:"$result.ENERGY.Today kWh"]], missingChild)
         }
         if (result.ENERGY.containsKey("Yesterday")) {
             logging("Yesterday: $result.ENERGY.Yesterday kWh",99)
-            //sendEvent(name: "energyYesterday", value: "$result.ENERGY.Yesterday kWh")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"energyYesterday", value:"$result.ENERGY.Yesterday kWh"]], missingChild)
         }
         if (result.ENERGY.containsKey("Current")) {
             logging("Current: $result.ENERGY.Current A",99)
             def r = (result.ENERGY.Current == null) ? 0 : result.ENERGY.Current
-            //sendEvent(name: "current", value: "$r A")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"current", value:"$r A"]], missingChild)
         }
         if (result.ENERGY.containsKey("ApparentPower")) {
             logging("apparentPower: $result.ENERGY.ApparentPower VA",99)
-            //sendEvent(name: "apparentPower", value: "$result.ENERGY.ApparentPower VA")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"apparentPower", value:"$result.ENERGY.ApparentPower VA"]], missingChild)
         }
         if (result.ENERGY.containsKey("ReactivePower")) {
             logging("reactivePower: $result.ENERGY.ReactivePower VAr",99)
-            //sendEvent(name: "reactivePower", value: "$result.ENERGY.ReactivePower VAr")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"reactivePower", value:"$result.ENERGY.ReactivePower VAr"]], missingChild)
         }
         if (result.ENERGY.containsKey("Factor")) {
             logging("powerFactor: $result.ENERGY.Factor",99)
-            //sendEvent(name: "powerFactor", value: "$result.ENERGY.Factor")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"powerFactor", value:"$result.ENERGY.Factor"]], missingChild)
         }
         if (result.ENERGY.containsKey("Voltage")) {
             logging("Voltage: $result.ENERGY.Voltage V",99)
             def r = (result.ENERGY.Voltage == null) ? 0 : result.ENERGY.Voltage
-            //sendEvent(name: "voltageWithUnit", value: "$r V")
-            //sendEvent(name: "voltage", value: r, unit: "V")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"voltageWithUnit", value:"$r V"]], missingChild)
             missingChild = callChildParseByTypeId("POWER1", [[name:"voltage", value: r, unit: "V"]], missingChild)
         }
         if (result.ENERGY.containsKey("Power")) {
             logging("Power: $result.ENERGY.Power W",99)
             def r = (result.ENERGY.Power == null) ? 0 : result.ENERGY.Power
-            //sendEvent(name: "powerWithUnit", value: "$r W")
-            //sendEvent(name: "power", value: r, unit: "W")
+    
             missingChild = callChildParseByTypeId("POWER1", [[name:"powerWithUnit", value:"$r W"]], missingChild)
             missingChild = callChildParseByTypeId("POWER1", [[name:"power", value: r, unit: "W"]], missingChild)
-            //state.energy.power = r
+    
         }
     }
-    // StatusPTH:[PowerDelta:0, PowerLow:0, PowerHigh:0, VoltageLow:0, VoltageHigh:0, CurrentLow:0, CurrentHigh:0]
     // END:  getTasmotaNewParserForEnergyMonitor()
     // BEGIN:getTasmotaNewParserForSensors()
-    // Standard Sensor Data parsing
-    // AM2301
-    // BME280
-    // BMP280
-    //logging("result instanceof Map: ${result instanceof Map}", 1)
     for ( r in result ) {
-        //logging("${r.key} instanceof Map: ${r.value instanceof Map}", 1)
+    
         if((r.key == 'StatusSNS' || r.key == 'SENSOR') && r.value instanceof Map) {
             result << r
         }
@@ -1234,7 +1092,7 @@ boolean parseResult(result, missingChild) {
                 missingChild = callChildParseByTypeId(r.key, [[name: "humidity", value: r.value.Humidity, unit: "%"]], missingChild)
             }
             if (r.value.containsKey("Temperature")) {
-                //Probably need this line below
+    
                 logging("Temperature: $r.value.Temperature", 99)
                 String c = String.valueOf((char)(Integer.parseInt("00B0", 16)));
                 missingChild = callChildParseByTypeId(r.key, [[name: "temperature", value: r.value.Temperature, unit: "$c${location.temperatureScale}"]], missingChild)
@@ -1243,20 +1101,18 @@ boolean parseResult(result, missingChild) {
                 logging("Pressure: $r.value.Pressure", 99)
                 String pressureUnit = "mbar"
                 missingChild = callChildParseByTypeId(r.key, [[name: "pressure", value: r.value.Pressure, unit: pressureUnit]], missingChild)
-                // Since there is no Pressure tile yet, we need an attribute with the unit as well... But that is NOT the responsibility of the Parent
-                //missingChild = callChildParseByTypeId(r.key, [[name: "pressureWithUnit", value: "$r.value.Pressure $pressureUnit"]], missingChild)
+    
             }
             if (r.value.containsKey("Distance")) {
                 logging("Distance: $r.value.Distance cm", 99)
                 def realDistance = Math.round((r.value.Distance as Double) * 100) / 100
-                //sendEvent(name: "distance", value: "${realDistance}", unit: "cm")
+    
                 missingChild = callChildParseByTypeId(r.key, [[name: "distance", value: String.format("%.2f cm", realDistance), unit: "cm"]], missingChild)
             }
         }
     }
     // END:  getTasmotaNewParserForSensors()
     // BEGIN:getTasmotaNewParserForWifi()
-    // Standard Wifi Data parsing
     if (result.containsKey("Wifi")) {
         if (log99 == true && result.Wifi.containsKey("AP")) {
             logging("AP: $result.Wifi.AP",99)
@@ -1269,7 +1125,7 @@ boolean parseResult(result, missingChild) {
         }
         if (result.Wifi.containsKey("RSSI")) {
             logging("RSSI: $result.Wifi.RSSI",99)
-            // In Tasmota RSSI is actually the % already, no conversion needed...
+    
             String quality = "${result.Wifi.RSSI}%"
             if(device.currentValue('wifiSignal') != quality) sendEvent(name: "wifiSignal", value: quality, isStateChange: false)
         }
@@ -1278,38 +1134,31 @@ boolean parseResult(result, missingChild) {
         }
     }
     // END:  getTasmotaNewParserForWifi()
-    //logging("Entered parseResult 3", 100)
-    updatePresence("present")
+    tasmota_updatePresence("present")
     return missingChild
 }
 
-// Call order: installed() -> configure() -> initialize() -> updated() -> updateNeededSettings()
 void updateNeededSettings() {
     // BEGIN:getUpdateNeededSettingsTasmotaHeader()
-    // updateNeededSettings() Generic header BEGINS here
     def currentProperties = state.currentProperties ?: [:]
     
     state.settings = settings
     
-    def configuration = new XmlSlurper().parseText(configuration_model_tasmota())
     def isUpdateNeeded = "NO"
     
     if(runReset != null && runReset == 'RESET') {
         for ( e in state.settings ) {
             logging("Deleting '${e.key}' with value = ${e.value} from Settings", 50)
-            // Not sure which ones are needed, so doing all...
+    
             device.clearSetting("${e.key}")
             device.removeSetting("${e.key}")
             state?.settings?.remove("${e.key}")
         }
     }
     
-    prepareDNI()
-    
-    // updateNeededSettings() Generic header ENDS here
+    tasmota_prepareDNI()
     // END:  getUpdateNeededSettingsTasmotaHeader()
 
-    // Get the Device Configuration
     if(deviceConfig == null) deviceConfig = "01generic-device"
     def deviceConfigMap = getDeviceConfiguration(deviceConfig)
     
@@ -1323,9 +1172,8 @@ void updateNeededSettings() {
     logging("updateNeededSettings: deviceConfigMap=$deviceConfigMap, deviceTemplateInput=$deviceTemplateInput, moduleNumber=$moduleNumber", 1)
 
     // BEGIN:getUpdateNeededSettingsTasmotaDynamicModuleCommand()
-    // Tasmota Module and Template selection command (autogenerated)
-    getAction(getCommandString("Module", null))
-    getAction(getCommandString("Template", null))
+    tasmota_getAction(tasmota_getCommandString("Module", null))
+    tasmota_getAction(tasmota_getCommandString("Template", null))
     if(disableModuleSelection == null) disableModuleSelection = false
     def moduleNumberUsed = moduleNumber
     if(moduleNumber == null || moduleNumber == -1) moduleNumberUsed = -1
@@ -1336,7 +1184,7 @@ void updateNeededSettings() {
         defaultDeviceTemplate = ''
     }
     if(deviceTemplateInput == null || deviceTemplateInput == "") {
-        // We should use the default of the driver
+    
         useDefaultTemplate = true
         defaultDeviceTemplate = ''
     }
@@ -1349,37 +1197,35 @@ void updateNeededSettings() {
         }
         logging("Setting the Template (${usedDeviceTemplate}) soon...", 100)
         logging("templateData = ${device.currentValue('templateData')}", 10)
-        if(usedDeviceTemplate != '') moduleNumberUsed = 0  // This activates the Template when set
-        // Checking this makes installs fail: device.currentValue('templateData') != null
+        if(usedDeviceTemplate != '') moduleNumberUsed = 0
+    
         if(usedDeviceTemplate != null && device.currentValue('templateData') != usedDeviceTemplate) {
             logging("The template is currently NOT set to '${usedDeviceTemplate}', it is set to '${device.currentValue('templateData')}'", 100)
-            // The NAME part of th Device Template can't exceed 14 characters! More than that and they will be truncated.
-            // TODO: Parse and limit the size of NAME???
-            getAction(getCommandString("Template", usedDeviceTemplate))
+    
+            tasmota_getAction(tasmota_getCommandString("Template", usedDeviceTemplate))
         } else if (device.currentValue('module') == null){
-            // Update our stored value!
-            getAction(getCommandString("Template", null))
+    
+            tasmota_getAction(tasmota_getCommandString("Template", null))
         }else if (usedDeviceTemplate != null) {
             logging("The template is set to '${usedDeviceTemplate}' already!", 100)
         }
     } else {
         logging("Can't set the Template...", 10)
         logging(device.currentValue('templateData'), 10)
-        //logging("deviceTemplateInput: '${deviceTemplateInput}'", 10)
-        //logging("disableModuleSelection: '${disableModuleSelection}'", 10)
+    
     }
     if(disableModuleSelection == false && moduleNumberUsed != null && moduleNumberUsed >= 0) {
         logging("Setting the Module (${moduleNumberUsed}) soon...", 100)
         logging("device.currentValue('module'): '${device.currentValue('module')}'", 10)
-        // Don't filter in this case: device.currentValue('module') != null
+    
         if(moduleNumberUsed != null && (device.currentValue('module') == null || !(device.currentValue('module').startsWith("[${moduleNumberUsed}:") || device.currentValue('module') == '0'))) {
             logging("Currently not using module ${moduleNumberUsed}, using ${device.currentValue('module')}", 100)
-            getAction(getCommandString("Module", "${moduleNumberUsed}"))
+            tasmota_getAction(tasmota_getCommandString("Module", "${moduleNumberUsed}"))
         } else if (moduleNumberUsed != null && device.currentValue('module') != null){
             logging("This starts with [${moduleNumberUsed} ${device.currentValue('module')}",10)
         } else if (device.currentValue('module') == null){
-            // Update our stored value!
-            getAction(getCommandString("Module", null))
+    
+            tasmota_getAction(tasmota_getCommandString("Module", null))
         } else {
             logging("Module is set to '${device.currentValue('module')}', and it's set to be null, report this to the creator of this driver!",10)
         }
@@ -1387,90 +1233,63 @@ void updateNeededSettings() {
         logging("Setting the Module has been disabled!", 10)
     }
     // END:  getUpdateNeededSettingsTasmotaDynamicModuleCommand()
-    logging("After getUpdateNeededSettingsTasmotaDynamicModuleCommand", 1)
-    // TODO: Process device-type specific settings here...
+    //logging("After getUpdateNeededSettingsTasmotaDynamicModuleCommand", 0)
 
     installCommands = deviceConfigMap?.installCommands
     if(installCommands == null || installCommands == '') installCommands = []
-    logging("Got to just before runInstallCommands", 1)
-    runInstallCommands(installCommands)
-
-    //
-    // https://tasmota.github.io/docs/#/Commands
-    //SetOption66
-    //Set publishing TuyaReceived to MQTT  »6.7.0
-    //0 = disable publishing TuyaReceived over MQTT (default)
-    //1 = enable publishing TuyaReceived over MQTT
-    //getAction(getCommandString("SetOption66", "1"))
-
-    //getAction(getCommandString("SetOption81", "0")) // Set PCF8574 component behavior for all ports as inverted (default=0)
+    //logging("Got to just before tasmota_runInstallCommands", 0)
+    tasmota_runInstallCommands(installCommands)
 
     // BEGIN:getUpdateNeededSettingsTasmotaFooter()
-    getAction(getCommandString("TelePeriod", "${getTelePeriodValue()}"))
-    // updateNeededSettings() Generic footer BEGINS here
-    getAction(getCommandString("SetOption113", "1")) // Hubitat Enabled
-    // Disabling Emulation so that we don't flood the logs with upnp traffic
-    getAction(getCommandString("Emulation", "2")) // Hue Emulation Enabled, REQUIRED for device discovery
-    getAction(getCommandString("HubitatHost", device.hub.getDataValue("localIP")))
-    logging("HubitatPort: ${device.hub.getDataValue("localSrvPortTCP")}", 1)
-    getAction(getCommandString("HubitatPort", device.hub.getDataValue("localSrvPortTCP")))
-    getAction(getCommandString("FriendlyName1", device.displayName.take(32))) // Set to a maximum of 32 characters
-    // We need the Backlog inter-command delay to be 20ms instead of 200...
-    getAction(getCommandString("SetOption34", "20"))
+    tasmota_getAction(tasmota_getCommandString("TelePeriod", "${tasmota_getTelePeriodValue()}"))
     
-    // Set the timezone
+    tasmota_getAction(tasmota_getCommandString("SetOption113", "1"))
+    
+    tasmota_getAction(tasmota_getCommandString("Emulation", "2"))
+    tasmota_getAction(tasmota_getCommandString("HubitatHost", device.hub.getDataValue("localIP")))
+    logging("HubitatPort: ${device.hub.getDataValue("localSrvPortTCP")}", 1)
+    tasmota_getAction(tasmota_getCommandString("HubitatPort", device.hub.getDataValue("localSrvPortTCP")))
+    tasmota_getAction(tasmota_getCommandString("FriendlyName1", device.displayName.take(32)))
+    
+    tasmota_getAction(tasmota_getCommandString("SetOption34", "20"))
+    
     int tzoffset = getLocation().timeZone.getOffset(now()) / 3600000
     String tzoffsetWithSign = tzoffset < 0 ? "${tzoffset}" : "+${tzoffset}"
     logging("Setting timezone to $tzoffsetWithSign", 10)
-    getAction(getCommandString("Timezone", tzoffsetWithSign))
+    tasmota_getAction(tasmota_getCommandString("Timezone", tzoffsetWithSign))
     
-    // Just make sure we update the child devices
-    logging("Scheduling refreshChildren...", 1)
-    runIn(30, "refreshChildren")
-    runIn(60, "refreshChildrenAgain")
-    logging("Done scheduling refreshChildren...", 1)
+    logging("Scheduling tasmota_refreshChildren...", 1)
+    runIn(30, "tasmota_refreshChildren")
+    runIn(60, "tasmota_refreshChildrenAgain")
+    logging("Done scheduling tasmota_refreshChildren...", 1)
     
     if(override == true) {
-        sync(ipAddress)
+        tasmota_sync(ipAddress)
     }
     
-    //logging("Cmds: " +cmds,1)
     sendEvent(name:"needUpdate", value: isUpdateNeeded, displayed:false, isStateChange: false)
-    // updateNeededSettings() Generic footer ENDS here
     // END:  getUpdateNeededSettingsTasmotaFooter()
 }
 
 /** Calls TO Child devices */
 boolean callChildParseByTypeId(String deviceTypeId, event, boolean missingChild) {
-    //logging("Before callChildParseByTypeId()", 100)
     event.each{
         if(it.containsKey("descriptionText") == false) {
             it["descriptionText"] = "'$it.name' set to '$it.value'"
         }
         it["isStateChange"] = false
     }
-    // Try - Catch is expensive since it won't be optimized
-    //try {
-    //logging("Before getChildDevice()", 100)
-    cd = getChildDevice("$device.id-$deviceTypeId")
+    def cd = getChildDevice("$device.id-$deviceTypeId")
     if(cd != null) {
-        //logging("Before Child parse()", 100)
-        // It takes 30 to 40ms to just call into the child device parse
         cd.parse(event)
-        //logging("After Child parse()", 100)
     } else {
-        // We're missing a device...
         log.warn("childParse() can't FIND the device ${cd?.displayName}! (childId: ${"$device.id-$deviceTypeId"}) Did you delete something?")
         missingChild = true
     }
-    //} catch(e) {
-    //    log.warn("childParse() can't send parse event to device ${cd?.displayName}! Error=$e")
-    //    missingChild = true
-    //}
     return missingChild
 }
 
-void childParse(cd, event) {
+void childParse(com.hubitat.app.DeviceWrapper cd, event) {
     try {
         getChildDevice(cd.deviceNetworkId).parse(event)
     } catch(e) {
@@ -1483,16 +1302,15 @@ String getDeviceActionType(String childDeviceNetworkId) {
 }
 
 /** Calls FROM Child devices */
-void componentRefresh(cd) {
+void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentRefresh(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
     refresh()
 }
 
-void componentOn(cd) {
+void componentOn(com.hubitat.app.DeviceWrapper cd) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     if(invertPowerNumber == true) {
-        // This is used when Tasmota mixes things up with a dimmer and relay in the same device
         if(actionType == "POWER1") { 
             actionType = "POWER2"
         } else if(actionType == "POWER2"){
@@ -1500,14 +1318,12 @@ void componentOn(cd) {
         }
     }
     logging("componentOn(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
-    getAction(getCommandString("$actionType", "1"))
-    //childParse(cd, [[name:"switch", value:"on", descriptionText:"${cd.displayName} was turned on"]])
+    tasmota_getAction(tasmota_getCommandString("$actionType", "1"))
 }
 
-void componentOff(cd) {
+void componentOff(com.hubitat.app.DeviceWrapper cd) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     if(invertPowerNumber == true) {
-        // This is used when Tasmota mixes things up with a dimmer and relay in the same device
         if(actionType == "POWER1") { 
             actionType = "POWER2"
         } else if(actionType == "POWER2"){
@@ -1515,79 +1331,78 @@ void componentOff(cd) {
         }
     }
     logging("componentOff(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
-    getAction(getCommandString("$actionType", "0"))
-    //childParse(cd, [[name:"switch", value:"off", descriptionText:"${cd.displayName} was turned off"]])
+    tasmota_getAction(tasmota_getCommandString("$actionType", "0"))
 }
 
-void componentSetLevel(cd, BigDecimal level) {
+void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetLevel(cd=${cd.displayName} (${cd.deviceNetworkId}), level=${level}) actionType=$actionType", 1)
     setLevel(level)
 }
 
-void componentSetLevel(cd, BigDecimal level, BigDecimal duration) {
+void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level, BigDecimal duration) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetLevel(cd=${cd.displayName} (${cd.deviceNetworkId}), level=${level}, duration=${duration}) actionType=$actionType", 1)
     setLevel(level, duration)
 }
 
-void componentStartLevelChange(cd, String direction) {
+void componentStartLevelChange(com.hubitat.app.DeviceWrapper cd, String direction) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentStartLevelChange(cd=${cd.displayName} (${cd.deviceNetworkId}), direction=${direction}) actionType=$actionType", 1)
-    startLevelChange(direction)
+    tasmota_rgbw_startLevelChange(direction)
 }
 
-void componentStopLevelChange(cd) {
+void componentStopLevelChange(com.hubitat.app.DeviceWrapper cd) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentStopLevelChange(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
-    stopLevelChange()
+    tasmota_rgbw_stopLevelChange()
 }
 
-void componentSetColor(cd, Map colormap) {
+void componentSetColor(com.hubitat.app.DeviceWrapper cd, Map colormap) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetColor(cd=${cd.displayName} (${cd.deviceNetworkId}), colormap=${colormap}) actionType=$actionType", 1)
-    setColor(colormap)
+    rgbw_setColor(colormap)
 }
 
-void componentSetHue(cd, BigDecimal hue) {
+void componentSetHue(com.hubitat.app.DeviceWrapper cd, BigDecimal hue) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetHue(cd=${cd.displayName} (${cd.deviceNetworkId}), hue=${hue}) actionType=$actionType", 1)
-    setHue(hue)
+    rgbw_setHue(hue)
 }
 
-void componentWhite(cd) {
+void componentWhite(com.hubitat.app.DeviceWrapper cd) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentWhite(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
-    white()
+    rgbw_white()
 }
 
-void componentSetRGB(cd, r, g, b) {
+void componentSetRGB(com.hubitat.app.DeviceWrapper cd, r, g, b) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetRGB(cd=${cd.displayName} (${cd.deviceNetworkId}), r=${r}, g=${g}, b=${b}) actionType=$actionType", 1)
-    setRGB(r, g, b)
+    tasmota_rgbw_setRGB(r, g, b)
 }
 
-void componentSetSaturation(cd, BigDecimal saturation) {
+void componentSetSaturation(com.hubitat.app.DeviceWrapper cd, BigDecimal saturation) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetSaturation(cd=${cd.displayName} (${cd.deviceNetworkId}), saturation=${saturation}) actionType=$actionType", 1)
-    setSaturation(saturation)
+    rgbw_setSaturation(saturation)
 }
 
-void componentSetColorTemperature(cd, BigDecimal colortemperature) {
+void componentSetColorTemperature(com.hubitat.app.DeviceWrapper cd, BigDecimal colortemperature) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetColorTemperature(cd=${cd.displayName} (${cd.deviceNetworkId}), colortemperature=${colortemperature}) actionType=$actionType", 1)
-    setColorTemperature(colortemperature)
+    tasmota_rgbw_setColorTemperature(colortemperature)
 }
 
-void componentSetEffect(cd, BigDecimal effectnumber, BigDecimal speed) {
-    modeSet((Integer) effectnumber, speed)
+void componentSetEffect(com.hubitat.app.DeviceWrapper cd, BigDecimal effectnumber, BigDecimal speed) {
+    tasmota_rgbw_modeSet((Integer) effectnumber, speed)
 }
 
-void componentModeWakeUp(cd, BigDecimal wakeUpDuration, BigDecimal level) {
-    modeWakeUp(wakeUpDuration, level)
+void componentModeWakeUp(com.hubitat.app.DeviceWrapper cd, BigDecimal wakeUpDuration, BigDecimal level) {
+    tasmota_rgbw_modeWakeUp(wakeUpDuration, level)
 }
 
-void componentSetSpeed(cd, String fanspeed) {
+void componentSetSpeed(com.hubitat.app.DeviceWrapper cd, String fanspeed) {
     String fanCommand = "Dimmer"
     String cModule = device.currentValue('module')
     if(cModule != null && (cModule.startsWith('[44') == true || cModule.startsWith('[71') == true)) {
@@ -1595,58 +1410,56 @@ void componentSetSpeed(cd, String fanspeed) {
     }
     switch(fanspeed) {
         case "off":
-            getAction(getCommandString(fanCommand, "0"))
+            tasmota_getAction(tasmota_getCommandString(fanCommand, "0"))
             break
         case "on":
         case "low":
-            getAction(getCommandString(fanCommand, "1"))
+            tasmota_getAction(tasmota_getCommandString(fanCommand, "1"))
             break
         case "medium-low":
         case "medium":  
-            getAction(getCommandString(fanCommand, "2"))
+            tasmota_getAction(tasmota_getCommandString(fanCommand, "2"))
             break
         case "medium-high":
         case "high":
-            getAction(getCommandString(fanCommand, "3"))
+            tasmota_getAction(tasmota_getCommandString(fanCommand, "3"))
             break
     }  
 }
 
-void componentOpen(cd) {
-    //TODO: Get this command from the device config!
-    getAction(getCommandString("TuyaSend4", "101,0"))
+void componentOpen(com.hubitat.app.DeviceWrapper cd) {
+    tasmota_getAction(tasmota_getCommandString("TuyaSend4", "101,0"))
 }
 
-void componentClose(cd) {
-    getAction(getCommandString("TuyaSend4", "101,2"))
+void componentClose(com.hubitat.app.DeviceWrapper cd) {
+    tasmota_getAction(tasmota_getCommandString("TuyaSend4", "101,2"))
 }
 
-void componentStop(cd) {
-    getAction(getCommandString("TuyaSend4", "101,1"))
+void componentStop(com.hubitat.app.DeviceWrapper cd) {
+    tasmota_getAction(tasmota_getCommandString("TuyaSend4", "101,1"))
 }
 
-void componentSetPosition(cd, BigDecimal position) {
-    // This is run in the child for now...
+void componentSetPosition(com.hubitat.app.DeviceWrapper cd, BigDecimal position) {
 }
 
-void componentSetColorByRGBString(cd, String colorRGB) {
-    setColorByRGBString(colorRGB)
+void componentSetColorByRGBString(com.hubitat.app.DeviceWrapper cd, String colorRGB) {
+    tasmota_rgbw_setColorByRGBString(colorRGB)
 }
 
-void componentSetPixelColor(cd, String colorRGB, BigDecimal pixel) {
-    setPixelColor(colorRGB, pixel)
+void componentSetPixelColor(com.hubitat.app.DeviceWrapper cd, String colorRGB, BigDecimal pixel) {
+    tasmota_rgbw_setPixelColor(colorRGB, pixel)
 }
 
-void componentSetAddressablePixels(cd, BigDecimal pixels) {
-    setAddressablePixels(pixels)
+void componentSetAddressablePixels(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels) {
+    tasmota_rgbw_setAddressablePixels(pixels)
 }
 
-void componentSetAddressableRotation(cd, BigDecimal pixels) {
-    setAddressableRotation(pixels)
+void componentSetAddressableRotation(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels) {
+    tasmota_rgbw_setAddressableRotation(pixels)
 }
 
-void componentSetEffectWidth(cd, BigDecimal pixels) {
-    setEffectWidth(pixels)
+void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels) {
+    tasmota_rgbw_setEffectWidth(pixels)
 }
 
 /**
@@ -1658,18 +1471,16 @@ void componentSetEffectWidth(cd, BigDecimal pixels) {
  */
 
 // BEGIN:getDefaultFunctions()
-/* Default Driver Methods go here */
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0503T"
+    String version = "v1.0.2.0512Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
     return version
 }
 // END:  getDefaultFunctions()
-
 
 // BEGIN:getGetChildDriverNameMethod()
 String getChildDriverName() {
@@ -1683,13 +1494,10 @@ String getChildDriverName() {
 }
 // END:  getGetChildDriverNameMethod()
 
-
 // BEGIN:getLoggingFunction(specialDebugLevel=True)
-/* Logging function included in all drivers */
 private boolean logging(message, level) {
     boolean didLogging = false
-    //Integer logLevelLocal = (logLevel != null ? logLevel.toInteger() : 0)
-    //if(!isDeveloperHub()) {
+     
     Integer logLevelLocal = 0
     if (infoLogging == null || infoLogging == true) {
         logLevelLocal = 100
@@ -1697,19 +1505,10 @@ private boolean logging(message, level) {
     if (debugLogging == true) {
         logLevelLocal = 1
     }
-    //}
+     
     if (logLevelLocal != 0){
         switch (logLevelLocal) {
-        case -1: // Insanely verbose
-            if (level >= 0 && level < 100) {
-                log.debug "$message"
-                didLogging = true
-            } else if (level == 100) {
-                log.info "$message"
-                didLogging = true
-            }
-        break
-        case 1: // Very verbose
+        case 1:  
             if (level >= 1 && level < 99) {
                 log.debug "$message"
                 didLogging = true
@@ -1718,29 +1517,7 @@ private boolean logging(message, level) {
                 didLogging = true
             }
         break
-        case 10: // A little less
-            if (level >= 10 && level < 99) {
-                log.debug "$message"
-                didLogging = true
-            } else if (level == 100) {
-                log.info "$message"
-                didLogging = true
-            }
-        break
-        case 50: // Rather chatty
-            if (level >= 50 ) {
-                log.debug "$message"
-                didLogging = true
-            }
-        break
-        case 99: // Only parsing reports
-            if (level >= 99 ) {
-                log.debug "$message"
-                didLogging = true
-            }
-        break
-        
-        case 100: // Only special debug messages, eg IR and RF codes
+        case 100:  
             if (level == 100 ) {
                 log.info "$message"
                 didLogging = true
@@ -1752,24 +1529,14 @@ private boolean logging(message, level) {
 }
 // END:  getLoggingFunction(specialDebugLevel=True)
 
-
-// Don't need this include anymore:
-//#include:getHelperFunctions('all-debug')
-
-/**
- * ALL DEFAULT METHODS (helpers-all-default)
- *
- * Helper functions included in all drivers/apps
- */
-
+// BEGIN:getHelperFunctions('all-default')
 boolean isDriver() {
     try {
-        // If this fails, this is not a driver...
         getDeviceDataByName('_unimportant')
-        logging("This IS a driver!", 0)
+         
         return true
     } catch (MissingMethodException e) {
-        logging("This is NOT a driver!", 0)
+         
         return false
     }
 }
@@ -1777,14 +1544,13 @@ boolean isDriver() {
 void deviceCommand(cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
-    logging("deviceCommand: ${cmd}", 0)
+     
     r = this."${cmd['cmd']}"(*cmd['args'])
-    logging("deviceCommand return: ${r}", 0)
+     
     updateDataValue('appReturn', JsonOutput.toJson(r))
 }
 
 void setLogsOffTask(boolean noLogWarning=false) {
-    // disable debug logs after 30 min, unless override is in place
 	if (debugLogging == true) {
         if(noLogWarning==false) {
             if(runReset != "DEBUG") {
@@ -1797,41 +1563,16 @@ void setLogsOffTask(boolean noLogWarning=false) {
     }
 }
 
-/*
-	initialize
-
-	Purpose: initialize the driver/app
-	Note: also called from updated()
-    This is called when the hub starts, DON'T declare it with return as void,
-    that seems like it makes it to not run? Since testing require hub reboots
-    and this works, this is not conclusive...
-*/
-// Call order: installed() -> configure() -> updated() -> initialize()
-def initialize() {
-    logging("initialize()", 100)
-	unschedule("updatePresence")
+def generalInitialize() {
+    logging("generalInitialize()", 100)
+	unschedule("tasmota_updatePresence")
     setLogsOffTask()
-    try {
-        // In case we have some more to run specific to this driver/app
-        initializeAdditional()
-    } catch (MissingMethodException e) {
-        // ignore
-    }
     refresh()
 }
 
-/**
- * Automatically disable debug logging after 30 mins.
- *
- * Note: scheduled in Initialize()
- */
 void logsOff() {
     if(runReset != "DEBUG") {
         log.warn "Debug logging disabled..."
-        // Setting logLevel to "0" doesn't seem to work, it disables logs, but does not update the UI...
-        //device.updateSetting("logLevel",[value:"0",type:"string"])
-        //app.updateSetting("logLevel",[value:"0",type:"list"])
-        // Not sure which ones are needed, so doing all... This works!
         if(isDriver()) {
             device.clearSetting("logLevel")
             device.removeSetting("logLevel")
@@ -1843,8 +1584,6 @@ void logsOff() {
             state?.settings?.remove("debugLogging")
             
         } else {
-            //app.clearSetting("logLevel")
-            // To be able to update the setting, it has to be removed first, clear does NOT work, at least for Apps
             app.removeSetting("logLevel")
             app.updateSetting("logLevel", "0")
             app.removeSetting("debugLogging")
@@ -1881,9 +1620,6 @@ private def getFilteredDeviceDisplayName() {
     return deviceDisplayName
 }
 
-/*
-    General Mathematical and Number Methods
-*/
 BigDecimal round2(BigDecimal number, Integer scale) {
     Integer pow = 10;
     for (Integer i = 1; i < scale; i++)
@@ -1911,25 +1647,13 @@ String hexToASCII(String hexValue) {
         output.append((char) Integer.parseInt(str, 16) + 30)
         logging("${Integer.parseInt(str, 16)}", 10)
     }
-    logging("hexToASCII: ${output.toString()}", 0)
+     
     return output.toString()
 }
+// END:  getHelperFunctions('all-default')
 
-/**
- * --END-- ALL DEFAULT METHODS (helpers-all-default)
- */
-
-/**
- * DRIVER METADATA METHODS (helpers-driver-metadata)
- *
- * These methods are to be used in (and/or with) the metadata section of drivers and
- * is also what contains the CSS handling and styling.
- */
-
-// These methods can be executed in both the NORMAL driver scope as well
-// as the Metadata scope.
+// BEGIN:getHelperFunctions('driver-metadata')
 private Map getMetaConfig() {
-    // This method can ALSO be executed in the Metadata Scope
     def metaConfig = getDataValue('metaConfig')
     if(metaConfig == null) {
         metaConfig = [:]
@@ -1946,8 +1670,6 @@ boolean isCSSDisabled(Map metaConfig=null) {
     return disableCSS
 }
 
-// These methods are used to set which elements to hide. 
-// They have to be executed in the NORMAL driver scope.
 private void saveMetaConfig(Map metaConfig) {
     updateDataValue('metaConfig', JsonOutput.toJson(metaConfig))
 }
@@ -1959,16 +1681,11 @@ private Map setSomethingToHide(String type, List something, Map metaConfig=null)
     if(!metaConfig.containsKey("hide")) {
         metaConfig["hide"] = [type:something]
     } else {
-        //logging("setSomethingToHide 1 else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
         if(metaConfig["hide"].containsKey(type)) {
-            //logging("setSomethingToHide 1 hasKey else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
             metaConfig["hide"][type].addAll(something)
         } else {
-            //logging("setSomethingToHide 1 noKey else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
             metaConfig["hide"][type] = something
         }
-        //metaConfig["hide"]["$type"] = oldData
-        //logging("setSomethingToHide 2 else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
     }
     saveMetaConfig(metaConfig)
     logging("setSomethingToHide() = ${metaConfig}", 1)
@@ -2071,43 +1788,10 @@ Map clearPreferencesToHide(Map metaConfig=null) {
     return metaConfig
 }
 
-// These methods are for executing inside the metadata section of a driver.
 def metaDataExporter() {
-    //log.debug "getEXECUTOR_TYPE = ${getEXECUTOR_TYPE()}"
     List filteredPrefs = getPreferences()['sections']['input'].name[0]
-    //log.debug "filteredPrefs = ${filteredPrefs}"
     if(filteredPrefs != []) updateDataValue('preferences', "${filteredPrefs}".replaceAll("\\s",""))
 }
-
-// These methods are used to add CSS to the driver page
-// This can be used for, among other things, to hide Commands
-// They HAVE to be run in getDriverCSS() or getDriverCSSWrapper()!
-
-/* Example usage:
-r += getCSSForCommandsToHide(["off", "refresh"])
-r += getCSSForStateVariablesToHide(["alertMessage", "mac", "dni", "oldLabel"])
-r += getCSSForCurrentStatesToHide(["templateData", "tuyaMCU", "needUpdate"])
-r += getCSSForDatasToHide(["preferences", "appReturn"])
-r += getCSSToChangeCommandTitle("configure", "Run Configure2")
-r += getCSSForPreferencesToHide(["numSwitches", "deviceTemplateInput"])
-r += getCSSForPreferenceHiding('<none>', overrideIndex=getPreferenceIndex('<none>', returnMax=true) + 1)
-r += getCSSForHidingLastPreference()
-r += '''
-form[action*="preference"]::before {
-    color: green;
-    content: "Hi, this is my content"
-}
-form[action*="preference"] div.mdl-grid div.mdl-cell:nth-of-type(2) {
-    color: green;
-}
-form[action*="preference"] div[for^=preferences] {
-    color: blue;
-}
-h3, h4, .property-label {
-    font-weight: bold;
-}
-'''
-*/
 
 String getDriverCSSWrapper() {
     Map metaConfig = getMetaConfig()
@@ -2140,7 +1824,6 @@ String getDriverCSSWrapper() {
     if(disableCSS == false) {
         r += "$defaultCSS "
         try{
-            // We always need to hide this element when we use CSS
             r += " ${getCSSForHidingLastPreference()} "
             
             if(disableCSS == false) {
@@ -2181,7 +1864,6 @@ String getDriverCSSWrapper() {
 Integer getCommandIndex(String cmd) {
     List commands = device.getSupportedCommands().unique()
     Integer i = commands.findIndexOf{ "$it" == cmd}+1
-    //log.debug "getCommandIndex: Seeing these commands: '${commands}', index=$i}"
     return i
 }
 
@@ -2215,7 +1897,6 @@ String getCSSToChangeCommandTitle(String cmd, String newTitle) {
 Integer getStateVariableIndex(String stateVariable) {
     def stateVariables = state.keySet()
     Integer i = stateVariables.findIndexOf{ "$it" == stateVariable}+1
-    //log.debug "getStateVariableIndex: Seeing these State Variables: '${stateVariables}', index=$i}"
     return i
 }
 
@@ -2247,7 +1928,6 @@ String getCSSForCurrentStatesToHide(List currentStates) {
 Integer getDataIndex(String data) {
     def datas = device.getData().keySet()
     Integer i = datas.findIndexOf{ "$it" == data}+1
-    //log.debug "getDataIndex: Seeing these Data Keys: '${datas}', index=$i}"
     return i
 }
 
@@ -2270,19 +1950,15 @@ String  getCSSForDatasToHide(List datas) {
 
 Integer getPreferenceIndex(String preference, boolean returnMax=false) {
     def filteredPrefs = getPreferences()['sections']['input'].name[0]
-    //log.debug "getPreferenceIndex: Seeing these Preferences first: '${filteredPrefs}'"
     if(filteredPrefs == [] || filteredPrefs == null) {
         d = getDataValue('preferences')
-        //log.debug "getPreferenceIndex: getDataValue('preferences'): '${d}'"
         if(d != null && d.length() > 2) {
             try{
                 filteredPrefs = d[1..d.length()-2].tokenize(',')
             } catch(e) {
-                // Do nothing
             }
         }
         
-
     }
     Integer i = 0
     if(returnMax == true) {
@@ -2290,7 +1966,6 @@ Integer getPreferenceIndex(String preference, boolean returnMax=false) {
     } else {
         i = filteredPrefs.findIndexOf{ "$it" == preference}+1
     }
-    //log.debug "getPreferenceIndex: Seeing these Preferences: '${filteredPrefs}', index=$i"
     return i
 }
 
@@ -2321,26 +1996,18 @@ String getCSSForPreferencesToHide(List preferences) {
 String getCSSForHidingLastPreference() {
     return getCSSForPreferenceHiding(null, overrideIndex=-1)
 }
+// END:  getHelperFunctions('driver-metadata')
 
-/**
- * --END-- DRIVER METADATA METHODS (helpers-driver-metadata)
- */
-
-/**
- * STYLING (helpers-styling)
- *
- * Helper functions included in all Drivers and Apps using Styling
- */
-String addTitleDiv(title) {
+// BEGIN:getHelperFunctions('styling')
+String styling_addTitleDiv(title) {
     return '<div class="preference-title">' + title + '</div>'
 }
 
-String addDescriptionDiv(description) {
+String styling_addDescriptionDiv(description) {
     return '<div class="preference-description">' + description + '</div>'
 }
 
-String makeTextBold(s) {
-    // DEPRECATED: Should be replaced by CSS styling!
+String styling_makeTextBold(s) {
     if(isDriver()) {
         return "<b>$s</b>"
     } else {
@@ -2348,8 +2015,7 @@ String makeTextBold(s) {
     }
 }
 
-String makeTextItalic(s) {
-    // DEPRECATED: Should be replaced by CSS styling!
+String styling_makeTextItalic(s) {
     if(isDriver()) {
         return "<i>$s</i>"
     } else {
@@ -2357,7 +2023,7 @@ String makeTextItalic(s) {
     }
 }
 
-String getDefaultCSS(boolean includeTags=true) {
+String styling_getDefaultCSS(boolean includeTags=true) {
     String defaultCSS = '''
     /* This is part of the CSS for replacing a Command Title */
     div.mdl-card__title div.mdl-grid div.mdl-grid .mdl-cell p::after {
@@ -2387,60 +2053,34 @@ String getDefaultCSS(boolean includeTags=true) {
         return defaultCSS
     }
 }
+// END:  getHelperFunctions('styling')
 
-/**
- * --END-- STYLING METHODS (helpers-styling)
- */
-
-/**
- * DRIVER DEFAULT METHODS (helpers-driver-default)
- *
- * General Methods used in ALL drivers except some CHILD drivers
- * Though some may have no effect in some drivers, they're here to
- * maintain a general structure
- */
-
-// Since refresh, with any number of arguments, is accepted as we always have it declared anyway, 
-// we use it as a wrapper
-// All our "normal" refresh functions take 0 arguments, we can declare one with 1 here...
+// BEGIN:getHelperFunctions('driver-default')
 void refresh(cmd) {
     deviceCommand(cmd)
 }
-// Call order: installed() -> configure() -> updated() -> initialize() -> refresh()
-// Calls installed() -> [configure() -> [updateNeededSettings(), updated() -> [updatedAdditional(), initialize() -> refresh() -> refreshAdditional()], installedAdditional()]
-def installed() {
-	logging("installed()", 100)
+def installedDefault() {
+	logging("installedDefault()", 100)
+    
     try {
-        // Used by certain types of drivers, like Tasmota Parent drivers
-        installedPreConfigure()
+        tasmota_installedPreConfigure()
     } catch (MissingMethodException e) {
-        // ignore
     }
-	//configure()
     try {
-        // In case we have some more to run specific to this Driver
         installedAdditional()
     } catch (MissingMethodException e) {
-        // ignore
     }
 }
 
-// Call order: installed() -> configure() -> updated() -> initialize() -> refresh()
-def configure() {
-    logging("configure()", 100)
-    if(isDriver()) {
-        // Do NOT call updateNeededSettings() here!
-        try {
-            return configureAdditional()
-        } catch (MissingMethodException e) {
-            updated()
-        }
-        try {
-            // Run the getDriverVersion() command
-            getDriverVersion()
-        } catch (MissingMethodException e) {
-            // ignore
-        }
+def configureDefault() {
+    logging("configureDefault()", 100)
+    try {
+        return configureAdditional()
+    } catch (MissingMethodException e) {
+    }
+    try {
+        getDriverVersion()
+    } catch (MissingMethodException e) {
     }
 }
 
@@ -2449,31 +2089,73 @@ void configureDelayed() {
     runIn(30, "refresh")
 }
 
-/**
- * --END-- DRIVER DEFAULT METHODS (helpers-driver-default)
- */
+void configurePresence() {
+    if(presenceEnable == null || presenceEnable == true) {
+        sendEvent(name: "presence", value: "present")
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
+    } else {
+        unschedule('checkPresence')
+    }
+}
 
-/*
-    CHILD DEVICES METHODS (helpers-childDevices)
+boolean isValidDate(String dateFormat, String dateString) {
+    try {
+        Date.parse(dateFormat, dateString)
+    } catch (e) {
+        return false
+    }
+    return true
+}
 
-    Helper functions included when using Child devices
+void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
+    if (lastCheckinEnable == true || lastCheckinEnable == null) {
+        String lastCheckinVal = device.currentValue('lastCheckin')
+        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (minimumMinutesToRepeat * 60 * 1000)) {
+		    sendEvent(name: "lastCheckin", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+            logging("Updated lastCheckin", 1)
+        } else {
+             
+        }
+	}
+    if (lastCheckinEpochEnable == true) {
+		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (minimumMinutesToRepeat * 60 * 1000)) {
+		    sendEvent(name: "lastCheckinEpoch", value: now())
+            logging("Updated lastCheckinEpoch", 1)
+        } else {
+             
+        }
+	}
+}
 
-    NOTE: MUCH of this is not in use any more, needs cleaning...
-*/
+void checkPresence() {
+    Long lastCheckinTime = null
+    String lastCheckinVal = device.currentValue('lastCheckin')
+    if ((lastCheckinEnable == true || lastCheckinEnable == null) && isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == true) {
+        lastCheckinTime = Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime()
+    } else if (lastCheckinEpochEnable == true && device.currentValue('lastCheckinEpoch') != null) {
+        lastCheckinTime = device.currentValue('lastCheckinEpoch').toLong()
+    }
+    if(lastCheckinTime != null && lastCheckinTime >= now() - (3 * 60 * 60 * 1000)) {
+        sendEvent(name: "presence", value: "present")
+    } else {
+        sendEvent(name: "presence", value: "not present")
+        log.warn("No event seen from the device for over 3 hours! Something is not right...")
+    }
+}
+// END:  getHelperFunctions('driver-default')
 
-// Get the button number
+// BEGIN:getHelperFunctions('childDevices')
 private channelNumber(String dni) {
     def ch = dni.split("-")[-1] as Integer
     return ch
 }
 
 def childOn(String dni) {
-    // Make sure to create an onOffCmd that sends the actual command
     onOffCmd(1, channelNumber(dni))
 }
 
 def childOff(String dni) {
-    // Make sure to create an onOffCmd that sends the actual command
     onOffCmd(0, channelNumber(dni))
 }
 
@@ -2514,16 +2196,14 @@ private void createChildDevices() {
     Integer numSwitchesI = numSwitches.toInteger()
     logging("createChildDevices: creating $numSwitchesI device(s)",1)
     
-    // If making changes here, don't forget that recreateDevices need to have the same settings set
     for (i in 1..numSwitchesI) {
-        // https://community.hubitat.com/t/composite-devices-parent-child-devices/1925
-        // BEGIN:getCreateChildDevicesCommand()
+         
         try {
         addChildDevice("${getDeviceInfoByName("namespace")}", "${getChildDriverName()}", "$device.id-$i", [name: "${getFilteredDeviceDriverName()} #$i", label: "${getFilteredDeviceDisplayName()} $i", isComponent: true])
                 } catch (com.hubitat.app.exception.UnknownDeviceTypeException e) {
                     log.error "'${getChildDriverName()}' driver can't be found! Did you forget to install the child driver?"
                 }
-        // END:  getCreateChildDevicesCommand()
+         
     }
 }
 
@@ -2535,26 +2215,20 @@ def recreateChildDevices() {
     for (i in 1..numSwitchesI) {
         childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$i")}
         if (childDevice) {
-            // The device exists, just update it
             childDevice.setName("${getDeviceInfoByName('name')} #$i")
-            childDevice.setDeviceNetworkId("$device.id-$i")  // This doesn't work right now...
+            childDevice.setDeviceNetworkId("$device.id-$i")
             logging(childDevice.getData(), 10)
-            // We leave the device Label alone, since that might be desired by the user to change
-            //childDevice.setLabel("$device.displayName $i")
-            //.setLabel doesn't seem to work on child devices???
         } else {
-            // No such device, we should create it
-            // BEGIN:getCreateChildDevicesCommand()
+             
             try {
             addChildDevice("${getDeviceInfoByName("namespace")}", "${getChildDriverName()}", "$device.id-$i", [name: "${getFilteredDeviceDriverName()} #$i", label: "${getFilteredDeviceDisplayName()} $i", isComponent: true])
                     } catch (com.hubitat.app.exception.UnknownDeviceTypeException e) {
                         log.error "'${getChildDriverName()}' driver can't be found! Did you forget to install the child driver?"
                     }
-            // END:  getCreateChildDevicesCommand()
+             
         }
     }
     if (numSwitchesI < 4) {
-        // Check if we should delete some devices
         for (i in 1..4) {
             if (i > numSwitchesI) {
                 childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$i")}
@@ -2575,146 +2249,106 @@ def deleteChildren() {
   		deleteChildDevice(child.deviceNetworkId)
     }
 }
+// END:  getHelperFunctions('childDevices')
 
-/**
- *   --END-- CHILD DEVICES METHODS (helpers-childDevices)
- */
-
-/**
- * TASMOTA METHODS (helpers-tasmota)
- *
- * Helper functions included in all Tasmota drivers
- */
-
-// Calls installed() -> installedPreConfigure()
-void installedPreConfigure() {
-    // This is run FIRST in installed()
-    if(isDriver()) {
-        // This is only run ONCE after install
-        
-        logging("Inside installedPreConfigure()", 1)
-        logging("Password: ${decrypt(getDataValue('password'))}", 1)
-        String pass = decrypt(getDataValue('password'))
-        if(pass != null && pass != "" && pass != "[installed]") {
-            device.updateSetting("password", [value: pass, type: "password"])
+// BEGIN:getHelperFunctions('tasmota')
+def parse(asyncResponse, data) {
+    if(asyncResponse != null) {
+        try{
+            logging("tasmota: parse(asyncResponse.getJson() = \"${asyncResponse.getJson()}\")", 1)
+            parseResult(asyncResponse.getJson())
+        } catch(MissingMethodException e1) {
+            log.error e1
+        } catch(e1) {
+            try{
+                logging("parse(asyncResponse.data = \"${asyncResponse.data}\", data = \"${data}\") e1=$e1", 1)
+            } catch(e2) {
+                logging("parse(asyncResponse.data = null, data = \"${data}\") Is the device online? e2=$e2", 1)
+            }
         }
-        device.updateSetting("deviceConfig", [type: "enum", value:getDataValue('deviceConfig')])
-    }
-}
-
-// Call order: installed() -> configure() -> updated() 
-void updated() {
-    logging("updated()", 10)
-    if(isDriver()) {
-        logging("before updateNeededSettings()", 10)
-        updateNeededSettings()
-        logging("after updateNeededSettings()", 10)
-        //sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "lan", hubHardwareId: device.hub.hardwareID])
-        //sendEvent(name:"needUpdate", value: device.currentValue("needUpdate"), displayed:false, isStateChange: false)
-    }
-    try {
-        // Also run initialize(), if it exists...
-        initialize()
-        updatedAdditional()
-    } catch (MissingMethodException e) {
-        // ignore
-    }
-}
-
-void refreshChildren() {
-    logging("refreshChildren()", 1)
-    getAction(getCommandString("Status", "0"), callback="parseConfigureChildDevices")
-}
-
-void refreshChildrenAgain() {
-    logging("refreshChildrenAgain()", 1)
-    refreshChildren()
-}
-
-// Call order: installed() -> configure() -> updated() -> initialize() -> refresh()
-void refresh() {
-	logging("refresh()", 100)
-    def metaConfig = null
-    if(isDriver()) {
-        // Clear all old state variables, but ONLY in a driver!
-        state.clear()
-
-        // Retrieve full status from Tasmota
-        getAction(getCommandString("Status", "0"), callback="parseConfigureChildDevices")
-        getDriverVersion()
-
-        updateDataValue('namespace', getDeviceInfoByName('namespace'))
-
-        //logging("this.binding.variables = ${this.binding.variables}", 1)
-        //logging("settings = ${settings}", 1)
-        //logging("getDefinitionData() = ${getDefinitionData()}", 1)
-        //logging("getPreferences() = ${getPreferences()}", 1)
-        //logging("getSupportedCommands() = ${device.getSupportedCommands()}", 1)
-        //logging("Seeing these commands: ${device.getSupportedCommands()}", 1)
-        
-        /*metaConfig = setCommandsToHide(["on", "hiAgain2", "on"])
-        metaConfig = setStateVariablesToHide(["uptime"], metaConfig=metaConfig)
-        metaConfig = setCurrentStatesToHide(["needUpdate"], metaConfig=metaConfig)
-        metaConfig = setDatasToHide(["namespace"], metaConfig=metaConfig)
-        metaConfig = setPreferencesToHide(["port"], metaConfig=metaConfig)*/
-
-        // This should be the first place we access metaConfig here, so clear and reset...
-        metaConfig = clearThingsToHide()
-        metaConfig = setCommandsToHide([], metaConfig=metaConfig)
-        metaConfig = setStateVariablesToHide(['settings', 'colorMode', 'red', 'green', 'blue', 
-            'mired', 'level', 'saturation', 'mode', 'hue'], metaConfig=metaConfig)
-        
-        metaConfig = setCurrentStatesToHide(['needUpdate'], metaConfig=metaConfig)
-        //metaConfig = setDatasToHide(['preferences', 'namespace', 'appReturn', 'metaConfig'], metaConfig=metaConfig)
-        metaConfig = setDatasToHide(['namespace', 'appReturn', 'password'], metaConfig=metaConfig)
-        metaConfig = setPreferencesToHide([], metaConfig=metaConfig)
-    }
-    try {
-        // In case we have some more to run specific to this driver
-        refreshAdditional(metaConfig)
-    } catch (MissingMethodException e1) {
-        // ignore
-        try {
-            // In case we have some more to run specific to this driver
-            refreshAdditional()
-        } catch (MissingMethodException e2) {
-            // ignore
-        }
+    } else {
+        logging("tasmota: parse(asyncResponse.data = null, data = \"${data}\")", 1)
     }
 }
 
 void reboot() {
-	logging("reboot()", 10)
-    getAction(getCommandString("Restart", "1"))
+	logging("tasmota: reboot()", 1)
+    tasmota_getAction(tasmota_getCommandString("Restart", "1"))
 }
 
-/*
-    // Stress-testing runInstallCommands() 
-    installCommands = []
-    installCommands.add(["rule1", 'ON Var1#Value DO Var4 0; ENDON'])
-    installCommands.add(["rule2", 'ON Var2#Value DO Var4 0; ENDON'])
-    installCommands.add(["rule3", 'ON Var3#Value DO Var4 0; ENDON'])
-    installCommands.add(["var1", "0"])
-    installCommands.add(["var2", "0"])
-    installCommands.add(["var3", "0"])
-    (1..8).each {
-        installCommands.add(["rule1", "+ ON Var1#Value DO Var4 $it; ENDON"])
-        installCommands.add(["rule2", "+ ON Var2#Value DO Var4 $it; ENDON"])
-        installCommands.add(["rule3", "+ ON Var3#Value DO Var4 $it; ENDON"])
-        installCommands.add(["add1", "1"])
-        installCommands.add(["add2", "1"])
-        installCommands.add(["add3", "1"])
+void sendCommand(String command) {
+    logging("tasmota: sendCommand(command=$command)", 1)
+    sendCommand(command, null)
+}
+
+void sendCommand(String command, String argument) {
+    String descriptionText = "${command}${argument != null ? " " + argument : ""}"
+    logging("tasmota: sendCommand($descriptionText)", 1)
+    sendEvent(name: "commandSent", value: command, descriptionText: descriptionText, isStateChange: true)
+    tasmota_getAction(tasmota_getCommandString(command, argument), callback="tasmota_sendCommandParse")
+}
+
+void updatePresence(String presence) {
+}
+
+void tasmota_installedPreConfigure() {
+    logging("tasmota_installedPreConfigure()", 1)
+    logging("Password: ${decrypt(getDataValue('password'))}", 1)
+    String pass = decrypt(getDataValue('password'))
+    if(pass != null && pass != "" && pass != "[installed]") {
+        device.updateSetting("password", [value: pass, type: "password"])
     }
-    installCommands.add(["rule1", '0'])
-    installCommands.add(["rule2", '0'])
-    installCommands.add(["rule3", '0'])
-    logging("refreshAdditional installCommands=$installCommands", 1)
-    runInstallCommands(installCommands)
-*/
-void runInstallCommands(installCommands) {
-    // Runs install commands as defined in helpers-device-configurations
-    // Called from updateNeededSettings() in parent drivers
-    logging("runInstallCommands(installCommands=$installCommands)", 1)
+    device.updateSetting("deviceConfig", [type: "enum", value:getDataValue('deviceConfig')])
+}
+
+void tasmota_updatedDefault() {
+    log.warn("tasmota_updatedDefault() should NOT be used!")
+    logging("tasmota_updatedDefault()", 10)
+    updateNeededSettings()
+    
+    try {
+    } catch (MissingMethodException e) {
+    }
+}
+
+void tasmota_refreshChildren() {
+    logging("tasmota_refreshChildren()", 1)
+    tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
+}
+
+void tasmota_refreshChildrenAgain() {
+    logging("tasmota_refreshChildrenAgain()", 1)
+    tasmota_refreshChildren()
+}
+
+def tasmota_refresh(metaConfig=null) {
+	logging("tasmota_refresh(metaConfig=$metaConfig)", 100)
+    state.clear()
+
+    tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
+    getDriverVersion()
+
+    updateDataValue('namespace', getDeviceInfoByName('namespace'))
+
+    metaConfig = clearThingsToHide()
+    metaConfig = setCommandsToHide([], metaConfig=metaConfig)
+    metaConfig = setStateVariablesToHide(['settings', 'colorMode', 'red', 'green', 'blue', 
+        'mired', 'level', 'saturation', 'mode', 'hue'], metaConfig=metaConfig)
+    
+    metaConfig = setCurrentStatesToHide(['needUpdate'], metaConfig=metaConfig)
+    metaConfig = setDatasToHide(['namespace', 'appReturn', 'password'], metaConfig=metaConfig)
+    metaConfig = setPreferencesToHide([], metaConfig=metaConfig)
+    try {
+    } catch (MissingMethodException e1) {
+        try {
+        } catch (MissingMethodException e2) {
+        }
+    }
+    return metaConfig
+}
+
+void tasmota_runInstallCommands(installCommands) {
+    logging("tasmota_runInstallCommands(installCommands=$installCommands)", 1)
     List backlogs = []
     List rule1 = []
     List rule2 = []
@@ -2731,49 +2365,27 @@ void runInstallCommands(installCommands) {
         }
     }
 
-    // Backlog inter-command delay in milliseconds
-    //getAction(getCommandString("SetOption34", "20"))
     pauseExecution(100)
-    // Maximum 30 commands per backlog call
     while(backlogs.size() > 0) {
-        getAction(getMultiCommandString(backlogs.take(10)))
+        tasmota_getAction(tasmota_getMultiCommandString(backlogs.take(10)))
         backlogs = backlogs.drop(10)
-        // If we run this too fast Tasmota can't keep up, 1000ms is enough when 20ms between commands...
         if(backlogs.size() > 0) pauseExecution(1000)
-        // REALLY don't use pauseExecution often... NOT good for performance...
     }
 
     [rule1, rule2, rule3].each {
-        //logging("rule: $it", 1)
         it.each {rule->
-            // Rules can't run in backlog!
-            getAction(getCommandString(rule["command"], rule["value"]))
-            //logging("cmd=${rule["command"]}, value=${rule["value"]}", 1)
+            tasmota_getAction(tasmota_getCommandString(rule["command"], rule["value"]))
             pauseExecution(100)
-            // REALLY don't use pauseExecution often... NOT good for performance...
         }
     }
-    //getAction(getCommandString("SetOption34", "200"))
 }
 
-void updatePresence(String presence) {
-    // presence - ENUM ["present", "not present"]
-    logging("updatePresence(presence=$presence)", 1)
-    Integer timeout = getTelePeriodValue()
-    timeout += (timeout * 1.1 > 120 ? Math.round(timeout * 1.1) : 120) + 60
-    String descriptionText = "No update received from the Tasmota device for ${timeout} seconds..."
-    if(presence == "present") {    
-        descriptionText = "Device is available"
-        //log.warn "Setting as present with timeout: $timeout"
-        runIn(timeout, "updatePresence", [data: "not present"])
-    } else {
-        log.warn "Presence time-out reached, setting device as 'not present'!"
-    }
-    sendEvent(name: "presence", value: presence, isStateChange: false, descriptionText: descriptionText)
+void tasmota_updatePresence(String presence) {
+    logging("tasmota_updatePresence(presence=$presence) DISABLED", 1)
+     
 }
 
-Map parseDescriptionAsMap(description) {
-    // Used by parse(description) to get descMap
+Map tasmota_parseDescriptionAsMap(description) {
 	description.split(",").inject([:]) { map, param ->
 		def nameAndValue = param.split(":")
         
@@ -2785,24 +2397,23 @@ Map parseDescriptionAsMap(description) {
 	}
 }
 
-private getAction(uri, callback="parse") { 
-    logging("Using getAction for '${uri}'...", 0)
-    httpGetAction(uri, callback=callback)
+private tasmota_getAction(uri, callback="parse") { 
+     
+    tasmota_httpGetAction(uri, callback=callback)
 }
 
-def parse(asyncResponse, data) {
-    // Parse called by default when using asyncHTTP
+void tasmota_parseConfigureChildDevices(asyncResponse, data) {
     if(asyncResponse != null) {
         try{
-            logging("parse(asyncResponse.getJson() = \"${asyncResponse.getJson()}\")", 100)
-            parseResult(asyncResponse.getJson())
+            logging("tasmota_parseConfigureChildDevices(asyncResponse.getJson() 2= \"${asyncResponse.getJson()}\", data = \"${data}\")", 1)
+            tasmota_configureChildDevices(asyncResponse, data)
         } catch(MissingMethodException e1) {
             log.error e1
         } catch(e1) {
             try{
-                logging("parse(asyncResponse.data = \"${asyncResponse.data}\", data = \"${data}\") e1=$e1", 1)
+                logging("tasmota_parseConfigureChildDevices(asyncResponse.data = \"${asyncResponse.data}\", data = \"${data}\") e1=$e1", 1)
             } catch(e2) {
-                logging("parse(asyncResponse.data = null, data = \"${data}\") Is the device online? e2=$e2", 1)
+                logging("tasmota_parseConfigureChildDevices(asyncResponse.data = null, data = \"${data}\") Is the device online? e2=$e2", 1)
             }
         }
     } else {
@@ -2810,186 +2421,10 @@ def parse(asyncResponse, data) {
     }
 }
 
-
-/*
-    Methods related to configureChildDevices()
-
-    configureChildDevices() detects which child devices to create/update and does the creation/updating
-*/
-
-void parseConfigureChildDevices(asyncResponse, data) {
-    if(asyncResponse != null) {
-        try{
-            logging("parse(asyncResponse.getJson() 2= \"${asyncResponse.getJson()}\", data = \"${data}\")", 1)
-            configureChildDevices(asyncResponse, data)
-        } catch(MissingMethodException e1) {
-            log.error e1
-        } catch(e1) {
-            try{
-                logging("parse(asyncResponse.data = \"${asyncResponse.data}\", data = \"${data}\") e1=$e1", 1)
-            } catch(e2) {
-                logging("parse(asyncResponse.data = null, data = \"${data}\") Is the device online? e2=$e2", 1)
-            }
-        }
-    } else {
-        logging("parse(asyncResponse.data = null, data = \"${data}\")", 1)
-    }
-}
-
-boolean containsKeyInSubMap(aMap, key) {
-    boolean hasKey = false
-    aMap.find {
-        try{
-            hasKey = it.value.containsKey(key)
-        } catch(e) {
-
-        }
-        hasKey == true
-    }
-    return hasKey
-}
-
-Integer numOfKeyInSubMap(aMap, String key) {
-    Integer numKeys = 0
-    aMap.each {
-        try{
-            if(it.value.containsKey(key)) numKeys += 1
-        } catch(e) {
-            // Do nothing
-        }
-    }
-    return numKeys
-}
-
-Integer numOfKeysIsMap(aMap) {
-    Integer numKeys = 0
-    aMap.each {
-        if(it.value instanceof java.util.Map) numKeys += 1
-    }
-    return numKeys
-}
-
-TreeMap getKeysWithMapAndId(aMap) {
-    def foundMaps = [:] as TreeMap
-    aMap.each {
-        if(it.value instanceof java.util.Map) {
-            foundMaps[it.key] = it.value
-        }
-    }
-    return foundMaps
-}
-
-void configureChildDevices(asyncResponse, data) {
-    // This detects which child devices to create/update and does the creation/updating
+void tasmota_configureChildDevices(asyncResponse, data) {
     def statusMap = asyncResponse.getJson()
-    logging("configureChildDevices() statusMap=$statusMap", 1)
-    // Use statusMap to determine which Child Devices we should create
+    logging("tasmota_configureChildDevices() statusMap=$statusMap", 1)
 
-    // The built-in Generic Components are:
-    //
-    // Acceleration Sensor  - ID: 189
-    // Button Controller    - ID: 1029
-    // Central Scene Dimmer - ID: 912
-    // Central Scene Switch - ID: 913
-    // Contact Sensor       - ID: 192
-    // Contact/Switch       - ID: 199
-    // CT                   - ID: 198
-    // Dimmer               - ID: 187
-    // Metering Switch      - ID: 188
-    // Motion Sensor        - ID: 197
-    // RGB                  - ID: 195
-    // RGBW                 - ID: 191
-    // Smoke Detector       - ID: 196
-    // Switch               - ID: 190
-    // Temperature Sensor   - ID: 200
-    // Water Sensor         - ID: 194
-    
-
-    // {"StatusSTS":{"Time":"2020-01-26T01:13:27","Uptime":"15T02:59:27","UptimeSec":1306767,
-    // "Heap":26,"SleepMode":"Dynamic","Sleep":50,"LoadAvg":19,"MqttCount":0,"POWER1":"OFF",
-    // "POWER2":"OFF","POWER3":"OFF","POWER4":"OFF","Wifi":{"AP":1,"SSId":"network",
-    // "BSSId":"4A:11:11:12:CF:11","Channel":1,"RSSI":62,"LinkCount":37,"Downtime":"0T00:05:48"}}}
-
-    // With a dimmer:
-    // {"StatusSTS":{"Time":"2020-01-26T11:58:10","Uptime":"0T00:01:20","UptimeSec":80,"Heap":26,
-    // "SleepMode":"Dynamic","Sleep":50,"LoadAvg":19,"MqttCount":0,"POWER":"OFF","Dimmer":0,
-    // "Fade":"OFF","Speed":1,"LedTable":"ON","Wifi":{"AP":1,"SSId":"network",
-    // "BSSId":"4A:11:11:12:D9:11","Channel":1,"RSSI":100,"LinkCount":1,"Downtime":"0T00:00:06"}}}
-
-    // With an RGB+CW+WW light:
-    // {"StatusSTS":{"Time":"2020-01-26T12:07:57","Uptime":"0T00:06:58","UptimeSec":418,"Heap":27,
-    // "SleepMode":"Dynamic","Sleep":10,"LoadAvg":99,"MqttCount":0,"POWER":"ON","Dimmer":100,
-    // "Color":"000000FF62","HSBColor":"0,0,0","Channel":[0,0,0,100,38],"CT":250,"Scheme":0,
-    // "Fade":"ON","Speed":10,"LedTable":"ON","Wifi":{"AP":1,"SSId":"network",
-    // "BSSId":"4A:11:11:12:D9:11","Channel":1,"RSSI":96,"LinkCount":1,"Downtime":"0T00:00:06"}}}
-    
-
-    // With an RGB+W light:
-    // {"StatusSTS":{"Time":"2020-01-26T12:11:56","Uptime":"0T00:00:26","UptimeSec":26,"Heap":27,
-    // "SleepMode":"Dynamic","Sleep":10,"LoadAvg":99,"MqttCount":0,"POWER":"ON","Dimmer":100,
-    // "Color":"000000FF","HSBColor":"0,0,0","Channel":[0,0,0,100],"Scheme":0,"Fade":"ON",
-    // "Speed":10,"LedTable":"ON","Wifi":{"AP":1,"SSId":"network","BSSId":"4A:11:11:12:D9:11",
-    // "Channel":1,"RSSI":90,"LinkCount":1,"Downtime":"0T00:00:06"}}}
-
-    // With an RGB light:
-    // {"StatusSTS":{"Time":"2020-01-26T12:14:15","Uptime":"0T00:00:19","UptimeSec":19,"Heap":27,
-    // "SleepMode":"Dynamic","Sleep":10,"LoadAvg":99,"MqttCount":0,"POWER":"ON","Dimmer":100,
-    // "Color":"FFFFFF","HSBColor":"0,0,100","Channel":[100,100,100],"Scheme":0,"Fade":"ON",
-    // "Speed":10,"LedTable":"ON","Wifi":{"AP":1,"SSId":"network","BSSId":"4A:11:11:12:D9:11",
-    // "Channel":1,"RSSI":98,"LinkCount":1,"Downtime":"0T00:00:06"}}}
-
-    // With CW+WW ("CT" is available):
-    // {"StatusSTS":{"Time":"2020-01-26T12:16:48","Uptime":"0T00:00:17","UptimeSec":17,"Heap":28,
-    // "SleepMode":"Dynamic","Sleep":10,"LoadAvg":99,"MqttCount":0,"POWER":"ON","Dimmer":100,
-    // "Color":"FF62","HSBColor":"0,0,0","Channel":[100,38],"CT":250,"Fade":"ON","Speed":10,
-    // "LedTable":"ON","Wifi":{"AP":1,"SSId":"network","BSSId":"4A:11:11:12:D9:11",
-    // "Channel":1,"RSSI":94,"LinkCount":1,"Downtime":"0T00:00:06"}}}
-
-    // With CW or WW (PWM1 configured on the correct pin), just the same as a normal dimmer...
-    // {"StatusSTS":{"Time":"2020-01-26T12:19:51","Uptime":"0T00:01:15","UptimeSec":75,"Heap":27,
-    // "SleepMode":"Dynamic","Sleep":10,"LoadAvg":99,"MqttCount":0,"POWER":"ON","Dimmer":71,
-    // "Fade":"ON","Speed":10,"LedTable":"ON","Wifi":{"AP":1,"SSId":"network",
-    // "BSSId":"4A:11:11:12:D9:11","Channel":1,"RSSI":88,"LinkCount":1,"Downtime":"0T00:00:25"}}}
-
-    // Addressable RGB light (has the attribute "Width")
-    // {"StatusSNS":{"Time":"2020-01-26T12:57:30","SR04":{"Distance":8.579}}}
-    // {"StatusSTS":{"Time":"2020-01-26T12:57:30","Uptime":"0T00:02:14","UptimeSec":134,"Heap":21,
-    // "SleepMode":"Dynamic","Sleep":10,"LoadAvg":113,"MqttCount":0,"POWER1":"ON","POWER2":"ON",
-    // "Dimmer":100,"Color":"00FF00","HSBColor":"120,100,100","Channel":[0,100,0],"Scheme":13,
-    // "Width":2,"Fade":"OFF","Speed":1,"LedTable":"ON","Wifi":{"AP":1,"SSId":"network",
-    // "BSSId":"4A:11:11:12:D9:11","Channel":1,"RSSI":100,"Signal":-40,"LinkCount":1,
-    // "Downtime":"0T00:00:09"}}}
-
-    // {"StatusSNS":{"Time":"2020-01-26T01:24:16","BMP280":{"Temperature":23.710,"Pressure":1017.6},
-    // "PressureUnit":"hPa","TempUnit":"C"}}
-
-    // Multiple temperature sensors:
-    // {"Time":"2020-01-26T17:45:30","DS18B20-1":{"Id":"000008BD38BF","Temperature":26.1},
-    // "DS18B20-2":{"Id":"000008BD9714","Temperature":25.1},"DS18B20-3":{"Id":"000008C02C3A",
-    // "Temperature":25.3},"TempUnit":"C"}
-    
-    // For DS18B20, us ID to distinguish them? Then you can't replace them...
-    // For AM2301 the GPIO used is appended.
-    // {"StatusSNS":{"Time":"2020-01-26T20:54:10","DS18B20-1":{"Id":"000008BD38BF","Temperature":25.8},
-    // "DS18B20-2":{"Id":"000008BD9714","Temperature":24.7},"DS18B20-3":{"Id":"000008C02C3A","Temperature":24.9},
-    // "AM2301-12":{"Temperature":25.1,"Humidity":66.4},"AM2301-14":{"Temperature":null,"Humidity":null},"TempUnit":"C"}}
-
-    // D5 = GPIO14
-    // D6 = GPIO12
-    // D7 = GPIO13
-
-    // Distance Sensor
-    // {"StatusSNS":{"Time":"2020-01-26T13:52:19","SR04":{"Distance":11.667}}}
-
-    // {"NAME":"ControlRGBWWCW","GPIO":[17,0,0,0,0,40,0,0,38,39,37,41,0],"FLAG":0,"BASE":18}
-
-    // result: [Time:2020-01-30T11:30:43, DS18B20-1:[Id:000008BD38BF, Temperature:25.3], DS18B20-2:[Id:000008BD9714, Temperature:24.3], DS18B20-3:[Id:000008C02C3A, Temperature:24.4], AM2301-12:[Temperature:24.2, Humidity:68.1], AM2301-14:[Temperature:24.0, Humidity:68.1], TempUnit:C]
-    // result: [Time:2020-01-30T11:31:12, DS18B20-1:[Id:000008BD38BF, Temperature:25.3], DS18B20-2:[Id:000008BD9714, Temperature:24.3], DS18B20-3:[Id:000008C02C3A, Temperature:24.4], AM2301-12:[Temperature:24.2, Humidity:68.0], AM2301-14:[Temperature:24.0, Humidity:68.1], TempUnit:C]
-    // [hasEnergy:false, numTemperature:5, numHumidity:2, numPressure:0, numDistance:0, sensorMap:[AM2301-12:[Temperature:24.2, Humidity:68.1], AM2301-14:[Temperature:24.0, Humidity:68.1], DS18B20-1:[Id:000008BD38BF, Temperature:25.3], DS18B20-2:[Id:000008BD9714, Temperature:24.3], DS18B20-3:[Id:000008C02C3A, Temperature:24.4]], numSwitch:0, isDimmer:false, isAddressable:false, isRGB:false, hasCT:false]
-
-    // SENSOR = {"Time":"2020-01-30T19:15:08","SR04":{"Distance":73.702}}
-
-    // Switch or Metering Switch are the two most likely ones
     def deviceInfo = [:]
     deviceInfo["hasEnergy"] = false
     deviceInfo["numTemperature"] = 0
@@ -3001,14 +2436,13 @@ void configureChildDevices(asyncResponse, data) {
     if(statusMap.containsKey("StatusSNS")) {
         sns = statusMap["StatusSNS"]
         deviceInfo["hasEnergy"] = sns.containsKey("ENERGY")
-        deviceInfo["sensorMap"] = getKeysWithMapAndId(sns)
-        // Energy is the only one that doesn't belong... Just remove it...
+        deviceInfo["sensorMap"] = map_getKeysWithMapAndId(sns)
         deviceInfo["sensorMap"].remove("ENERGY")
         deviceInfo["numSensorGroups"] = deviceInfo["sensorMap"].size()
-        deviceInfo["numTemperature"] = numOfKeyInSubMap(sns, "Temperature")
-        deviceInfo["numHumidity"] = numOfKeyInSubMap(sns, "Humidity")
-        deviceInfo["numPressure"] = numOfKeyInSubMap(sns, "Pressure")
-        deviceInfo["numDistance"] = numOfKeyInSubMap(sns, "Distance")
+        deviceInfo["numTemperature"] = map_numOfKeyInSubMap(sns, "Temperature")
+        deviceInfo["numHumidity"] = map_numOfKeyInSubMap(sns, "Humidity")
+        deviceInfo["numPressure"] = map_numOfKeyInSubMap(sns, "Pressure")
+        deviceInfo["numDistance"] = map_numOfKeyInSubMap(sns, "Distance")
     }
 
     deviceInfo["numSwitch"] = 0
@@ -3026,7 +2460,6 @@ void configureChildDevices(asyncResponse, data) {
         deviceInfo["hasFanControl"] = sts.containsKey("FanSpeed")
 
         if(sts["POWER"] != null) {
-            // This only exist if there is ONLY one switch/bulb
             deviceInfo["numSwitch"] = 1
         } else {
             i = 1
@@ -3038,22 +2471,12 @@ void configureChildDevices(asyncResponse, data) {
     }
     logging("Device info found: $deviceInfo", 100)
 
-    // Create the devices, if needed
-
-    // Switches
     def driverName = ["Tasmota - Universal Plug/Outlet (Child)", "Generic Component Switch"]
     def namespace = "tasmota"
     if(deviceInfo["numSwitch"] > 0) {
-        /*if(deviceInfo["numSwitch"] > 1 && (
-            deviceInfo["isDimmer"] == true || deviceInfo["isAddressable"] == true || 
-            deviceInfo["isRGB"] == true || deviceInfo["hasCT"] == true)) {
-                // This is supported now ;)
-                // log.warn "There's more than one switch and the device is either dimmable, addressable, RGB or has CT capability. This is not fully supported yet, please report which device and settings you're using to the developer so that a solution can be found."
-
-        }*/
+         
         if(deviceInfo["hasEnergy"]  == true && (deviceInfo["isAddressable"] == false && deviceInfo["isRGB"] == false && deviceInfo["hasCT"] == false)) {
             if(deviceInfo["isDimmer"]) {
-                // TODO: Make a Component Dimmer with Metering
                 driverName = ["Tasmota - Universal Metering Dimmer (Child)", "Generic Component Dimmer"]
             } else {
                 driverName = ["Tasmota - Universal Metering Plug/Outlet (Child)", 
@@ -3078,48 +2501,41 @@ void configureChildDevices(asyncResponse, data) {
             }
         }
         
-        
         for(i in 1..deviceInfo["numSwitch"]) {
             namespace = "tasmota"
             def childId = "POWER$i"
-            def childName = getChildDeviceNameRoot(keepType=true) + " ${getMinimizedDriverName(driverName[0])} ($childId)"
-            def childLabel = "${getMinimizedDriverName(device.getLabel())} ($i)"
+            def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+            def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($i)"
             logging("createChildDevice: POWER$i", 1)
-            createChildDevice(namespace, driverName, childId, childName, childLabel)
+            tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
             
-            // Once the first switch is created we only support one type... At least for now...
             driverName = ["Tasmota - Universal Plug/Outlet (Child)", "Generic Component Switch"]
         }
     }
     
-    // Fan Control
     if(deviceInfo["hasFanControl"] == true) {
-        logging("hasFanControl", 0)
+         
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Fan Control (Child)"]
         def childId = "FAN"
-        def childName = getChildDeviceNameRoot(keepType=true) + " ${getMinimizedDriverName(driverName[0])} ($childId)"
-        def childLabel = "${getMinimizedDriverName(device.getLabel())} ($childId)"
-        createChildDevice(namespace, driverName, childId, childName, childLabel)
+        def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
     }
 
-    // Sensors
-    logging("Available in sensorMap: ${deviceInfo["sensorMap"]}, size:${deviceInfo["numSensorGroups"]}", 0)
     deviceInfo["sensorMap"].each {
-        logging("sensorMap: $it.key", 0)
+         
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Multi Sensor (Child)"]
         def childId = "${it.key}"
-        def childName = getChildDeviceNameRoot(keepType=true) + " ${getMinimizedDriverName(driverName[0])} ($childId)"
-        def childLabel = "${getMinimizedDriverName(device.getLabel())} ($childId)"
-        createChildDevice(namespace, driverName, childId, childName, childLabel)
+        def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
     }
-    //logging("After sensor creation...", 0)
-    // Finally let the default parser have the data as well...
     parseResult(statusMap)
 }
 
-String getChildDeviceNameRoot(boolean keepType=false) {
+String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
     String childDeviceNameRoot = getDeviceInfoByName('name')
     if(childDeviceNameRoot.toLowerCase().endsWith(' (parent)')) {
         childDeviceNameRoot = childDeviceNameRoot.substring(0, childDeviceNameRoot.length()-9)
@@ -3132,9 +2548,8 @@ String getChildDeviceNameRoot(boolean keepType=false) {
     return childDeviceNameRoot
 }
 
-String getMinimizedDriverName(String driverName) {
-    // Remove parts we don't need from the string 
-    logging("getMinimizedDriverName(driverName=$driverName)", 1)
+String tasmota_getMinimizedDriverName(String driverName) {
+    logging("tasmota_getMinimizedDriverName(driverName=$driverName)", 1)
     if(driverName.toLowerCase().endsWith(' (child)')) {
         driverName = driverName.substring(0, driverName.length()-8)
     } else if(driverName.toLowerCase().endsWith(' child')) {
@@ -3145,11 +2560,9 @@ String getMinimizedDriverName(String driverName) {
     } else if(driverName.toLowerCase().endsWith(' parent')) {
         driverName = driverName.substring(0, driverName.length()-7)
     }
-    // Just replace all Occurrances of Parent
     driverName = driverName.replaceAll("(?i) \\(parent\\)", "").replaceAll("(?i) parent", "").replaceAll("(?i)parent", "")
     logging("driverName: $driverName", 1)
 
-    // Remove IP as well
     driverName = driverName.replaceFirst("\\(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\)", "").replaceFirst("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "");
 
     if(driverName.toLowerCase().startsWith('tasmota - ')) {
@@ -3162,19 +2575,18 @@ String getMinimizedDriverName(String driverName) {
     driverName = driverName.trim()
     if(driverName == '') driverName = "Device"
     
-    logging("getMinimizedDriverName(driverName=$driverName) end", 1)
+    logging("tasmota_getMinimizedDriverName(driverName=$driverName) end", 1)
     return driverName
 }
 
-def getChildDeviceByActionType(String actionType) {
+def tasmota_getChildDeviceByActionType(String actionType) {
     return childDevices.find{it.deviceNetworkId.endsWith("-$actionType")}
 }
 
-private void createChildDevice(String namespace, List driverName, String childId, String childName, String childLabel) {
-    logging("createChildDevice(namespace=$namespace, driverName=$driverName, childId=$childId, childName=$childName, childLabel=$childLabel)", 1)
+private void tasmota_createChildDevice(String namespace, List driverName, String childId, String childName, String childLabel) {
+    logging("tasmota_createChildDevice(namespace=$namespace, driverName=$driverName, childId=$childId, childName=$childName, childLabel=$childLabel)", 1)
     def childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$childId")}
     if(!childDevice && childId.toLowerCase().startsWith("power")) {
-        // If this driver was used to replace an "old" parent driver, rename the child Network ID
         logging("Looking for $childId, ending in ${childId.substring(5)}", 1)
         childDevice = childDevices.find{it.deviceNetworkId.endsWith("-${childId.substring(5)}")}
         if(childDevice) {
@@ -3183,13 +2595,10 @@ private void createChildDevice(String namespace, List driverName, String childId
         }
     }
     if (childDevice) {
-        // The device exists, just update it
         childDevice.setName(childName)
-        //Setting isComponent to false doesn't change how the device is treated...
-        //childDevice.updateDataValue('isComponent', "false")
         logging("childDevice.getData(): ${childDevice.getData()}", 1)
     } else {
-        logging("The child device doesn't exist, create it...", 0)
+         
         Integer s = childName.size()
         for(i in 0..s) {
             def currentNamespace = namespace
@@ -3210,78 +2619,64 @@ private void createChildDevice(String namespace, List driverName, String childId
     }
 }
 
-/*
-    Tasmota IP Settings and Wifi status
-*/
-private String setDeviceNetworkId(String macOrIP, boolean isIP = false) {
+private String tasmota_determineDeviceNetworkId(String macOrIP, boolean isIP = false) {
     String myDNI
     if (isIP == false) {
         myDNI = macOrIP
     } else {
-        logging("About to convert ${macOrIP}...", 0)
-        myDNI = convertIPtoHex(macOrIP)
+         
+        myDNI = tasmota_convertIPtoHex(macOrIP)
     }
-    logging("Device Network Id should be set to ${myDNI} from ${macOrIP}", 0)
+     
     return myDNI
 }
 
-void prepareDNI() {
-    // Called from updateNeededSettings() and parse(description)
+void tasmota_prepareDNI() {
     if (useIPAsID) {
-        def hexIPAddress = setDeviceNetworkId(ipAddress, true)
+        def hexIPAddress = tasmota_determineDeviceNetworkId(ipAddress, true)
         if(hexIPAddress != null && state.dni != hexIPAddress) {
             state.dni = hexIPAddress
-            updateDNI()
+            tasmota_updateDNI()
         }
     } else if (state.mac != null && state.dni != state.mac) { 
-        state.dni = setDeviceNetworkId(state.mac)
-        updateDNI()
+        state.dni = tasmota_determineDeviceNetworkId(state.mac)
+        tasmota_updateDNI()
     }
 }
 
-private void updateDNI() {
-    // Called from:
-    // prepareDNI()
-    // httpGetAction(uri, callback="parse")
-    // postAction(uri, data)
+private void tasmota_updateDNI() {
     if (state.dni != null && state.dni != "" && device.deviceNetworkId != state.dni) {
-        logging("Device Network Id will be set to ${state.dni} from ${device.deviceNetworkId}", 0)
+         
         device.deviceNetworkId = state.dni
     }
 }
 
-Integer getTelePeriodValue() {
-    // Naming this getTelePeriod() will cause Error 500 and other unexpected behavior when
-    // telePeriod isn't set to anything...
+Integer tasmota_getTelePeriodValue() {
     return (telePeriod != null && telePeriod.isInteger() ? telePeriod.toInteger() : 300)
 }
 
-private String getHostAddress() {
+private String tasmota_getHostAddress() {
     Integer port = 80
     if (getDeviceDataByName("port") != null) {
         port = getDeviceDataByName("port").toInteger()
     }
     if (override == true && ipAddress != null){
-        // Preferences
         return "${ipAddress}:$port"
     } else if(device.currentValue("ip") != null) {
-        // Current States
         return "${device.currentValue("ip")}:$port"
     } else if(getDeviceDataByName("ip") != null) {
-        // Data Section
         return "${getDeviceDataByName("ip")}:$port"
     } else {
-        // There really is no fallback here, if we get here, something went WRONG, probably with the DB...
-        log.warn "getHostAddress() failed and ran out of fallbacks! If this happens, contact the developer, this is an \"impossible\" scenario!"
+        log.warn "tasmota_getHostAddress() failed and ran out of fallbacks! If this happens, contact the developer, this is an \"impossible\" scenario!"
 	    return "127.0.0.1:$port"
     }
 }
 
-private String convertIPtoHex(ipAddress) {
+private String tasmota_convertIPtoHex(ipAddress) {
     String hex = null
     if(ipAddress != null) {
         hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02X', it.toInteger() ) }.join()
-        logging("Got this IP in hex: ${hex}", 0)
+         
     } else {
         hex = null
         if (useIPAsID) {
@@ -3291,21 +2686,21 @@ private String convertIPtoHex(ipAddress) {
     return hex
 }
 
-private String getFirstTwoIPBytes(ipAddress) {
+private String tasmota_getFirstTwoIPBytes(ipAddress) {
     String ipStart = null
     if(ipAddress != null) {
         ipStart = ipAddress.tokenize( '.' ).take(2).join('.') + '.'
-        logging("Got these IP bytes: ${ipStart}", 0)
+         
     } else {
         ipStart = ''
     }
     return ipStart
 }
 
-void sync(String ip, Integer port = null) {
+void tasmota_sync(String ip, Integer port = null) {
     String existingIp = getDataValue("ip")
     String existingPort = getDataValue("port")
-    logging("Running sync()", 1)
+    logging("Running tasmota_sync()", 1)
     if (ip != null && ip != existingIp) {
         updateDataValue("ip", ip)
         sendEvent(name: 'ip', value: ip, isStateChange: false)
@@ -3318,50 +2713,32 @@ void sync(String ip, Integer port = null) {
     }
 }
 
-Integer dBmToQuality(Integer dBm) {
-    // In Tasmota RSSI is actually % already, so just returning the received value here
-    // Keeping this around if this behavior changes
-    /*Integer quality = 0
-    if(dBm > 0) dBm = dBm * -1
-    if(dBm <= -100) {
-        quality = 0
-    } else if(dBm >= -50) {
-        quality = 100
-    } else {
-        quality = 2 * (dBm + 100)
-    }
-    logging("DBM: $dBm (${quality}%)", 0)*/
+Integer tasmota_dBmToQuality(Integer dBm) {
+     
     return dBm
 }
 
-/*
-    HTTP Tasmota API Related
-*/
-private void httpGetAction(String uri, callback="parse") { 
-  updateDNI()
+private void tasmota_httpGetAction(String uri, callback="parse") { 
+  tasmota_updateDNI()
   
-  def headers = getHeader()
-  logging("Using httpGetAction for 'http://${getHostAddress()}$uri'...", 100)
+  def headers = tasmota_getHeader()
+  logging("tasmota_httpGetAction for 'http://${tasmota_getHostAddress()}$uri'...", 1)
   try {
-    /*hubAction = new hubitat.device.HubAction(
-        method: "GET",
-        path: uri,
-        headers: headers
-    )*/
+     
     asynchttpGet(
         callback,
-        [uri: "http://${getHostAddress()}$uri",
+        [uri: "http://${tasmota_getHostAddress()}$uri",
         headers: headers]
     )
   } catch (e) {
-    log.error "Error in httpGetAction(uri): $e ('$uri')"
+    log.error "Error in tasmota_httpGetAction(uri): $e ('$uri')"
   }
 }
 
-private postAction(String uri, String data) { 
-  updateDNI()
+private tasmota_postAction(String uri, String data) { 
+  tasmota_updateDNI()
 
-  def headers = getHeader()
+  def headers = tasmota_getHeader()
 
   def hubAction = null
   try {
@@ -3372,59 +2749,47 @@ private postAction(String uri, String data) {
     body: data
   )
   } catch (e) {
-    log.error "Error in postAction(uri, data): $e ('$uri', '$data')"
+    log.error "Error in tasmota_postAction(uri, data): $e ('$uri', '$data')"
   }
   return hubAction    
 }
 
-void sendCommand(String command) {
-    sendCommand(command, null)
-}
-
-void sendCommand(String command, String argument) {
-    String descriptionText = "${command}${argument != null ? " " + argument : ""}"
-    logging("sendCommand: $descriptionText", 100)
-    sendEvent(name: "commandSent", value: command, descriptionText: descriptionText, isStateChange: true)
-    getAction(getCommandString(command, argument), callback="sendCommandParse")
-}
-
-def sendCommandParse(asyncResponse, data) {
-    // Parse called using sendCommand
+def tasmota_sendCommandParse(asyncResponse, data) {
     if(asyncResponse != null) {
         try{
             def r = asyncResponse.getJson()
-            logging("sendCommandParse(asyncResponse.getJson() = \"${r}\")", 100)
+            logging("tasmota_sendCommandParse(asyncResponse.getJson() = \"${r}\")", 1)
             sendEvent(name: "commandResult", value: asyncResponse.getData(), isStateChange: true)
             parseResult(r)
         } catch(MissingMethodException e1) {
             log.error e1
         } catch(e1) {
             try{
-                logging("parse(asyncResponse.data = \"${asyncResponse.data}\", data = \"${data}\") e1=$e1", 1)
+                logging("tasmota_sendCommandParse(asyncResponse.data = \"${asyncResponse.data}\", data = \"${data}\") e1=$e1", 1)
             } catch(e2) {
-                logging("parse(asyncResponse.data = null, data = \"${data}\") Is the device online? e2=$e2", 1)
+                logging("tasmota_sendCommandParse(asyncResponse.data = null, data = \"${data}\") Is the device online? e2=$e2", 1)
             }
         }
     } else {
-        logging("parse(asyncResponse.data = null, data = \"${data}\")", 1)
+        logging("tasmota_sendCommandParse(asyncResponse.data = null, data = \"${data}\")", 1)
     }
 }
 
-String getCommandString(String command, String value) {
+String tasmota_getCommandString(String command, String value) {
     def uri = "/cm?"
     if (password != null) {
-        uri += "user=admin&password=${urlEscape(password)}&"
+        uri += "user=admin&password=${tasmota_urlEscape(password)}&"
     }
 	if (value != null && value != "") {
-		uri += "cmnd=${urlEscape(command)}%20${urlEscape(value)}"
+		uri += "cmnd=${tasmota_urlEscape(command)}%20${tasmota_urlEscape(value)}"
 	}
 	else {
-		uri += "cmnd=${urlEscape(command)}"
+		uri += "cmnd=${tasmota_urlEscape(command)}"
 	}
     return uri
 }
 
-String getMultiCommandString(commands) {
+String tasmota_getMultiCommandString(commands) {
     String uri = "/cm?"
     if (password != null) {
         uri += "user=admin&password=${password}&"
@@ -3435,80 +2800,112 @@ String getMultiCommandString(commands) {
     }
     commands.each {cmd->
         if(cmd.containsKey("value")) {
-          uri += "${urlEscape(cmd['command'])}%20${urlEscape(cmd['value'])}%3B%20"
+          uri += "${tasmota_urlEscape(cmd['command'])}%20${tasmota_urlEscape(cmd['value'])}%3B%20"
         } else {
-          uri += "${urlEscape(cmd['command'])}%3B%20"
+          uri += "${tasmota_urlEscape(cmd['command'])}%3B%20"
         }
     }
     return uri
 }
 
-private String urlEscape(String url) {
-    //logging("urlEscape(url = $url)", 1)
+private String tasmota_urlEscape(String url) {
     return(URLEncoder.encode(url).replace("+", "%20").replace("#", "%23"))
 }
 
-private String convertPortToHex(Integer port) {
+private String tasmota_convertPortToHex(Integer port) {
 	String hexport = port.toString().format( '%04X', port.toInteger() )
     return hexport
 }
 
-private encodeCredentials(String username, String password) {
+private tasmota_encodeCredentials(String username, String password) {
 	String userpassascii = "${username}:${password}"
     String userpass = "Basic " + userpassascii.bytes.encodeBase64().toString()
     return userpass
 }
 
-private Map getHeader(String userpass = null) {
+private Map tasmota_getHeader(String userpass = null) {
     Map headers = [:]
-    headers.put("Host", getHostAddress())
+    headers.put("Host", tasmota_getHostAddress())
     headers.put("Content-Type", "application/x-www-form-urlencoded")
     if (userpass != null)
        headers.put("Authorization", userpass)
     return headers
 }
+// END:  getHelperFunctions('tasmota')
 
-/**
- * --END-- TASMOTA METHODS (helpers-tasmota)
- */
+// BEGIN:getHelperFunctions('map')
+boolean map_containsKeyInSubMap(aMap, key) {
+    boolean hasKey = false
+    aMap.find {
+        try{
+            hasKey = it.value.containsKey(key)
+        } catch(e) {
 
-/**
- * RGBW METHODS (helpers-rgbw)
- *
- * Helper functions included in all drivers using RGB, RGBW or Dimmers
- * These methods are NOT specific to Tasmota
- */
-void setColor(value) {
-    logging("setColor('${value}')", 10)
+        }
+        hasKey == true
+    }
+    return hasKey
+}
+
+Integer map_numOfKeyInSubMap(aMap, String key) {
+    Integer numKeys = 0
+    aMap.each {
+        try{
+            if(it.value.containsKey(key)) numKeys += 1
+        } catch(e) {
+        }
+    }
+    return numKeys
+}
+
+Integer map_numOfKeysIsMap(aMap) {
+    Integer numKeys = 0
+    aMap.each {
+        if(it.value instanceof java.util.Map) numKeys += 1
+    }
+    return numKeys
+}
+
+TreeMap map_getKeysWithMapAndId(aMap) {
+    def foundMaps = [:] as TreeMap
+    aMap.each {
+        if(it.value instanceof java.util.Map) {
+            foundMaps[it.key] = it.value
+        }
+    }
+    return foundMaps
+}
+// END:  getHelperFunctions('map')
+
+// BEGIN:getHelperFunctions('rgbw')
+void rgbw_setColor(value) {
+    logging("rgbw_setColor('${value}')", 10)
 	if (value != null && value instanceof Map) {
         def h = value.containsKey("hue") ? value.hue : 0
         def s = value.containsKey("saturation") ? value.saturation : 0
         def b = value.containsKey("level") ? value.level : 0
-        setHSB(h, s, b)
+        tasmota_rgbw_setHSB(h, s, b)
     } else {
-        logging("setColor('${value}') called with an INVALID argument!", 10)
+        logging("rgbw_setColor('${value}') called with an INVALID argument!", 10)
     }
 }
 
-void setHue(h) {
-    logging("setHue('${h}')", 10)
-    setHSB(h, null, null)
+void rgbw_setHue(h) {
+    logging("rgbw_setHue('${h}')", 10)
+    tasmota_rgbw_setHSB(h, null, null)
 }
 
-void setSaturation(s) {
-    logging("setSaturation('${s}')", 10)
-    setHSB(null, s, null)
+void rgbw_setSaturation(s) {
+    logging("rgbw_setSaturation('${s}')", 10)
+    tasmota_rgbw_setHSB(null, s, null)
 }
 
-void setLevel(b) {
-    logging("setLevel('${b}')", 10)
-    //return(setHSB(null, null, b))
-    setLevel(b, 0)
+void rgbw_setLevel(b) {
+    logging("rgbw_setLevel('${b}')", 10)
+    rgbw_setLevel(b, 0)
 }
 
-def rgbToHSB(red, green, blue) {
-    // All credits for this function goes to Joe Julian (joejulian):
-    // https://gist.github.com/joejulian/970fcd5ecf3b792bc78a6d6ebc59a55f
+def rgbw_rgbToHSB(red, green, blue) {
     BigDecimal r = red / 255f
     BigDecimal g = green / 255f
     BigDecimal b = blue / 255f
@@ -3522,7 +2919,6 @@ def rgbToHSB(red, green, blue) {
     } else if (max == r) {
         def h1 = (g - b) / delta / 6
         def h2 = h1.asType(Integer)
-        //logging("h1 = $h1, h2 = $h2, (1 + h1 - h2) = ${(1 + h1 - h2)}", 1)
         if (h1 < 0) {
             hue = Math.round(360 * (1 + h1 - h2))
         } else {
@@ -3537,7 +2933,6 @@ def rgbToHSB(red, green, blue) {
         logging("rgbToHSB: blue hue=${hue}", 1)
     }
     
-    // Convert hue to Hubitat value:
     hue = Math.round((hue) / 3.6)
 
     if (max == 0) {
@@ -3555,7 +2950,7 @@ def rgbToHSB(red, green, blue) {
     ]
 }
 
-String getColorNameFromTemperature(Integer colorTemperature){
+String rgbw_getColorNameFromTemperature(Integer colorTemperature){
     if (!colorTemperature) return "Undefined"
     String colorName = "Undefined"
     if (colorTemperature <= 2000) colorName = "Sodium"
@@ -3573,7 +2968,7 @@ String getColorNameFromTemperature(Integer colorTemperature){
     return colorName
 }
 
-String getColorNameFromHueSaturation(Integer hue, Integer saturation=null){
+String rgbw_getColorNameFromHueSaturation(Integer hue, Integer saturation=null){
     if (!hue) hue = 0
     String colorName = "Undefined"
     switch (hue * 3.6 as Integer){
@@ -3608,62 +3003,47 @@ String getColorNameFromHueSaturation(Integer hue, Integer saturation=null){
     return colorName
 }
 
-// Fixed colours
-void white() {
-    logging("white()", 10)
-    // This is separated to be able to reuse functions between platforms
-    whiteForPlatform()
+void rgbw_white() {
+    logging("rgbw_white()", 10)
+    tasmota_rgbw_whiteForPlatform()
 }
 
-void red() {
-    logging("red()", 10)
-    setRGB(255, 0, 0)
+void rgbw_red() {
+    logging("rgbw_red()", 10)
+    tasmota_rgbw_setRGB(255, 0, 0)
 }
 
-void green() {
-    logging("green()", 10)
-    setRGB(0, 255, 0)
+void rgbw_green() {
+    logging("rgbw_green()", 10)
+    tasmota_rgbw_setRGB(0, 255, 0)
 }
 
-void blue() {
-    logging("blue()", 10)
-    setRGB(0, 0, 255)
+void rgbw_blue() {
+    logging("rgbw_blue()", 10)
+    tasmota_rgbw_setRGB(0, 0, 255)
 }
 
-void yellow() {
-    logging("yellow()", 10)
-    setRGB(255, 255, 0)
+void rgbw_yellow() {
+    logging("rgbw_yellow()", 10)
+    tasmota_rgbw_setRGB(255, 255, 0)
 }
 
-void cyan() {
-    logging("cyan()", 10)
-    setRGB(0, 255, 255)
+void rgbw_cyan() {
+    logging("rgbw_cyan()", 10)
+    tasmota_rgbw_setRGB(0, 255, 255)
 }
 
-void pink() {
-    logging("pink()", 10)
-    setRGB(255, 0, 255)
+void rgbw_pink() {
+    logging("rgbw_pink()", 10)
+    tasmota_rgbw_setRGB(255, 0, 255)
 }
+// END:  getHelperFunctions('rgbw')
 
-/**
- * --END-- RGBW METHODS (helpers-rgbw)
- */
-
-/**
- * TASMOTA RGBW METHODS (helpers-tasmota-rgbw)
- *
- * Helper functions included in all Tasmota drivers using RGB, RGBW or Dimmers
- * These methods ARE specific to Tasmota
- */
-void setColorTemperature(value) {
-    logging("setColorTemperature('${value}')", 10)
+// BEGIN:getHelperFunctions('tasmota-rgbw')
+void tasmota_rgbw_setColorTemperature(value) {
+    logging("tasmota_rgbw_setColorTemperature('${value}')", 10)
     if(device.currentValue('colorTemperature') != value ) sendEvent(name: "colorTemperature", value: value)
-    // 153..500 = set color temperature from 153 (cold) to 500 (warm) for CT lights
-    // Tasmota use mired to measure color temperature
     Integer t = value != null ?  (value as Integer) : 0
-    // First make sure we have a Kelvin value we can more or less handle
-    // 153 mired is approx. 6536K
-    // 500 mired = 2000K
     if(t > 6536) t = 6536
     if(t < 2000) t = 2000
     t = Math.round(1000000/t)
@@ -3673,18 +3053,17 @@ void setColorTemperature(value) {
     state.hue = 0
     state.saturation = 0
     state.colorMode = "CT"
-    //if(device.currentValue("colorMode") != "CT" ) sendEvent(name: "colorMode", value: "CT")
-    logging("setColorTemperature('${t}') ADJUSTED to Mired", 10)
-    getAction(getCommandStringWithModeReset("CT", "${t}"))
+    logging("tasmota_rgbw_setColorTemperature('${t}') ADJUSTED to Mired", 10)
+    tasmota_getAction(tasmota_getCommandStringWithModeReset("CT", "${t}"))
 }
 
-void setHSB(h, s, b) {
-    logging("setHSB('${h}','${s}','${b}')", 10)
-    setHSB(h, s, b, true)
+void tasmota_rgbw_setHSB(h, s, b) {
+    logging("tasmota_rgbw_setHSB('${h}','${s}','${b}')", 10)
+    tasmota_rgbw_setHSB(h, s, b, true)
 }
 
-void setHSB(h, s, b, callWhite) {
-    logging("setHSB('${h}','${s}','${b}', callWhite=${String.valueOf(callWhite)})", 10)
+void tasmota_rgbw_setHSB(h, s, b, callWhite) {
+    logging("tasmota_rgbw_setHSB('${h}','${s}','${b}', callWhite=${String.valueOf(callWhite)})", 10)
     boolean adjusted = False
     if(h == null || h == 'NaN') {
         h = state != null && state.containsKey("hue") ? state.hue : 0
@@ -3699,7 +3078,7 @@ void setHSB(h, s, b, callWhite) {
         adjusted = True
     }
     if(adjusted) {
-        logging("ADJUSTED setHSB('${h}','${s}','${b}'", 1)
+        logging("ADJUSTED tasmota_rgbw_setHSB('${h}','${s}','${b}'", 1)
     }
     Integer adjustedH = Math.round(h*3.6)
     if( adjustedH > 360 ) { adjustedH = 360 }
@@ -3712,23 +3091,19 @@ void setHSB(h, s, b, callWhite) {
     state.level = b
     state.colorMode = "RGB"
     if (hsbcmd.startsWith("0,0,")) {
-        //state.colorMode = "white"
-        //if(device.currentValue("colorMode") != "CT" ) sendEvent(name: "colorMode", value: "CT")
-        white()
-        //getAction(getCommandString("hsbcolor", hsbcmd))
+        rgbw_white()
     } else {
-        //if(device.currentValue("colorMode") != "RGB" ) sendEvent(name: "colorMode", value: "RGB")
         if(useAlternateColorCommand == true) {
             def rgbval = hubitat.helper.ColorUtils.hsvToRGB([h, s, b])
-            setRGB(rgbval[0], rgbval[1], rgbval[2])
+            tasmota_rgbw_setRGB(rgbval[0], rgbval[1], rgbval[2])
         } else {
-            getAction(getCommandStringWithModeReset("HsbColor", hsbcmd))
+            tasmota_getAction(tasmota_getCommandStringWithModeReset("HsbColor", hsbcmd))
         }
     }
 }
 
-void setRGB(r, g, b) {   
-    logging("setRGB('${r}','${g}','${b}')", 10)
+void tasmota_rgbw_setRGB(r, g, b) {   
+    logging("tasmota_rgbw_setRGB('${r}','${g}','${b}')", 10)
     boolean adjusted = False
     if(r == null || r == 'NaN') {
         r = 0
@@ -3743,41 +3118,37 @@ void setRGB(r, g, b) {
         adjusted = True
     }
     if(adjusted) {
-        logging("ADJUSTED setRGB('${r}','${g}','${b}')", 1)
+        logging("ADJUSTED tasmota_rgbw_setRGB('${r}','${g}','${b}')", 1)
     }
-    //String rgbcmd = "${r},${g},${b}"
     String rgbcmd = hubitat.helper.ColorUtils.rgbToHEX([r, g, b])
     logging("rgbcmd = ${rgbcmd}", 1)
     state.red = r
     state.green = g
     state.blue = b
-    // Calculate from RGB values
-    def hsbColor = rgbToHSB(r, g, b)
+    def hsbColor = rgbw_rgbToHSB(r, g, b)
     logging("hsbColor from RGB: ${hsbColor}", 1)
     state.colorMode = "RGB"
-    //if(device.currentValue("colorMode") != "RGB" ) sendEvent(name: "colorMode", value: "RGB")
-    //if (hsbcmd == "${hsbColor[0]},${hsbColor[1]},${hsbColor[2]}") state.colorMode = "white"
     state.hue = hsbColor['hue']
     state.saturation = hsbColor['saturation']
     state.level = hsbColor['level']
-    getAction(getCommandStringWithModeReset("Color1", rgbcmd))
+    tasmota_getAction(tasmota_getCommandStringWithModeReset("Color1", rgbcmd))
 }
 
-void setLevel(l, duration) {
+void tasmota_rgbw_setLevel(l, duration) {
     if (duration == 0) {
         if (false && state.colorMode == "RGB") {
-            setHSB(null, null, l)
+            tasmota_rgbw_setHSB(null, null, l)
         } else {
             state.level = l
-            getAction(getCommandString("Dimmer", "${l}"))
+            tasmota_getAction(tasmota_getCommandString("Dimmer", "${l}"))
         }
     } else if (duration > 0) {
         if (false && state.colorMode == "RGB") {
-            setHSB(null, null, l)
+            tasmota_rgbw_setHSB(null, null, l)
         } else {
             if (duration > 5400) {
                 log.warn "Maximum supported dimming duration is 5400 seconds due to current implementation method used."
-                duration = 5400 // Maximum duration is 1.5 hours
+                duration = 5400
             } 
             Integer cLevel = state.level
             
@@ -3796,9 +3167,7 @@ void setLevel(l, duration) {
             fadeCommands.add([command: "Fade", value: "1"])
             fadeCommands.add([command: "Speed", value: "20"])
             if(steps > 0) {
-                // If we have less than 1 step, we shouldn't execute any of the below...
 
-                // Each Backlog command has 200ms delay, deduct that delay and add 1 second extra
                 duration = ((duration as Float) - (2 * steps * 0.2) + 1) as Float
                 BigDecimal stepTime = round2((duration / steps) as Float, 1)
                 Integer stepTimeTasmota = Math.round((stepTime as Float) * 10)
@@ -3822,42 +3191,38 @@ void setLevel(l, duration) {
                 fadeCommands.add([command: "Dimmer", value: "$l"])
             }
             fadeCommands.add([command: "Fade", value: "0"])
-            //fadeCommands = "Fade 1;Speed ${speed};Dimmer ${l};Delay ${duration};Fade 0"
             logging("fadeCommands: '" + fadeCommands + "', cmdData=${[cLevel:cLevel, levelDistance:levelDistance, direction:direction, steps:steps, increment:increment, stepTime:stepTime, lastStepTime:lastStepTime]}", 1)
-            getAction(getMultiCommandString(fadeCommands))
+            tasmota_getAction(tasmota_getMultiCommandString(fadeCommands))
         }
    }
 }
 
-void stopLevelChange() {
-    // Since sending a backlog command without arguments will cancel any current level change we have, 
-    // so that is what we do...
-    getAction(getCommandString("Fade", "0"))
-    getAction(getCommandString("Backlog", null))
-    modeSingleColor(1)
+void tasmota_rgbw_stopLevelChange() {
+    tasmota_getAction(tasmota_getCommandString("Fade", "0"))
+    tasmota_getAction(tasmota_getCommandString("Backlog", null))
+    tasmota_rgbw_modeSingleColor(1)
 }
 
-void startLevelChange(String direction) {
+void tasmota_rgbw_startLevelChange(String direction) {
     Integer cLevel = state.level
     Integer delay = 30
-    modeSingleColor(1)
+    tasmota_rgbw_modeSingleColor(1)
     if(direction == "up") {
         if(cLevel != null) {
             delay = Math.round(((delay / 100) * (100-cLevel)) as Float)
         }
-        setLevel(100, delay)
+        tasmota_rgbw_setLevel(100, delay)
     } else {
         if(cLevel != null) {
             delay = Math.round(((delay / 100) * (cLevel)) as Float)
         }
-        setLevel(0, delay)
+        tasmota_rgbw_setLevel(0, delay)
     }
 }
 
-void whiteForPlatform() {
-    logging("whiteForPlatform()", 10)
+void tasmota_rgbw_whiteForPlatform() {
+    logging("tasmota_rgbw_whiteForPlatform()", 10)
     Integer l = state.level
-    //state.colorMode = "white"
     if (l < 10) l = 10
     l = Math.round(l * 2.55).toInteger()
     if (l > 255) l = 255
@@ -3870,115 +3235,110 @@ void whiteForPlatform() {
     state.green = l
     state.blue = l
     state.colorMode = "CT"
-    //if(device.currentValue("colorMode") != "CT" ) sendEvent(name: "colorMode", value: "CT")
-    getAction(getCommandStringWithModeReset("Color1", hexCmd))
+    tasmota_getAction(tasmota_getCommandStringWithModeReset("Color1", hexCmd))
 }
 
-// Functions to set RGBW Mode
-void modeSet(Integer mode, BigDecimal speed=3) {
-    logging("modeSet('${mode}')", 10)
-    getAction(getMultiCommandString([[command:"Speed", value:"$speed"], [command:"Scheme", value:"${mode}"]]))
+void tasmota_rgbw_modeSet(Integer mode, BigDecimal speed=3) {
+    logging("tasmota_rgbw_modeSet('${mode}')", 10)
+    tasmota_getAction(tasmota_getMultiCommandString([[command:"Speed", value:"$speed"], [command:"Scheme", value:"${mode}"]]))
 }
 
-void modeNext(BigDecimal speed=3) {
-    logging("modeNext()", 10)
+void tasmota_rgbw_modeNext(BigDecimal speed=3) {
+    logging("tasmota_rgbw_modeNext()", 10)
     if (state.mode < 4) {
         state.mode = state.mode + 1
     } else {
         state.mode = 0
     }
-    modeSet(state.mode, speed)
+    tasmota_rgbw_modeSet(state.mode, speed)
 }
 
-void modePrevious(BigDecimal speed=3) {
+void tasmota_rgbw_modePrevious(BigDecimal speed=3) {
     if (state.mode > 0) {
         state.mode = state.mode - 1
     } else {
         state.mode = 4
     }
-    modeSet(state.mode, speed)
+    tasmota_rgbw_modeSet(state.mode, speed)
 }
 
-void modeSingleColor(BigDecimal speed=3) {
+void tasmota_rgbw_modeSingleColor(BigDecimal speed=3) {
     state.mode = 0
-    modeSet(state.mode, speed)
+    tasmota_rgbw_modeSet(state.mode, speed)
 }
 
-void modeCycleUpColors(BigDecimal speed=3) {
+void tasmota_rgbw_modeCycleUpColors(BigDecimal speed=3) {
     state.mode = 2
-    modeSet(state.mode, speed)
+    tasmota_rgbw_modeSet(state.mode, speed)
 }
 
-void modeCycleDownColors(BigDecimal speed=3) {
+void tasmota_rgbw_modeCycleDownColors(BigDecimal speed=3) {
     state.mode = 3
-    modeSet(state.mode, speed)
+    tasmota_rgbw_modeSet(state.mode, speed)
 }
 
-void modeRandomColors(BigDecimal speed=3) {
+void tasmota_rgbw_modeRandomColors(BigDecimal speed=3) {
     state.mode = 4
-    modeSet(state.mode, speed)
+    tasmota_rgbw_modeSet(state.mode, speed)
 }
 
-void modeWakeUp(BigDecimal wakeUpDuration) {
+void tasmota_rgbw_modeWakeUp(BigDecimal wakeUpDuration) {
     Integer level = device.currentValue('level')
     Integer nlevel = level > 10 ? level : 10
-    logging("modeWakeUp(wakeUpDuration ${wakeUpDuration}, current level: ${nlevel})", 1)
-    modeWakeUp(wakeUpDuration, nlevel)
+    logging("tasmota_rgbw_modeWakeUp(wakeUpDuration ${wakeUpDuration}, current level: ${nlevel})", 1)
+    tasmota_rgbw_modeWakeUp(wakeUpDuration, nlevel)
 }
 
-void modeWakeUp(BigDecimal wakeUpDuration, BigDecimal level) {
-    logging("modeWakeUp(wakeUpDuration ${wakeUpDuration}, level: ${level})", 1)
+void tasmota_rgbw_modeWakeUp(BigDecimal wakeUpDuration, BigDecimal level) {
+    logging("tasmota_rgbw_modeWakeUp(wakeUpDuration ${wakeUpDuration}, level: ${level})", 1)
     state.mode = 1
     wakeUpDuration = wakeUpDuration < 1 ? 1 : wakeUpDuration > 3000 ? 3000 : wakeUpDuration
     level = level < 1 ? 1 : level > 100 ? 100 : level
     state.level = level
-    getAction(getMultiCommandString([[command: "WakeupDuration", value: "${wakeUpDuration}"],
+    tasmota_getAction(tasmota_getMultiCommandString([[command: "WakeupDuration", value: "${wakeUpDuration}"],
                                     [command: "Wakeup", value: "${level}"]]))
 }
 
-void setColorByRGBString(String colorRGB) {
-    logging("setColorByRGBString(colorRGB ${colorRGB})", 100)
-    getAction(getCommandStringWithModeReset("Color1", colorRGB.take(11)))
+void tasmota_rgbw_setColorByRGBString(String colorRGB) {
+    logging("tasmota_rgbw_setColorByRGBString(colorRGB ${colorRGB})", 100)
+    tasmota_getAction(tasmota_getCommandStringWithModeReset("Color1", colorRGB.take(11)))
 }
 
-void setPixelColor(String colorRGB, BigDecimal pixel) {
-    logging("setPixelColor(colorRGB ${colorRGB}, pixel: ${pixel})", 1)
+void tasmota_rgbw_setPixelColor(String colorRGB, BigDecimal pixel) {
+    logging("tasmota_rgbw_setPixelColor(colorRGB ${colorRGB}, pixel: ${pixel})", 1)
     if(pixel < 1) pixel = 1
     if(pixel > 512) pixel = 512
-    getAction(getCommandStringWithModeReset("Led$pixel", colorRGB.take(7)))
+    tasmota_getAction(tasmota_getCommandStringWithModeReset("Led$pixel", colorRGB.take(7)))
 }
 
-void setAddressablePixels(BigDecimal pixels) {
-    logging("setAddressablePixels(pixels: ${pixels})", 100)
+void tasmota_rgbw_setAddressablePixels(BigDecimal pixels) {
+    logging("tasmota_rgbw_setAddressablePixels(pixels: ${pixels})", 100)
     if(pixels < 1) pixels = 1
     if(pixels > 512) pixels = 512
-    getAction(getCommandString("Pixels", "$pixels"))
+    tasmota_getAction(tasmota_getCommandString("Pixels", "$pixels"))
 }
 
-void setAddressableRotation(BigDecimal pixels) {
-    logging("setAddressableRotation(pixels: ${pixels})", 100)
+void tasmota_rgbw_setAddressableRotation(BigDecimal pixels) {
+    logging("tasmota_rgbw_setAddressableRotation(pixels: ${pixels})", 100)
     if(pixels < 1) pixels = 1
     if(pixels > 512) pixels = 512
-    getAction(getCommandString("Rotation", "$pixels"))
+    tasmota_getAction(tasmota_getCommandString("Rotation", "$pixels"))
 }
 
-void setEffectWidth(BigDecimal pixels) {
-    logging("setEffectWidth(pixels: ${pixels})", 100)
+void tasmota_rgbw_setEffectWidth(BigDecimal pixels) {
+    logging("tasmota_rgbw_setEffectWidth(pixels: ${pixels})", 100)
     if(pixels < 0) pixels = 0
     if(pixels > 4) pixels = 4
-    getAction(getCommandString("Width1", "$pixels"))
+    tasmota_getAction(tasmota_getCommandString("Width1", "$pixels"))
 }
 
-String getCommandStringWithModeReset(String command, String value) {
+String tasmota_getCommandStringWithModeReset(String command, String value) {
     if(useAlternateColorCommand == true && command == "Color1") {
         if(value.startsWith("#") == true) value = value.substring(1)
-        return getCommandString("Var1", "$value")
+        return tasmota_getCommandString("Var1", "$value")
     } else {
-        return getMultiCommandString([[command: "Scheme", value: "0"], [command: "Fade", value: "0"], 
+        return tasmota_getMultiCommandString([[command: "Scheme", value: "0"], [command: "Fade", value: "0"], 
                                   [command: command, value: value]])
     }
 }
-
-/**
- * --END-- TASMOTA RGBW METHODS (helpers-tasmota-rgbw)
- */
+// END:  getHelperFunctions('tasmota-rgbw')
