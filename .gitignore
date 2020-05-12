@@ -1,0 +1,17 @@
+/_tmpdhcp*
+/private
+__hubitat_session
+/__hubitat_session_*
+/__hubitat_checksums
+/__hubitat_checksums_*
+/hhs_10_*.cfg
+/hubitat_hubspider.cfg
+*.cpython-*.pyc
+/DEVELOPER
+/drivers/expanded/tasmota-tuya-wifi-touch-switch-legacy-child-expanded.groovy
+/drivers/OLD_drivers
+/drivers/expanded/*-testing*-expanded.groovy
+/.vscode/.ropeproject
+/drivers/OBSOLETE-tasmota-ykyc-001-pm-plug.groovy
+/drivers/expanded/testing-bare-minimum-driver-expanded.groovy
+
