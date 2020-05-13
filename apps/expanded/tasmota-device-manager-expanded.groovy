@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0512Tb
+ *  Version: v1.0.2.0513Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,6 +58,8 @@ preferences {
      page(name: "deviceDiscoveryReset")
      page(name: "discoveredAddConfirm")
      
+     page(name: "disableDebugLoggingOnDevices")
+     page(name: "disableInfoLoggingOnDevices")
 }
 
 // BEGIN:getHelperFunctions('device-configurations')
@@ -581,7 +583,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.2.0512Tb"
+    String version = "v1.0.2.0513Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -611,6 +613,10 @@ Map mainPage() {
             section(getElementStyle('header', getMaterialIcon('library_add') + "Install New Devices"), hideable: true, hidden: false){
                 href("deviceDiscovery", title:getMaterialIcon('', 'he-discovery_1') + "Discover Devices (using SSDP)", description:"")
                 href("manuallyAdd", title:getMaterialIcon('', 'he-add_1') + "Manually Install Device", description:"")
+            }
+            section(getElementStyle('header', getMaterialIcon('keyboard') + "Device Actions"), hideable: true, hidden: true){
+                href("disableDebugLoggingOnDevices", title:getMaterialIcon('block') + "Disable Debug Logging on ALL Tasmota devices", description:"")
+                href("disableInfoLoggingOnDevices", title:getMaterialIcon('block') + "Disable Info Logging on ALL Tasmota devices", description:"")
             }
             section(getElementStyle('header', getMaterialIcon('playlist_add') + 'Grant Access to Additional Devices'), hideable: true, hidden: true){
                 paragraph("Select the devices to grant access to, if the device doesn't use a compatible driver it will be ignored, so selecting too many or the wrong ones, doesn't matter. Easiest is probably to just select all devices. Only Parent devices are shown.")
@@ -717,9 +723,41 @@ def refreshDevices(){
     return resultPage("refreshDevices", "Devices Refreshed", result)
 }
 
-Map resultPage(){
-    logging("resultPage()", 1)
-    return resultPage("resultPage", "Result Page", "My little result...")
+Map disableDebugLoggingOnDevices(){
+    logging("disableDebugLoggingOnDevices()", 1)
+    updateAllChildrenWithDeviceSetting("debugLogging", "false")
+    return resultPage("disableDebugLoggingOnDevices", "Disable DEBUG Logging Result Page", "DEBUG logging has been DISABLED in all child and grandchild devices")
+}
+
+Map disableInfoLoggingOnDevices(){
+    logging("disableInfoLoggingOnDevices()", 1)
+    updateAllChildrenWithDeviceSetting("infoLogging", "false")
+    updateAllChildrenWithDeviceSetting("txtEnable", "false")
+    return resultPage("disableInfoLoggingOnDevices", "Disable INFO Logging Result Page", "INFO logging has been DISABLED in all child and grandchild devices")
+}
+
+void updateAllChildrenWithDeviceSetting(String settingName, String value) {
+    getAllTasmotaDevices().each { rawDev ->
+        def cDev = getTasmotaDevice(rawDev.deviceNetworkId)
+        if(cDev != null) {
+            cDev.clearSetting(settingName)
+            cDev.removeSetting(settingName)
+            cDev.updateSetting(settingName, value)
+            try{
+                cDev.getChildDevices().each { gcDev ->
+                    gcDev.clearSetting(settingName)
+                    gcDev.removeSetting(settingName)
+                    gcDev.updateSetting(settingName, value)
+                }
+            } catch(e) {
+                try{
+                    runDeviceCommand(cDev, "tasmota_updateChildDeviceSetting", args=[settingName, value])
+                } catch(e2) {
+                    log.warn("Failed to set the Setting of child (error: $e2):\"${cDev.label}\" (${cDev.id})")
+                }
+            }
+        }
+    }
 }
 
 Map resultPage(name, title, result, nextPage = "mainPage", otherReturnPage = null, otherReturnTitle="Return Page"){
@@ -2182,6 +2220,14 @@ private void tasmota_createChildDevice(String namespace, List driverName, String
                 }
             }
         }
+    }
+}
+
+private void tasmota_updateChildDeviceSetting(String settingName, String value) {
+    getChildDevices().each { cDev ->
+        cDev.clearSetting(settingName)
+        cDev.removeSetting(settingName)
+        cDev.updateSetting(settingName, value)
     }
 }
 

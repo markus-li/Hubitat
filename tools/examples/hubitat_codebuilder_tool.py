@@ -319,14 +319,14 @@ def main():
         {'id': 737, 'file': 'tasmota-generic-wifi-dimmer.groovy' },
 
         # Universal drivers
-        {'id': 865, 'id_3': 342, 'file': 'tasmota-universal-parent.groovy', 'specialDebugLabel': 'descriptionText',
+        {'id': 865, 'id_2': 328, 'id_3': 342, 'file': 'tasmota-universal-parent.groovy', 'specialDebugLabel': 'descriptionText',
          'required': True },
         
-        {'id': 866, 'id_3': 343, 'file': 'tasmota-universal-multi-sensor-child.groovy', 
+        {'id': 866, 'id_2': 364, 'id_3': 343, 'file': 'tasmota-universal-multi-sensor-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         {'id': 993, 'file': 'tasmota-universal-fancontrol-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
-        {'id': 589, 'file': 'tasmota-universal-curtain-child.groovy', 
+        {'id': 589, 'id_2': 331, 'file': 'tasmota-universal-curtain-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         {'id': 359, 'file': 'tasmota-universal-switch-as-contact-sensor-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
@@ -334,23 +334,23 @@ def main():
             'specialDebugLabel': 'descriptionText' },
         {'id': 555, 'file': 'tasmota-universal-switch-as-water-sensor-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
-        {'id': 581, 'file': 'tasmota-universal-plug-outlet-child.groovy', 
+        {'id': 581, 'id_2': 333, 'file': 'tasmota-universal-plug-outlet-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
-        {'id': 582, 'file': 'tasmota-universal-bulb-light-child.groovy', 
+        {'id': 582, 'id_2': 329, 'file': 'tasmota-universal-bulb-light-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         
-        {'id': 577, 'file': 'tasmota-universal-ct-rgb-cw-ww-child.groovy', 
+        {'id': 577, 'id_2': 330, 'file': 'tasmota-universal-ct-rgb-cw-ww-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
-        {'id': 646, 'file': 'tasmota-universal-dimmer-child.groovy', 
+        {'id': 646, 'id_2': 332, 'file': 'tasmota-universal-dimmer-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         {'id': 559, 'file': 'tasmota-universal-metering-dimmer-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
-        {'id': 644, 'file': 'tasmota-universal-metering-plug-outlet-child.groovy', 
+        {'id': 644, 'id_2': 0, 'file': 'tasmota-universal-metering-plug-outlet-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
-        {'id': 647, 'file': 'tasmota-universal-metering-bulb-light-child.groovy', 
+        {'id': 647, 'id_2': 0, 'file': 'tasmota-universal-metering-bulb-light-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         
-
+        # Testing versions
         {'id': 867, 'file': 'tasmota-universal-parent.groovy', 'specialDebugLabel': 'descriptionText',
          'alternate_output_filename': 'tasmota-universal-parent-testing', \
          'alternate_name': 'Tasmota - Universal Parent Testing' },
@@ -362,9 +362,9 @@ def main():
 
         # Zigbee
         {'id': 579, 'file': 'zigbee-generic-wifi-switch-plug.groovy' },
-        {'id': 801, 'id_3': 335, 'file': 'zigbee-aqara-smart-curtain-motor.groovy', 'version': 'v1.0.1.MMDD',
+        {'id': 801, 'id_2': 368, 'id_3': 335, 'file': 'zigbee-aqara-smart-curtain-motor.groovy', 'version': 'v1.0.1.MMDD',
          'comment': 'Works with models ZNCLDJ11LM & ZNCLDJ12LM' },        
-        {'id': 1122, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1122, 'id_2': 367, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model GZCGQ01LM.' },
         
         
@@ -380,27 +380,27 @@ def main():
         {'id': 547, 'id_3': 341, 'file': 'testing-bare-minimum-driver.groovy', 'version': 'v0.1.0.MMDD' },
 
         # Zigbee:
-        {'id': 1121, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1121, 'id_2': 363, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with models WXKG01LM, WXKG11LM (2015), WXKG11LM (2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM' },
-        {'id': 1153, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1153, 'id_2': 322, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model MCCGQ01LM & MCCGQ11LM.' },
-        {'id': 1154, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-motion-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1154, 'id_2': 324, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-motion-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model RTCGQ01LM & RTCGQ11LM.' },
-        {'id': 1155, 'id_3': 0, 'file': 'zigbee-ihorn-motion-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1155, 'id_2': 362, 'id_3': 0, 'file': 'zigbee-ihorn-motion-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model LH-992ZB.' },
-        {'id': 1185, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-plug-outlet.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1185, 'id_2': 325, 'file': 'zigbee-xiaomi-aqara-plug-outlet.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model ZNCZ02LM & QBCZ11LM.' },
         {'id': 1186, 'id_2': 334, 'id_3': 0, 'file': 'zigbee-aqara-bulb.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model ZNLDP12LM.' },
-        {'id': 1256, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-oppo-6-button.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1256, 'id_2': 361, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-oppo-6-button.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model WXCJKG13LM.' },
         {'id': 1313, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-5-button-remote.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model ???.' },
-        {'id': 1345, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-temperature-humidity.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1345, 'id_2': 326, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-temperature-humidity.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model WSDCGQ01LM & WSDCGQ11LM.' },
-        {'id': 1377, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model SJCGQ11LM.' },
-        {'id': 1378, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model DJT11LM.' },
     ]
 
@@ -450,7 +450,6 @@ def main():
         {'id': 644}, {'id': 647}, # Metering Children
         {'id': 581}, {'id': 582}, # Switch Children
         
-
         #{'id': 962}, # Javascript Injection Driver
         #{'id': 867}, {'id': 868},  # Universal Drivers TESTING
         
@@ -471,24 +470,45 @@ def main():
         {'id': 1377}, # Aqara Water Leak Sensor
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
-        {'id': 1313}, # IKEA 5 Button Remote
-        {'id': 1256}, # Aqara Oppo 6 Buttons
         {'id': 1186}, # Aqara Bulb
         {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
         {'id': 1155}, # iHorn Motion Sensor
         {'id': 1121}, # Xiaomi/Aqara Button/Switch
+        #{'id': 1256}, # Aqara Oppo 6 Buttons
+        #{'id': 1313}, # IKEA 5 Button Remote
         
     ]
     driver_files_active_2 = [
-        #{'id': 801}, {'id': 547},
-        #{'id': 865}, {'id': 866}, # Universal Drivers RELEASE
+        {'id': 865}, {'id': 866}, # Universal Drivers RELEASE
+        {'id': 577}, # CT/RGB/RGB+CW+WW Child
+        {'id': 581}, {'id': 582}, # Switch Children
+        {'id': 589}, # Curtain Child
+        {'id': 646}, # Dimmer Child
+
+        # Zigbee drivers :
+        {'id': 1122}, # Xiaomi Mijia Smart Light Sensor
+        {'id': 801}, # Aqara Smart Curtain
     ]
+    driver_files_active_2 = []
     driver_files_private_active_2 = [
         #{'id': 1186}, # Aqara Bulb
         #{'id': 801}, {'id': 547},
         #{'id': 865}, {'id': 866}, # Universal Drivers RELEASE
+
+        # Zigbee
+        {'id': 1378}, # Aqara Vibration Sensor
+        {'id': 1377}, # Aqara Water Leak Sensor
+        {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
+        {'id': 1153}, # Xiaomi/Aqara Contact Sensors
+        {'id': 1186}, # Aqara Bulb
+        {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
+        {'id': 1154}, # Xiaomi/Aqara Motion Sensors
+        {'id': 1155}, # iHorn Motion Sensor
+        {'id': 1121}, # Xiaomi/Aqara Button/Switch
     ]
+    #driver_files_private_active_2 = []
+
     driver_files_active_3 = [
         #{'id': 801}, {'id': 547},
         #{'id': 865}, {'id': 866}, # Universal Drivers RELEASE
@@ -724,18 +744,21 @@ def main():
         #{'id': 97, 'file': 'tasmota-connect.groovy' },
         # 163 is available for re-use
         #{'id': 163, 'file': 'tasmota-connect-test.groovy' },
-        {'id': 289, 'file': 'tasmota-device-manager.groovy', 'required': True, 'oauth': False },
+        {'id': 289, 'id_2': 66, 'file': 'tasmota-device-manager.groovy', 'required': True, 'oauth': False },
     ]
 
     app_files_private = [
         {'id': 353, 'id_3': 67, 'file': 'custom-lighting.groovy', 'required': True, 'oauth': False },
     ]
 
-    cb.setUsedDriverList(used_driver_list)
+    cb.setUsedDriverList(used_driver_list.copy())
+    cb_2.setUsedDriverList(used_driver_list_2.copy())
     filtered_app_files = []
+    filtered_app_files_2 = []
     for a in app_files:
         # Add this driver to the Package
-        filtered_app_files.append(a)
+        filtered_app_files.append(a.copy())
+        filtered_app_files_2.append(a.copy())
         #if(a['id'] != 97):
         #    filtered_app_files.append(a)
         #if(a['id'] != 0 and len(used_driver_list) >= expected_num_drivers):
@@ -750,6 +773,7 @@ def main():
     #print(filtered_app_files)
     if(branch_name != 'release'):
         used_app_list_private_3 = cb_private_3.expandGroovyFilesAndPush(app_files_private.copy(), code_type='app')
+        used_app_list_2 = cb_2.expandGroovyFilesAndPush(filtered_app_files_2, code_type='app')
     
     # The main target needs to be last to keep everything in a consistent state
     used_app_list = cb.expandGroovyFilesAndPush(filtered_app_files.copy(), code_type='app')
@@ -883,6 +907,11 @@ def main():
     else:
         log.info('No new PRIVATE drivers were created!')
     log.info('This many PRIVATE drivers were UPDATED: {}'.format(cb_private.driver_num_updated))
+
+    if(len(cb_private_2.driver_new)>0):
+        log.warning('These new PRIVATE drivers were created on 10.2: \n{}'.format(cb_private_2.driver_new))
+    else:
+        log.info('No new PRIVATE drivers were created on 10.2!')
 
     if(len(cb.app_new)>0):
         log.warn('These new apps were created: \n{}'.format(cb.app_new))

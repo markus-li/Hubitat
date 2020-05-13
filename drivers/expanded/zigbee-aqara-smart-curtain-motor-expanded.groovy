@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.1.0512
+ *  Version: v1.0.1.0513
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -533,7 +533,7 @@ ArrayList<String> getBattery() {
 private String getDriverVersion() {
     comment = "Works with models ZNCLDJ11LM & ZNCLDJ12LM"
     if(comment != "") state.comment = comment
-    String version = "v1.0.1.0512"
+    String version = "v1.0.1.0513"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -813,7 +813,7 @@ void parseAndSendBatteryStatus(BigDecimal vCurrent) {
     } else {
         bat = 100
     }
-    bat = bat.setScale(1, BigDecimal.ROUND_HALF_UP)
+    bat = bat.setScale(0, BigDecimal.ROUND_HALF_UP)
     bat = bat > 100 ? 100 : bat
     
     vCurrent = vCurrent.setScale(3, BigDecimal.ROUND_HALF_UP)
