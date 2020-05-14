@@ -490,7 +490,7 @@ def main():
         {'id': 1122}, # Xiaomi Mijia Smart Light Sensor
         {'id': 801}, # Aqara Smart Curtain
     ]
-    driver_files_active_2 = []
+    #driver_files_active_2 = []
     driver_files_private_active_2 = [
         #{'id': 1186}, # Aqara Bulb
         #{'id': 801}, {'id': 547},

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0513Tb
+ *  Version: v1.0.2.0514Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -642,6 +642,7 @@ def updated() {
     unschedule("updatePresence")
     unschedule("tasmota_updatePresence")
     updateNeededSettings()
+    refresh()
 }
 
 def configure() {
@@ -1474,7 +1475,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0513Tb"
+    String version = "v1.0.2.0514Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2126,6 +2127,37 @@ void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
              
         }
 	}
+}
+
+Long secondsSinceLastCheckinEvent() {
+    Long r = null
+    if (lastCheckinEnable == true || lastCheckinEnable == null) {
+        String lastCheckinVal = device.currentValue('lastCheckin')
+        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false) {
+            log.warn("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours...")
+            r = -1
+        } else {
+            r = (now() - Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime()) / 1000
+        }
+	}
+    if (lastCheckinEpochEnable == true) {
+		if(device.currentValue('lastCheckinEpoch') == null) {
+		    log.warn("No VALID lastCheckinEpoch event available! This should be resolved by itself within 1 or 2 hours...")
+            r = r == null ? -1 : r
+        } else {
+            r = (now() - device.currentValue('lastCheckinEpoch').toLong()) / 1000
+        }
+	}
+    return r
+}
+
+boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90) {
+    Long secondsSinceLastCheckin = secondsSinceLastCheckinEvent()
+    if(secondsSinceLastCheckin != null && secondsSinceLastCheckin > maximumMinutesBetweenEvents * 60) {
+        log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
+        return false
+    }
+    return true
 }
 
 void checkPresence() {
