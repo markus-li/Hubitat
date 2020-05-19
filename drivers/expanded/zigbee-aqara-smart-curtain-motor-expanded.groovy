@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.1.0513
+ *  Version: v1.0.1.0514
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -212,8 +212,14 @@ ArrayList<String> parse(String description) {
 
     if(msgMap["profileId"] == "0104" && msgMap["clusterId"] == "000A") {
 		logging("Xiaomi Curtain Present Event", 1)
-        sendlastCheckinEvent(minimumMinutesToRepeat=60)
-	} else if(msgMap["profileId"] == "0104") {
+        if(sendlastCheckinEvent(minimumMinutesToRepeat=60) == true) {
+            logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 100)
+            sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+        }
+	} else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
+        logging("Manufacturer Name Received - description:${description} | parseMap:${msgMap}", 100)
+        
+    } else if(msgMap["profileId"] == "0104") {
         //logging("Unhandled KNOWN 0104 event (heartbeat?)- description:${description} | parseMap:${msgMap}", 0)
         //logging("RAW: ${msgMap["attrId"]}", 0)
 
@@ -533,7 +539,7 @@ ArrayList<String> getBattery() {
 private String getDriverVersion() {
     comment = "Works with models ZNCLDJ11LM & ZNCLDJ12LM"
     if(comment != "") state.comment = comment
-    String version = "v1.0.1.0513"
+    String version = "v1.0.1.0514"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1283,10 +1289,12 @@ boolean isValidDate(String dateFormat, String dateString) {
     return true
 }
 
-void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
+boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
+    boolean r = false
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
         if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (minimumMinutesToRepeat * 60 * 1000)) {
+            r = true
 		    sendEvent(name: "lastCheckin", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
             logging("Updated lastCheckin", 1)
         } else {
@@ -1295,12 +1303,46 @@ void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
 	}
     if (lastCheckinEpochEnable == true) {
 		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (minimumMinutesToRepeat * 60 * 1000)) {
+            r = true
 		    sendEvent(name: "lastCheckinEpoch", value: now())
             logging("Updated lastCheckinEpoch", 1)
         } else {
              
         }
 	}
+    if(r == true) sendEvent(name: "presence", value: "present")
+    return r
+}
+
+Long secondsSinceLastCheckinEvent() {
+    Long r = null
+    if (lastCheckinEnable == true || lastCheckinEnable == null) {
+        String lastCheckinVal = device.currentValue('lastCheckin')
+        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false) {
+            log.warn("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours...")
+            r = -1
+        } else {
+            r = (now() - Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime()) / 1000
+        }
+	}
+    if (lastCheckinEpochEnable == true) {
+		if(device.currentValue('lastCheckinEpoch') == null) {
+		    log.warn("No VALID lastCheckinEpoch event available! This should be resolved by itself within 1 or 2 hours...")
+            r = r == null ? -1 : r
+        } else {
+            r = (now() - device.currentValue('lastCheckinEpoch').toLong()) / 1000
+        }
+	}
+    return r
+}
+
+boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90) {
+    Long secondsSinceLastCheckin = secondsSinceLastCheckinEvent()
+    if(secondsSinceLastCheckin != null && secondsSinceLastCheckin > maximumMinutesBetweenEvents * 60) {
+        log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
+        return false
+    }
+    return true
 }
 
 void checkPresence() {

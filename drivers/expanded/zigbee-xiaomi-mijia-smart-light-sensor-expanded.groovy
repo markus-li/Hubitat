@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0513
+ *  Version: v0.6.1.0514
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -297,7 +297,7 @@ ArrayList<String> configureAdditional() {
 private String getDriverVersion() {
     comment = "Works with model GZCGQ01LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0513"
+    String version = "v0.6.1.0514"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1047,10 +1047,12 @@ boolean isValidDate(String dateFormat, String dateString) {
     return true
 }
 
-void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
+boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
+    boolean r = false
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
         if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (minimumMinutesToRepeat * 60 * 1000)) {
+            r = true
 		    sendEvent(name: "lastCheckin", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
             logging("Updated lastCheckin", 1)
         } else {
@@ -1059,12 +1061,46 @@ void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
 	}
     if (lastCheckinEpochEnable == true) {
 		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (minimumMinutesToRepeat * 60 * 1000)) {
+            r = true
 		    sendEvent(name: "lastCheckinEpoch", value: now())
             logging("Updated lastCheckinEpoch", 1)
         } else {
              
         }
 	}
+    if(r == true) sendEvent(name: "presence", value: "present")
+    return r
+}
+
+Long secondsSinceLastCheckinEvent() {
+    Long r = null
+    if (lastCheckinEnable == true || lastCheckinEnable == null) {
+        String lastCheckinVal = device.currentValue('lastCheckin')
+        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false) {
+            log.warn("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours...")
+            r = -1
+        } else {
+            r = (now() - Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime()) / 1000
+        }
+	}
+    if (lastCheckinEpochEnable == true) {
+		if(device.currentValue('lastCheckinEpoch') == null) {
+		    log.warn("No VALID lastCheckinEpoch event available! This should be resolved by itself within 1 or 2 hours...")
+            r = r == null ? -1 : r
+        } else {
+            r = (now() - device.currentValue('lastCheckinEpoch').toLong()) / 1000
+        }
+	}
+    return r
+}
+
+boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90) {
+    Long secondsSinceLastCheckin = secondsSinceLastCheckinEvent()
+    if(secondsSinceLastCheckin != null && secondsSinceLastCheckin > maximumMinutesBetweenEvents * 60) {
+        log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
+        return false
+    }
+    return true
 }
 
 void checkPresence() {

@@ -2109,10 +2109,12 @@ boolean isValidDate(String dateFormat, String dateString) {
     return true
 }
 
-void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
+boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
+    boolean r = false
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
         if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (minimumMinutesToRepeat * 60 * 1000)) {
+            r = true
 		    sendEvent(name: "lastCheckin", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
             logging("Updated lastCheckin", 1)
         } else {
@@ -2121,12 +2123,15 @@ void sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
 	}
     if (lastCheckinEpochEnable == true) {
 		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (minimumMinutesToRepeat * 60 * 1000)) {
+            r = true
 		    sendEvent(name: "lastCheckinEpoch", value: now())
             logging("Updated lastCheckinEpoch", 1)
         } else {
              
         }
 	}
+    if(r == true) sendEvent(name: "presence", value: "present")
+    return r
 }
 
 Long secondsSinceLastCheckinEvent() {

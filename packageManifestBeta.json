@@ -2,7 +2,7 @@
   "packageName": "Tasmota for Hubitat Elevation",
   "minimumHEVersion": "2.1.7",
   "author": "Markus",
-  "dateReleased": "2020-05-14",
+  "dateReleased": "2020-05-18",
   "documentationLink": "https://github.com/markus-li/Hubitat/wiki",
   "communityLink": "https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322",
   "apps": [
@@ -10,7 +10,7 @@
       "id": "a1ac29fa-f00a-5e58-822a-472f71bf3c1d",
       "internalId": 289,
       "name": "Tasmota Device Manager",
-      "betaVersion": "v1.0.2.0513Tb",
+      "betaVersion": "v1.0.2.0516Tb",
       "namespace": "tasmota",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/apps/expanded/tasmota-device-manager-expanded.groovy",
       "required": true,
