@@ -623,7 +623,7 @@ def main():
             pm.addPackage(zigbee_pkg)
 
             if(branch_name == 'release'):
-                zigbee_pkg.buildManifest(extraInput="packages/" + newD['filestem'] + ".json")
+                zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + ".json", extraInput="packages/" + newD['filestem'] + ".json")
             else:
                 zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + "-beta.json", extraInput="packages/" + newD['filestem'] + ".json")
 
@@ -793,7 +793,8 @@ def main():
     ]
 
     cb.setUsedDriverList(used_driver_list.copy())
-    cb_2.setUsedDriverList(used_driver_list_2.copy())
+    if(branch_name != 'release'):
+        cb_2.setUsedDriverList(used_driver_list_2.copy())
     filtered_app_files = []
     filtered_app_files_2 = []
     for a in app_files:
@@ -837,7 +838,7 @@ def main():
     #pm.printJSON()
 
     if(branch_name == 'release'):
-        t4he_pkg.buildManifest(extraInput="packages/t4he.json")
+        t4he_pkg.buildManifest(output="packages/t4he.json", extraInput="packages/t4he-beta.json")
     else:
         t4he_pkg.buildManifest(output="packages/t4he-beta.json", extraInput="packages/t4he.json")
         #t4he_pkg.printJSON()
@@ -888,21 +889,22 @@ def main():
         # README
         repo_tool.copy_files_by_wildcard(repo_private_path + "/README.md", repo_public_path)
         
-        # Examples of how to use the Codebuilder toolset
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_codebuilder_tasmota.py", repo_public_path + "/tools/examples")
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_codebuilder_tool.py", repo_public_path + "/tools/examples")
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_driver_snippets_metadata.py", repo_public_path + "/tools/examples")
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_driver_snippets_new_parser.py", repo_public_path + "/tools/examples")
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_driver_snippets.py", repo_public_path + "/tools/examples")
-        
-        # An example of a helper-include file
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/helpers/helpers-childDevices.groovy", repo_public_path + "/tools/examples/helpers")
+        if(repo_private.head.shorthand == "development"):
+            # Examples of how to use the Codebuilder toolset
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_codebuilder_tasmota.py", repo_public_path + "/tools/examples")
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_codebuilder_tool.py", repo_public_path + "/tools/examples")
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_driver_snippets_metadata.py", repo_public_path + "/tools/examples")
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_driver_snippets_new_parser.py", repo_public_path + "/tools/examples")
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_driver_snippets.py", repo_public_path + "/tools/examples")
+            
+            # An example of a helper-include file
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/helpers/helpers-childDevices.groovy", repo_public_path + "/tools/examples/helpers")
 
-        # Main files for the Codebuilder toolset
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_codebuilder.py", repo_public_path + "/tools")
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_hubspider.py", repo_public_path + "/tools")
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_packagemanagertool.py", repo_public_path + "/tools")
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/repo_tool.py", repo_public_path + "/tools")
+            # Main files for the Codebuilder toolset
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_codebuilder.py", repo_public_path + "/tools")
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_hubspider.py", repo_public_path + "/tools")
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/hubitat_packagemanagertool.py", repo_public_path + "/tools")
+            repo_tool.copy_files_by_wildcard(repo_private_path + "/tools/repo_tool.py", repo_public_path + "/tools")
 
         log.debug("DONE updating the Hubitat-Public Repo branch \"" + repo_public.head.shorthand + "\"!")
     else:

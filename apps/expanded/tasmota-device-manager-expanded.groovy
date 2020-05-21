@@ -1393,7 +1393,6 @@ String hexToASCII(String hexValue) {
  
 def installed() {
 	logging("installed()", 100)
-    
 	try {
         installedAdditional()
     } catch (MissingMethodException e) {
