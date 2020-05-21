@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0503T
+ *  Version: v1.0.2.0521T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,41 +14,37 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ *  NOTE: This is an auto-generated file and most comments have been removed!
+ *
  */
 
 // BEGIN:getDefaultImports()
-/** Default Imports */
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
-// Used for MD5 calculations
+ 
 import java.security.MessageDigest
 // END:  getDefaultImports()
 
-
 metadata {
-    // Do NOT rename the child driver name unless you also change the corresponding code in the Parent!
     definition (name: "Tasmota - Universal Fan Control (Child)", namespace: "tasmota", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-fancontrol-child-expanded.groovy") {
         capability "FanControl"
         capability "Refresh"
 
         // BEGIN:getMinimumChildAttributes()
-        // Attributes used by all Child Drivers
         attribute   "driver", "string"
         // END:  getMinimumChildAttributes()
     }
 
     preferences {
         // BEGIN:getDefaultMetadataPreferences()
-        // Default Preferences
-        input(name: "debugLogging", type: "bool", title: addTitleDiv("Enable debug logging"), description: "" , defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
-        input(name: "infoLogging", type: "bool", title: addTitleDiv("Enable descriptionText logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
+        input(name: "debugLogging", type: "bool", title: styling_addTitleDiv("Enable debug logging"), description: "" , defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
+        input(name: "infoLogging", type: "bool", title: styling_addTitleDiv("Enable info logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
         // END:  getDefaultMetadataPreferences()
 
     }
 
-    // The below line needs to exist in ALL drivers for custom CSS to work!
     // BEGIN:getMetadataCustomizationMethods()
-    // Here getPreferences() can be used to get the above preferences
     metaDataExporter()
     if(isCSSDisabled() == false) {
         preferences {
@@ -60,14 +56,12 @@ metadata {
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
-    // DO NOT EDIT: This is generated from the metadata!
-    // TODO: Figure out how to get this from Hubitat instead of generating this?
+     
     Map deviceInfo = ['name': 'Tasmota - Universal Fan Control (Child)', 'namespace': 'tasmota', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-fancontrol-child-expanded.groovy']
-    //logging("deviceInfo[${infoName}] = ${deviceInfo[infoName]}", 1)
+     
     return(deviceInfo[infoName])
 }
 // END:  getDeviceInfoFunction()
-
 
 /* These functions are unique to each driver */
 void parse(List<Map> description) {
@@ -81,7 +75,6 @@ void parse(List<Map> description) {
             logging(it.descriptionText, 100)
             sendEvent(it)
         } else if (it.name in ["switch"]) {
-            // ignore
         } else {
             log.warn "Got '$it.name' attribute data, but doesn't know what to do with it! Did you choose the right device type?"
         }
@@ -91,7 +84,6 @@ void parse(List<Map> description) {
 void updated() {
     log.info "updated()"
     // BEGIN:getChildComponentDefaultUpdatedContent()
-    // This is code needed to run in updated() in ALL Child drivers
     getDriverVersion()
     // END:  getChildComponentDefaultUpdatedContent()
     refresh()
@@ -106,8 +98,6 @@ void installed() {
 
 void refresh() {
     // BEGIN:getChildComponentMetaConfigCommands()
-    // metaConfig is what contains all fields to hide and other configuration
-    // processed in the "metadata" context of the driver.
     def metaConfig = clearThingsToHide()
     metaConfig = setDatasToHide(['metaConfig', 'isComponent', 'preferences', 'label', 'name'], metaConfig=metaConfig)
     // END:  getChildComponentMetaConfigCommands()
@@ -128,11 +118,10 @@ void setSpeed(String value) {
  */
 
 // BEGIN:getDefaultFunctions()
-/* Default Driver Methods go here */
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0503T"
+    String version = "v1.0.2.0521T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -140,24 +129,14 @@ private String getDriverVersion() {
 }
 // END:  getDefaultFunctions()
 
-
-// Don't need this include anymore:
-//#include:getHelperFunctions('all-debug')
-
-/**
- * ALL DEFAULT METHODS (helpers-all-default)
- *
- * Helper functions included in all drivers/apps
- */
-
+// BEGIN:getHelperFunctions('all-default')
 boolean isDriver() {
     try {
-        // If this fails, this is not a driver...
         getDeviceDataByName('_unimportant')
-        logging("This IS a driver!", 0)
+         
         return true
     } catch (MissingMethodException e) {
-        logging("This is NOT a driver!", 0)
+         
         return false
     }
 }
@@ -165,14 +144,13 @@ boolean isDriver() {
 void deviceCommand(cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
-    logging("deviceCommand: ${cmd}", 0)
+     
     r = this."${cmd['cmd']}"(*cmd['args'])
-    logging("deviceCommand return: ${r}", 0)
+     
     updateDataValue('appReturn', JsonOutput.toJson(r))
 }
 
 void setLogsOffTask(boolean noLogWarning=false) {
-    // disable debug logs after 30 min, unless override is in place
 	if (debugLogging == true) {
         if(noLogWarning==false) {
             if(runReset != "DEBUG") {
@@ -185,41 +163,16 @@ void setLogsOffTask(boolean noLogWarning=false) {
     }
 }
 
-/*
-	initialize
-
-	Purpose: initialize the driver/app
-	Note: also called from updated()
-    This is called when the hub starts, DON'T declare it with return as void,
-    that seems like it makes it to not run? Since testing require hub reboots
-    and this works, this is not conclusive...
-*/
-// Call order: installed() -> configure() -> updated() -> initialize()
-def initialize() {
-    logging("initialize()", 100)
-	unschedule("updatePresence")
+def generalInitialize() {
+    logging("generalInitialize()", 100)
+	unschedule("tasmota_updatePresence")
     setLogsOffTask()
-    try {
-        // In case we have some more to run specific to this driver/app
-        initializeAdditional()
-    } catch (MissingMethodException e) {
-        // ignore
-    }
     refresh()
 }
 
-/**
- * Automatically disable debug logging after 30 mins.
- *
- * Note: scheduled in Initialize()
- */
 void logsOff() {
     if(runReset != "DEBUG") {
         log.warn "Debug logging disabled..."
-        // Setting logLevel to "0" doesn't seem to work, it disables logs, but does not update the UI...
-        //device.updateSetting("logLevel",[value:"0",type:"string"])
-        //app.updateSetting("logLevel",[value:"0",type:"list"])
-        // Not sure which ones are needed, so doing all... This works!
         if(isDriver()) {
             device.clearSetting("logLevel")
             device.removeSetting("logLevel")
@@ -231,8 +184,6 @@ void logsOff() {
             state?.settings?.remove("debugLogging")
             
         } else {
-            //app.clearSetting("logLevel")
-            // To be able to update the setting, it has to be removed first, clear does NOT work, at least for Apps
             app.removeSetting("logLevel")
             app.updateSetting("logLevel", "0")
             app.removeSetting("debugLogging")
@@ -269,9 +220,6 @@ private def getFilteredDeviceDisplayName() {
     return deviceDisplayName
 }
 
-/*
-    General Mathematical and Number Methods
-*/
 BigDecimal round2(BigDecimal number, Integer scale) {
     Integer pow = 10;
     for (Integer i = 1; i < scale; i++)
@@ -299,25 +247,13 @@ String hexToASCII(String hexValue) {
         output.append((char) Integer.parseInt(str, 16) + 30)
         logging("${Integer.parseInt(str, 16)}", 10)
     }
-    logging("hexToASCII: ${output.toString()}", 0)
+     
     return output.toString()
 }
+// END:  getHelperFunctions('all-default')
 
-/**
- * --END-- ALL DEFAULT METHODS (helpers-all-default)
- */
-
-/**
- * DRIVER METADATA METHODS (helpers-driver-metadata)
- *
- * These methods are to be used in (and/or with) the metadata section of drivers and
- * is also what contains the CSS handling and styling.
- */
-
-// These methods can be executed in both the NORMAL driver scope as well
-// as the Metadata scope.
+// BEGIN:getHelperFunctions('driver-metadata')
 private Map getMetaConfig() {
-    // This method can ALSO be executed in the Metadata Scope
     def metaConfig = getDataValue('metaConfig')
     if(metaConfig == null) {
         metaConfig = [:]
@@ -334,8 +270,6 @@ boolean isCSSDisabled(Map metaConfig=null) {
     return disableCSS
 }
 
-// These methods are used to set which elements to hide. 
-// They have to be executed in the NORMAL driver scope.
 private void saveMetaConfig(Map metaConfig) {
     updateDataValue('metaConfig', JsonOutput.toJson(metaConfig))
 }
@@ -347,16 +281,11 @@ private Map setSomethingToHide(String type, List something, Map metaConfig=null)
     if(!metaConfig.containsKey("hide")) {
         metaConfig["hide"] = [type:something]
     } else {
-        //logging("setSomethingToHide 1 else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
         if(metaConfig["hide"].containsKey(type)) {
-            //logging("setSomethingToHide 1 hasKey else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
             metaConfig["hide"][type].addAll(something)
         } else {
-            //logging("setSomethingToHide 1 noKey else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
             metaConfig["hide"][type] = something
         }
-        //metaConfig["hide"]["$type"] = oldData
-        //logging("setSomethingToHide 2 else: something: '$something', type:'$type' (${metaConfig["hide"]}) containsKey:${metaConfig["hide"].containsKey(type)}", 1)
     }
     saveMetaConfig(metaConfig)
     logging("setSomethingToHide() = ${metaConfig}", 1)
@@ -459,43 +388,10 @@ Map clearPreferencesToHide(Map metaConfig=null) {
     return metaConfig
 }
 
-// These methods are for executing inside the metadata section of a driver.
 def metaDataExporter() {
-    //log.debug "getEXECUTOR_TYPE = ${getEXECUTOR_TYPE()}"
     List filteredPrefs = getPreferences()['sections']['input'].name[0]
-    //log.debug "filteredPrefs = ${filteredPrefs}"
     if(filteredPrefs != []) updateDataValue('preferences', "${filteredPrefs}".replaceAll("\\s",""))
 }
-
-// These methods are used to add CSS to the driver page
-// This can be used for, among other things, to hide Commands
-// They HAVE to be run in getDriverCSS() or getDriverCSSWrapper()!
-
-/* Example usage:
-r += getCSSForCommandsToHide(["off", "refresh"])
-r += getCSSForStateVariablesToHide(["alertMessage", "mac", "dni", "oldLabel"])
-r += getCSSForCurrentStatesToHide(["templateData", "tuyaMCU", "needUpdate"])
-r += getCSSForDatasToHide(["preferences", "appReturn"])
-r += getCSSToChangeCommandTitle("configure", "Run Configure2")
-r += getCSSForPreferencesToHide(["numSwitches", "deviceTemplateInput"])
-r += getCSSForPreferenceHiding('<none>', overrideIndex=getPreferenceIndex('<none>', returnMax=true) + 1)
-r += getCSSForHidingLastPreference()
-r += '''
-form[action*="preference"]::before {
-    color: green;
-    content: "Hi, this is my content"
-}
-form[action*="preference"] div.mdl-grid div.mdl-cell:nth-of-type(2) {
-    color: green;
-}
-form[action*="preference"] div[for^=preferences] {
-    color: blue;
-}
-h3, h4, .property-label {
-    font-weight: bold;
-}
-'''
-*/
 
 String getDriverCSSWrapper() {
     Map metaConfig = getMetaConfig()
@@ -528,7 +424,6 @@ String getDriverCSSWrapper() {
     if(disableCSS == false) {
         r += "$defaultCSS "
         try{
-            // We always need to hide this element when we use CSS
             r += " ${getCSSForHidingLastPreference()} "
             
             if(disableCSS == false) {
@@ -569,7 +464,6 @@ String getDriverCSSWrapper() {
 Integer getCommandIndex(String cmd) {
     List commands = device.getSupportedCommands().unique()
     Integer i = commands.findIndexOf{ "$it" == cmd}+1
-    //log.debug "getCommandIndex: Seeing these commands: '${commands}', index=$i}"
     return i
 }
 
@@ -603,7 +497,6 @@ String getCSSToChangeCommandTitle(String cmd, String newTitle) {
 Integer getStateVariableIndex(String stateVariable) {
     def stateVariables = state.keySet()
     Integer i = stateVariables.findIndexOf{ "$it" == stateVariable}+1
-    //log.debug "getStateVariableIndex: Seeing these State Variables: '${stateVariables}', index=$i}"
     return i
 }
 
@@ -635,7 +528,6 @@ String getCSSForCurrentStatesToHide(List currentStates) {
 Integer getDataIndex(String data) {
     def datas = device.getData().keySet()
     Integer i = datas.findIndexOf{ "$it" == data}+1
-    //log.debug "getDataIndex: Seeing these Data Keys: '${datas}', index=$i}"
     return i
 }
 
@@ -658,19 +550,15 @@ String  getCSSForDatasToHide(List datas) {
 
 Integer getPreferenceIndex(String preference, boolean returnMax=false) {
     def filteredPrefs = getPreferences()['sections']['input'].name[0]
-    //log.debug "getPreferenceIndex: Seeing these Preferences first: '${filteredPrefs}'"
     if(filteredPrefs == [] || filteredPrefs == null) {
         d = getDataValue('preferences')
-        //log.debug "getPreferenceIndex: getDataValue('preferences'): '${d}'"
         if(d != null && d.length() > 2) {
             try{
                 filteredPrefs = d[1..d.length()-2].tokenize(',')
             } catch(e) {
-                // Do nothing
             }
         }
         
-
     }
     Integer i = 0
     if(returnMax == true) {
@@ -678,7 +566,6 @@ Integer getPreferenceIndex(String preference, boolean returnMax=false) {
     } else {
         i = filteredPrefs.findIndexOf{ "$it" == preference}+1
     }
-    //log.debug "getPreferenceIndex: Seeing these Preferences: '${filteredPrefs}', index=$i"
     return i
 }
 
@@ -709,26 +596,18 @@ String getCSSForPreferencesToHide(List preferences) {
 String getCSSForHidingLastPreference() {
     return getCSSForPreferenceHiding(null, overrideIndex=-1)
 }
+// END:  getHelperFunctions('driver-metadata')
 
-/**
- * --END-- DRIVER METADATA METHODS (helpers-driver-metadata)
- */
-
-/**
- * STYLING (helpers-styling)
- *
- * Helper functions included in all Drivers and Apps using Styling
- */
-String addTitleDiv(title) {
+// BEGIN:getHelperFunctions('styling')
+String styling_addTitleDiv(title) {
     return '<div class="preference-title">' + title + '</div>'
 }
 
-String addDescriptionDiv(description) {
+String styling_addDescriptionDiv(description) {
     return '<div class="preference-description">' + description + '</div>'
 }
 
-String makeTextBold(s) {
-    // DEPRECATED: Should be replaced by CSS styling!
+String styling_makeTextBold(s) {
     if(isDriver()) {
         return "<b>$s</b>"
     } else {
@@ -736,8 +615,7 @@ String makeTextBold(s) {
     }
 }
 
-String makeTextItalic(s) {
-    // DEPRECATED: Should be replaced by CSS styling!
+String styling_makeTextItalic(s) {
     if(isDriver()) {
         return "<i>$s</i>"
     } else {
@@ -745,7 +623,7 @@ String makeTextItalic(s) {
     }
 }
 
-String getDefaultCSS(boolean includeTags=true) {
+String styling_getDefaultCSS(boolean includeTags=true) {
     String defaultCSS = '''
     /* This is part of the CSS for replacing a Command Title */
     div.mdl-card__title div.mdl-grid div.mdl-grid .mdl-cell p::after {
@@ -775,17 +653,12 @@ String getDefaultCSS(boolean includeTags=true) {
         return defaultCSS
     }
 }
-
-/**
- * --END-- STYLING METHODS (helpers-styling)
- */
+// END:  getHelperFunctions('styling')
 
 // BEGIN:getLoggingFunction(specialDebugLevel=True)
-/* Logging function included in all drivers */
 private boolean logging(message, level) {
     boolean didLogging = false
-    //Integer logLevelLocal = (logLevel != null ? logLevel.toInteger() : 0)
-    //if(!isDeveloperHub()) {
+     
     Integer logLevelLocal = 0
     if (infoLogging == null || infoLogging == true) {
         logLevelLocal = 100
@@ -793,19 +666,10 @@ private boolean logging(message, level) {
     if (debugLogging == true) {
         logLevelLocal = 1
     }
-    //}
+     
     if (logLevelLocal != 0){
         switch (logLevelLocal) {
-        case -1: // Insanely verbose
-            if (level >= 0 && level < 100) {
-                log.debug "$message"
-                didLogging = true
-            } else if (level == 100) {
-                log.info "$message"
-                didLogging = true
-            }
-        break
-        case 1: // Very verbose
+        case 1:  
             if (level >= 1 && level < 99) {
                 log.debug "$message"
                 didLogging = true
@@ -814,29 +678,7 @@ private boolean logging(message, level) {
                 didLogging = true
             }
         break
-        case 10: // A little less
-            if (level >= 10 && level < 99) {
-                log.debug "$message"
-                didLogging = true
-            } else if (level == 100) {
-                log.info "$message"
-                didLogging = true
-            }
-        break
-        case 50: // Rather chatty
-            if (level >= 50 ) {
-                log.debug "$message"
-                didLogging = true
-            }
-        break
-        case 99: // Only parsing reports
-            if (level >= 99 ) {
-                log.debug "$message"
-                didLogging = true
-            }
-        break
-        
-        case 100: // Only special debug messages, eg IR and RF codes
+        case 100:  
             if (level == 100 ) {
                 log.info "$message"
                 didLogging = true
@@ -847,4 +689,3 @@ private boolean logging(message, level) {
     return didLogging
 }
 // END:  getLoggingFunction(specialDebugLevel=True)
-

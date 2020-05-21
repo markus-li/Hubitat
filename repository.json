@@ -3,10 +3,59 @@
   "gitHubUrl": "https://github.com/markus-li/Hubitat",
   "packages": [
     {
+      "name": "Aqara Smart Curtain Motor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-smart-curtain-motor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-aqara-smart-curtain-motor-beta.json",
+      "description": "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
+    },
+    {
+      "name": "Aqara Water Leak Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-water-leak-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-aqara-water-leak-sensor-beta.json",
+      "description": "Works with model SJCGQ11LM."
+    },
+    {
+      "name": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-mijia-smart-light-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-mijia-smart-light-sensor-beta.json",
+      "description": "Works with model GZCGQ01LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Contact Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-contact-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-contact-sensor-beta.json",
+      "description": "Works with model MCCGQ01LM & MCCGQ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Motion Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-motion-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-motion-sensor-beta.json",
+      "description": "Works with model RTCGQ01LM & RTCGQ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Temperature & Humidity Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-temperature-humidity.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-temperature-humidity-beta.json",
+      "description": "Works with model WSDCGQ01LM & WSDCGQ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara/Opple Button/Switch/Remote",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-opple-button-switch-remote.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-opple-button-switch-remote-beta.json",
+      "description": "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
+    },
+    {
       "name": "Tasmota for Hubitat Elevation",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packageManifest.json",
-      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packageManifestBeta.json",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/t4he.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/t4he-beta.json",
       "description": "Allows you to integrate Tasmota-based devices with Hubitat Elevation."
     }
   ]
