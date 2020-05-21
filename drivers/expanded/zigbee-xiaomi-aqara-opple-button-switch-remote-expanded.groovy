@@ -318,9 +318,9 @@ boolean isNonSwitchModel(String model=null) {
 }
 
 ArrayList<String> parse(String description) {
-    // BEGIN:getGenericZigbeeParseHeader(loglevel=100)
-    logging("PARSE START---------------------", 100)
-    logging("Parsing: '${description}'", 100)
+    // BEGIN:getGenericZigbeeParseHeader(loglevel=0)
+    //logging("PARSE START---------------------", 0)
+    //logging("Parsing: '${description}'", 0)
     ArrayList<String> cmd = []
     Map msgMap = null
     if(description.indexOf('encoding: 4C') >= 0) {
@@ -375,8 +375,8 @@ ArrayList<String> parse(String description) {
         }
       }
     }
-    logging("msgMap: ${msgMap}", 100)
-    // END:  getGenericZigbeeParseHeader(loglevel=100)
+    //logging("msgMap: ${msgMap}", 0)
+    // END:  getGenericZigbeeParseHeader(loglevel=0)
 
     String cModel = getDeviceDataByName('model')
 
@@ -409,7 +409,7 @@ ArrayList<String> parse(String description) {
         refreshActual(model)
 
     } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0001") {
-        logging("Application version (also requested when receiving hourly checkin) - description:${description} | parseMap:${msgMap}", 100)
+        logging("Application version (also requested when receiving hourly checkin) - description:${description} | parseMap:${msgMap}", 1)
         
     } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "FFF0") {
         logging("Unparsed event FFF0 - description:${description}", 1)
@@ -499,10 +499,10 @@ ArrayList<String> parse(String description) {
     hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90)
     sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
-    // BEGIN:getGenericZigbeeParseFooter(loglevel=1)
-    logging("PARSE END-----------------------", 1)
+    // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
+    //logging("PARSE END-----------------------", 0)
     return cmd
-    // END:  getGenericZigbeeParseFooter(loglevel=1)
+    // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
 void oppleInit() {
