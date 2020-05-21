@@ -26,6 +26,7 @@ from colorama import init, Fore, Style
 from os import path
 from pygit2 import Repository
 import sys
+import os
 init()
 sys.path.insert(0, "private/tools")
 
@@ -111,9 +112,13 @@ def main():
     base_repo_url = 'https://github.com/markus-li/Hubitat/blob/'+branch_name+'/drivers/expanded/'
     base_raw_repo_url = 'https://raw.githubusercontent.com/markus-li/Hubitat/'+branch_name+'/drivers/expanded/'
     app_raw_repo_url = 'https://raw.githubusercontent.com/markus-li/Hubitat/'+branch_name+'/apps/expanded/'
-
-    # Get us a Code Builder...
     
+    # Build the expansion folders:
+    for f in ['apps/expanded', 'drivers/expanded', 'private/apps/expanded', 'private/drivers/expanded']:
+        if not os.path.exists(f):
+            os.makedirs(f)
+
+    # Get us a Code Builder...    
     log.debug('Getting started...')
     #HubitatHubSpider.saveConfig('192.168.1.1', 'username', 'password', 'hhs_sample.cfg')
     hhs = HubitatHubSpider(None, 'hubitat_hubspider.cfg')
