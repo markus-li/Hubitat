@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0521
+ *  Version: v1.0.2.0521b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -539,7 +539,7 @@ ArrayList<String> getBattery() {
 private String getDriverVersion() {
     comment = "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0521"
+    String version = "v1.0.2.0521b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -798,7 +798,7 @@ String setCleanModelName(String newModelToSet=null, List<String> acceptedModels=
             }
         }
     }
-    logging("dirty model = $model, cleaned model=$newModel", 1)
+    logging("dirty model = $model, clean model=$newModel", 1)
     updateDataValue('model', newModel)
     return newModel
 }

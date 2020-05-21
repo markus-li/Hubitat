@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.2.0521
+ *  Version: v0.6.1.0521b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1029,7 +1029,7 @@ void runLevelChange(String deviceID, String methodName, BigDecimal level, Intege
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.2.0521"
+    String version = "v0.6.1.0521b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1288,7 +1288,7 @@ String setCleanModelName(String newModelToSet=null, List<String> acceptedModels=
             }
         }
     }
-    logging("dirty model = $model, cleaned model=$newModel", 1)
+    logging("dirty model = $model, clean model=$newModel", 1)
     updateDataValue('model', newModel)
     return newModel
 }

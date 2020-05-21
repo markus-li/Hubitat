@@ -9,7 +9,7 @@
       "id": "1a3c3482-31d9-5e1f-86bf-ee3a36a4585e",
       "internalId": 1154,
       "name": "Zigbee - Xiaomi/Aqara Motion Sensor",
-      "betaVersion": "v0.6.2.0521",
+      "betaVersion": "v0.6.1.0521b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy",
       "required": true

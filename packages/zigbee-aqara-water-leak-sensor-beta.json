@@ -9,7 +9,7 @@
       "id": "dcf70739-e8a4-5d16-86a4-a6ea2bd94c40",
       "internalId": 1377,
       "name": "Zigbee - Aqara Water Leak Sensor",
-      "betaVersion": "v0.6.2.0521",
+      "betaVersion": "v0.6.1.0521b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-water-leak-sensor-expanded.groovy",
       "required": true

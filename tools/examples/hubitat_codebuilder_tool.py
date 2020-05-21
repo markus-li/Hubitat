@@ -125,11 +125,15 @@ def main():
     log.debug(hhs_3.login())
 
     default_version = "v1.0.2.MMDDTb"
+    default_zigbee_version = "v0.6.1.MMDDb"
+    version_suffix = "b"
     checksum_file_suffix = None
     remove_comments = True
     is_beta = True
     if(branch_name == 'release'):
         default_version = "v1.0.2.MMDDT"
+        default_zigbee_version = "v0.6.1.MMDD"
+        version_suffix = ""
         checksum_file_suffix = "release"
         is_beta = False
 
@@ -363,23 +367,23 @@ def main():
          'alternate_output_filename': 'tasmota-universal-multi-sensor-testing-child', \
          'alternate_name': 'Tasmota - Universal Multi Sensor Testing (Child)' },
 
-        {'id': 1057, 'file': 'testing-get-driver-runtime-data.groovy', 'version': 'v0.1.0.MMDD'  },
+        {'id': 1057, 'file': 'testing-get-driver-runtime-data.groovy', 'version': 'v0.1.0.MMDD' + version_suffix },
 
         # Zigbee
         {'id': 579, 'file': 'zigbee-generic-wifi-switch-plug.groovy' },
-        {'id': 801, 'id_2': 368, 'id_3': 335, 'file': 'zigbee-aqara-smart-curtain-motor.groovy', 'version': 'v1.0.2.MMDD',
+        {'id': 801, 'id_2': 368, 'id_3': 335, 'file': 'zigbee-aqara-smart-curtain-motor.groovy', 'version': 'v1.0.2.MMDD' + version_suffix,
          'comment': 'Works with models ZNCLDJ11LM & ZNCLDJ12LM.' },        
-        {'id': 1122, 'id_2': 367, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': 'v0.6.2.MMDD',
+        {'id': 1122, 'id_2': 367, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model GZCGQ01LM.' },
-        {'id': 1121, 'id_2': 363, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': 'v0.6.2.MMDD',
+        {'id': 1121, 'id_2': 363, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': default_zigbee_version,
          'comment': 'Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM.' },
-        {'id': 1153, 'id_2': 322, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1153, 'id_2': 322, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model MCCGQ01LM & MCCGQ11LM.' },
-        {'id': 1154, 'id_2': 324, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-motion-sensor.groovy', 'version': 'v0.6.2.MMDD',
+        {'id': 1154, 'id_2': 324, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-motion-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model RTCGQ01LM & RTCGQ11LM.' },
-        {'id': 1345, 'id_2': 326, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-temperature-humidity.groovy', 'version': 'v0.6.2.MMDD',
+        {'id': 1345, 'id_2': 326, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-temperature-humidity.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model WSDCGQ01LM & WSDCGQ11LM.' },
-        {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': 'v0.6.2.MMDD',
+        {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model SJCGQ11LM.' },
         
         # Virtual
@@ -391,22 +395,22 @@ def main():
     driver_files_private = [
         # Private drivers:
         #{'id': None, 'file': 'zigbee-generic-wifi-switch-plug-private.groovy' },
-        {'id': 547, 'id_3': 341, 'file': 'testing-bare-minimum-driver.groovy', 'version': 'v0.1.0.MMDD' },
+        {'id': 547, 'id_3': 341, 'file': 'testing-bare-minimum-driver.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
 
         # Zigbee:
         
-        {'id': 1155, 'id_2': 362, 'id_3': 0, 'file': 'zigbee-ihorn-motion-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1155, 'id_2': 362, 'id_3': 0, 'file': 'zigbee-ihorn-motion-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model LH-992ZB.' },
-        {'id': 1185, 'id_2': 325, 'file': 'zigbee-xiaomi-aqara-plug-outlet.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1185, 'id_2': 325, 'file': 'zigbee-xiaomi-aqara-plug-outlet.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model ZNCZ02LM & QBCZ11LM.' },
-        {'id': 1186, 'id_2': 334, 'id_3': 0, 'file': 'zigbee-aqara-bulb.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1186, 'id_2': 334, 'id_3': 0, 'file': 'zigbee-aqara-bulb.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model ZNLDP12LM.' },
-        {'id': 1256, 'id_2': 361, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-oppo-6-button.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1256, 'id_2': 361, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-oppo-6-button.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model WXCJKG13LM.' },
-        {'id': 1313, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-5-button-remote.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1313, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-5-button-remote.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model ???.' },
         
-        {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model DJT11LM.' },
     ]
 
