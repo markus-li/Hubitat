@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0521
+ *  Version: v0.6.2.0521
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,6 @@
  *
  */
 
-/* 
-    Inspired by a driver from shin4299 which can be found here:
-    https:
-*/
-
 // BEGIN:getDefaultImports()
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
@@ -33,24 +28,18 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Aqara Smart Curtain Motor", namespace: "markusl", author: "Markus Liljergren", vid: "generic-shade", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-smart-curtain-motor-expanded.groovy") {
+	definition (name: "Zigbee - Xiaomi/Aqara Temperature & Humidity Sensor", namespace: "markusl", author: "Markus Liljergren", vid: "generic-shade", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-temperature-humidity-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
         capability "Initialize"
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
-        capability "Refresh"
         capability "Battery"
-        capability "PowerSource"
-        capability "WindowShade"
+        capability "TemperatureMeasurement"
+        capability "RelativeHumidityMeasurement"
+        capability "PressureMeasurement"
         
-        capability "Actuator"
-        capability "Switch"
-        capability "Light"
-        capability "SwitchLevel"
-        capability "ChangeLevel"
-
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
         // END:  getDefaultMetadataAttributes()
@@ -58,18 +47,19 @@ metadata {
         attribute "lastCheckin", "Date"
         attribute "lastCheckinEpoch", "String"
         // END:  getMetadataAttributesForLastCheckin()
-        
-        command "stop"
-        command "manualOpenEnable"
-        command "manualOpenDisable"
-        command "curtainOriginalDirection"
-        command "curtainReverseDirection"
-        command "trackDiscoveryMode"
+        // BEGIN:getZigbeeBatteryMetadataAttributes()
+        attribute "batteryLastReplaced", "String"
+        // END:  getZigbeeBatteryMetadataAttributes()
 
-        fingerprint profileId: "0104", endpointId: "01", inClusters: "0000,0004,0003,0005,000A,0102,000D,0013,0006,0001,0406", outClusters: "0019,000A,000D,0102,0013,0006,0001,0406", manufacturer: "LUMI", model: "lumi.curtain"
-        
-		fingerprint endpointId: "01", profileId: "0104", deviceId: "0202", inClusters: "0000, 0003, 0102, 000D, 0013, 0001", outClusters: "0003, 000A", manufacturer: "LUMI", model: "lumi.curtain.hagl04", deviceJoinName: "Xiaomi Curtain B1"
-	}
+        // BEGIN:getZigbeeBatteryCommands()
+        command "resetBatteryReplacedDate"
+        // END:  getZigbeeBatteryCommands()
+
+        fingerprint deviceJoinName: "Xiaomi Temperature & Humidity Sensor (WSDCGQ01LM)", model: "lumi.sens", profileId: "0104", endpointId: 01, inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI"
+        fingerprint deviceJoinName: "Xiaomi Temperature & Humidity Sensor (WSDCGQ01LM)", model: "lumi.sensor_ht", profileId: "0104", endpointId: 01, inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI"
+
+        fingerprint deviceJoinName: "Aqara Temperature & Humidity Sensor (WSDCGQ11LM)", model: "lumi.weather", modelType: "Aqara WSDCGQ11LM", profileId: "0104", endpointId: 01, application: 03, inClusters: "0000,0003,FFFF,0402,0403,0405", outClusters: "0000,0004,FFFF", manufacturer: "LUMI"
+    }
 
     preferences {
         // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
@@ -81,13 +71,27 @@ metadata {
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
+        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
+        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
+        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
+        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
+        // BEGIN:getDefaultMetadataPreferencesForTHMonitorAlternative1()
+        input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]], displayDuringSetup: false)
+        input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
+        input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..2 = maximum number of decimal places, default: 1)<br/>NOTE: If the 2nd decimal is a 0 (eg. 24.70) it will show without the last decimal (eg. 24.7)."), options: ["0", "1", "2"], defaultValue: "1", displayDuringSetup: true, required: false)
+        input(name: "humidityOffset", type: "decimal", title: styling_addTitleDiv("Humidity Offset"), description: styling_addDescriptionDiv("Adjust the humidity by this many percent."), displayDuringSetup: true, required: false, range: "*..*")
+        if(getDeviceDataByName('hasPressure') == "True") {
+            input(name: "pressureUnitConversion", type: "enum", title: styling_addTitleDiv("Displayed Pressure Unit"), description: styling_addDescriptionDiv("(default: kPa)"), options: ["mbar", "kPa", "inHg", "mmHg", "atm"], defaultValue: "kPa")
+            input(name: "pressureOffset", type: "decimal", title: styling_addTitleDiv("Pressure Offset"), description: styling_addDescriptionDiv("Adjust the pressure value by this much."), displayDuringSetup: true, required: false, range: "*..*")
+        }
+        // END:  getDefaultMetadataPreferencesForTHMonitorAlternative1()
 	}
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Aqara Smart Curtain Motor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'vid': 'generic-shade', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-smart-curtain-motor-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara Temperature & Humidity Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'vid': 'generic-shade', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-temperature-humidity-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -97,56 +101,40 @@ String getDeviceInfoByName(infoName) {
 
 ArrayList<String> refresh() {
     logging("refresh() model='${getDeviceDataByName('model')}'", 10)
-
+    
     getDriverVersion()
     configurePresence()
+    resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
-
-    ArrayList<String> cmd = []
-    cmd += getPosition()
-    cmd += zigbee.readAttribute(CLUSTER_BASIC, 0xFF01, [mfgCode: "0x115F"])
-
+    
     String model = setCleanModelName(newModelToSet=null, acceptedModels=[
-        "lumi.curtain.hagl04",
-        "lumi.curtain"
+        "lumi.sensor_ht",
+        "lumi.weather"
     ])
 
-    if(model != "lumi.curtain") { 
-        cmd += getBattery()
+    if(model == "lumi.weather") {
+        updateDataValue("hasPressure", "True")
     }
-    logging("refresh cmd: $cmd", 1)
-    sendZigbeeCommands(cmd)
+
+    ArrayList<String> cmd = []
     
+    logging("refresh cmd: $cmd", 1)
+    return cmd
 }
 
 void initialize() {
     logging("initialize()", 100)
-    makeSchedule()
     refresh()
 }
 
 void installed() {
     logging("installed()", 100)
-    sendEvent(name:"windowShade", value: 'unknown')
-    sendEvent(name:"switch", value: 'off')
-    sendEvent(name:"level", value: 0)
-    makeSchedule()
     refresh()
 }
 
 void updated() {
     logging("updated()", 100)
     refresh()
-}
-
-void makeSchedule() {
-    logging("makeSchedule()", 100)
-    if(getDeviceDataByName('model') != "lumi.curtain") {
-        Random rnd = new Random()
-        schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 5/12 * * ? *", 'getBattery')
-    } else {
-        unschedule('getBattery')
-    }
 }
 
 ArrayList<String> parse(String description) {
@@ -210,94 +198,114 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
-    if(msgMap["profileId"] == "0104" && msgMap["clusterId"] == "000A") {
-		logging("Xiaomi Curtain Present Event", 1)
-        if(sendlastCheckinEvent(minimumMinutesToRepeat=60) == true) {
-            logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 1)
-            sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
-        }
-	} else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
-        logging("Manufacturer Name Received - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if(msgMap["profileId"] == "0104") {
-        //logging("Unhandled KNOWN 0104 event (heartbeat?)- description:${description} | parseMap:${msgMap}", 0)
-        //logging("RAW: ${msgMap["attrId"]}", 0)
+    if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
+        /*if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"][0]["encoding"] == "42") {
+            logging("Redoing the parsing for additionalAttrs", 1)
+            msgMap = zigbee.parseDescriptionAsMap(description.replace('01FF42', '01FF41'))
+            msgMap["additionalAttrs"][0]["encoding"] = "42"
+            msgMap["additionalAttrs"][0]["value"] = parseXiaomiStruct(msgMap["additionalAttrs"][0]["value"], isFCC0=msgMap["additionalAttrs"][0]["attrId"]=="FCC0")
+        }*/
+        logging("Reset button pressed/message requested by hourly checkin - description:${description} | parseMap:${msgMap}", 1)
+        if(msgMap["value"] == "lumi.sens") msgMap["value"] = "lumi.sensor_ht"
+        setCleanModelName(newModelToSet=msgMap["value"])
 
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0404") {
-        if(msgMap["command"] == "0A") {
-            if(msgMap["value"] == "00" && getDeviceDataByName('model') == "lumi.curtain") {
-                logging("HANDLED KNOWN 0A command event with Value 00 - description:${description} | parseMap:${msgMap}", 1)
-                logging("Sending request for the actual position...", 1)
-                cmd += zigbee.readAttribute(CLUSTER_WINDOW_POSITION, 0x0055)
-            } else {
-                //logging("Unhandled KNOWN 0A command event - description:${description} | parseMap:${msgMap}", 0)
-            }
+    } else if(msgMap["cluster"] == "0402" && msgMap["attrId"] == "0000") {
+        logging("XIAOMI/AQARA TEMPERATURE EVENT - description:${description} | parseMap:${msgMap}", 1)
+        Integer rawValue = msgMap['valueParsed']
+        BigDecimal variance = 0.2
+        
+        List adjustedTemp = sensor_data_getAdjustedTempAlternative(rawValue / 100.0 )
+        String tempUnit = adjustedTemp[0]
+        BigDecimal t = adjustedTemp[1]
+        
+        BigDecimal oldT = device.currentValue('temperature') == null ? null : device.currentValue('temperature')
+        t = t.setScale(1, BigDecimal.ROUND_HALF_UP)
+        if(oldT != null) oldT = oldT.setScale(1, BigDecimal.ROUND_HALF_UP)
+        BigDecimal tChange = null
+        if(oldT == null) {
+            logging("Temperature: $t $tempUnit", 1)
         } else {
-            //logging("Unhandled KNOWN event - description:${description} | parseMap:${msgMap}", 0)
+            tChange = Math.abs(t - oldT)
+            tChange = tChange.setScale(1, BigDecimal.ROUND_HALF_UP)
+            logging("Temperature: $t $tempUnit (old temp: $oldT, change: $tChange)", 1)
         }
+        
+        if(oldT == null || tChange > variance) {
+            logging("Sending temperature event (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 100)
+            sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
+        } else {
+            logging("SKIPPING temperature event since the change wasn't large enough (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 1)
+        }
+
+    } else if(msgMap["cluster"] == "0403" && msgMap["attrId"] == "0000") {
+        logging("AQARA PRESSURE EVENT - description:${description} | parseMap:${msgMap}", 1)
+        Integer rawValue = msgMap['valueParsed']
+        BigDecimal variance = 0.0
+        
+        BigDecimal p = sensor_data_getAdjustedPressure(sensor_data_convertPressure(rawValue), decimals=2)
+        BigDecimal oldP = device.currentValue('pressure') == null ? null : device.currentValue('pressure')
+        p = p.setScale(2, BigDecimal.ROUND_HALF_UP)
+        if(oldP != null) oldP = oldP.setScale(2, BigDecimal.ROUND_HALF_UP)
+        BigDecimal pChange = null
+        if(oldP == null) {
+            logging("Pressure: $p", 1)
+        } else {
+            pChange = Math.abs(p - oldP)
+            pChange = pChange.setScale(2, BigDecimal.ROUND_HALF_UP)
+            logging("Pressure: $p (old pressure: $oldP, change: $pChange)", 1)
+        }
+        String pUnit = pressureUnitConversion == null ? "kPa" : pressureUnitConversion
+        if(oldP == null || pChange > variance) {
+            logging("Sending pressure event (Pressure: $p, old pressure: $oldP, change: $pChange)", 100)
+            sendEvent(name:"pressure", value: p, unit: "$pUnit", isStateChange: true)
+        } else {
+            logging("SKIPPING pressure event since the change wasn't large enough (Pressure: $p, old pressure: $oldP, change: $pChange)", 1)
+        }
+        
+    } else if(msgMap["cluster"] == "0405" && msgMap["attrId"] == "0000") {
+        logging("XIAOMI/AQARA HUMIDITY EVENT - description:${description} | parseMap:${msgMap}", 1)
+        Integer rawValue = msgMap['valueParsed']
+        BigDecimal variance = 0.02
+        
+        BigDecimal h = sensor_data_getAdjustedHumidity(rawValue / 100.0)
+        BigDecimal oldH = device.currentValue('humidity') == null ? null : device.currentValue('humidity')
+        h = h.setScale(1, BigDecimal.ROUND_HALF_UP)
+        if(oldH != null) oldH = oldH.setScale(2, BigDecimal.ROUND_HALF_UP)
+        BigDecimal hChange = null
+        if(oldH == null) {
+            logging("Humidity: $h %", 1)
+        } else {
+            hChange = Math.abs(h - oldH)
+            hChange = hChange.setScale(2, BigDecimal.ROUND_HALF_UP)
+            logging("Humidity: $h% (old hummidity: $oldH%, change: $hChange%)", 1)
+        }
+        
+        if(oldH == null || hChange > variance) {
+            logging("Sending humidity event (Humidity: $h%, old hummidity: $oldH%, change: $hChange%)", 100)
+            sendEvent(name:"humidity", value: h, unit: "%", isStateChange: true)
+        } else {
+            logging("SKIPPING humidity event since the change wasn't large enough (Humidity: $h%, old hummidity: $oldH%, change: $hChange%)", 1)
+        }
+
+    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "FF01" && 
+                (msgMap["encoding"] == "41" || msgMap["encoding"] == "42")) {
+        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42 - hourly checkin) - description:${description} | parseMap:${msgMap}", 100)
+
+        if(msgMap["value"].containsKey("battery")) {
+            parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
+        }
+        logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))        
+
     } else if(msgMap["clusterId"] == "0013") {
         //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
 
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
-        logging("Reset button pressed - description:${description} | parseMap:${msgMap}", 1)
-        setCleanModelName(newModelToSet=msgMap["value"])
-        refresh()
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0006") {
-        logging("Got a date - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0007") {
-        logging("Handled KNOWN event (BASIC_ATTR_POWER_SOURCE) - description:${description} | parseMap:${msgMap}", 1)
-        if(msgMap["value"] == "03") {
-            sendEvent(name:"powerSource", value: "battery")
-        } else if(msgMap["value"] == "04") {
-            sendEvent(name:"powerSource", value: "dc")
-        } else {
-            sendEvent(name:"powerSource", value: "unknown")
-        }
-    } else if(msgMap["cluster"] == "0102" && msgMap["attrId"] == "0008") {
-        logging("Position event (after pressing stop) - description:${description} | parseMap:${msgMap}", 1)
-        Long theValue = Long.parseLong(msgMap["value"], 16)
-        curtainPosition = theValue.intValue()
-        logging("GETTING POSITION from cluster 0102: int => ${curtainPosition}", 1)
-        positionEvent(curtainPosition)
-    } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02")) {
-        if(msgMap["encoding"] == "42") {
-            msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
-            msgMap["encoding"] = "42"
-            msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
-        }
-        //logging("KNOWN event (Xiaomi/Aqara specific data structure) - description:${description} | parseMap:${msgMap}", 0)
-        
-    } else if(msgMap["cluster"] == "000D" && msgMap["attrId"] == "0055") {
-        logging("cluster 000D", 1)
-		if(msgMap["size"] == "16" || msgMap["size"] == "1C" || msgMap["size"] == "10") {
-			Long theValue = Long.parseLong(msgMap["value"], 16)
-			BigDecimal floatValue = Float.intBitsToFloat(theValue.intValue());
-			logging("GOT POSITION DATA: long => ${theValue}, BigDecimal => ${floatValue}", 1)
-			curtainPosition = floatValue.intValue()
-            if(getDeviceDataByName('model') != "lumi.curtain" && msgMap["command"] == "0A" && curtainPosition == 0) {
-                logging("Sending a request for the actual position...", 1)
-                cmd += zigbee.readAttribute(CLUSTER_WINDOW_POSITION, 0x0055)
-
-            } else {
-                logging("SETTING POSITION: long => ${theValue}, BigDecimal => ${floatValue}", 1)
-                positionEvent(curtainPosition)
-            }
-		} else if(msgMap["size"] == "28" && msgMap["value"] == "00000000") {
-			logging("Requesting Position", 1)
-			cmd += zigbee.readAttribute(CLUSTER_WINDOW_POSITION, POSITION_ATTR_VALUE)
-		}
-	} else if(msgMap["cluster"] == "0001" && msgMap["attrId"] == "0021") {
-        if(getDeviceDataByName('model') != "lumi.curtain") {
-            def bat = msgMap["value"]
-            Long value = Long.parseLong(bat, 16)/2
-            logging("Battery: ${value}%, ${bat}", 100)
-            sendEvent(name:"battery", value: value)
-        }
-
-	} else {
-		log.warn "Unhandled Event - description:${description} | msgMap:${msgMap}"
+    } else {
+		log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
 	}
+
+    hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90)
+    sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
@@ -305,227 +313,13 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
-void positionEvent(Integer curtainPosition) {
-	String windowShadeStatus = ""
-	if(curtainPosition <= 2) curtainPosition = 0
-    if(curtainPosition >= 98) curtainPosition = 100
-    if(curtainPosition == 100) {
-        logging("Fully Open", 1)
-        windowShadeStatus = "open"
-    } else if(curtainPosition > 0) {
-        logging(curtainPosition + '% Partially Open', 1)
-        windowShadeStatus = "partially open"
-    } else {
-        logging("Closed", 1)
-        windowShadeStatus = "closed"
-    }
-    logging("device.currentValue('position') = ${device.currentValue('position')}, curtainPosition = $curtainPosition", 1)
-    if(device.currentValue('position') == null || 
-        curtainPosition < device.currentValue('position') - 1 || 
-        curtainPosition > device.currentValue('position') + 1) {
-        
-        logging("CHANGING device.currentValue('position') = ${device.currentValue('position')}, curtainPosition = $curtainPosition", 1)
-        sendEvent(name:"windowShade", value: windowShadeStatus)
-        sendEvent(name:"position", value: curtainPosition)
-        sendEvent(name:"level", value: curtainPosition)
-        if(windowShadeStatus == "closed") {
-            sendEvent(name:"switch", value: 'off')
-        } else {
-            sendEvent(name:"switch", value: 'on')
-        }
-    }
-}
-
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
-ArrayList<String> open() {
-    logging("open()", 1)
-	return setPosition(100)    
-}
-
-ArrayList<String> on() {
-    logging("on()", 1)
-	return open()
-}
-
-ArrayList<String> close() {
-    logging("close()", 1)
-	return setPosition(0)    
-}
-
-ArrayList<String> off() {
-    logging("off()", 1)
-	return close()
-}
-
-ArrayList<String> startLevelChange(String direction) {
-    logging("startLevelChange(direction=$direction)", 1)
-	if(direction == "up") {
-        return open()
-    } else {
-        return close()
-    }
-}
-
-ArrayList<String> reverseCurtain() {
-    logging("reverseCurtain()", 1)
-	ArrayList<String> cmd = []
-	cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF28, 0x10, 0x01, [mfgCode: "0x115F"])
-    logging("cmd=${cmd}", 1)
-    return cmd
-}
-
-ArrayList<String> manualOpenEnable() {
-    logging("manualOpenEnable()", 1)
-    ArrayList<String> cmd = []
-    if(getDeviceDataByName('model') == "lumi.curtain") {
-        cmd += zigbeeWriteLongAttribute(CLUSTER_BASIC, 0x0401, 0x42, 0x0700080000040012, [mfgCode: "0x115F"])
-    } else {
-        cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF29, 0x10, 0x00, [mfgCode: "0x115F"])
-    }
-    //logging("manualOpenEnable cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> manualOpenDisable() {
-    logging("manualOpenDisable()", 1)
-    ArrayList<String> cmd = []
-    if(getDeviceDataByName('model') == "lumi.curtain") {
-        cmd += zigbeeWriteLongAttribute(CLUSTER_BASIC, 0x0401, 0x42, 0x0700080000040112, [mfgCode: "0x115F"])
-    } else {
-        cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF29, 0x10, 0x01, [mfgCode: "0x115F"])
-    }
-    //logging("manualOpenDisable cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> curtainOriginalDirection() {
-    logging("curtainOriginalDirection()", 1)
-    ArrayList<String> cmd = []
-    if(getDeviceDataByName('model') == "lumi.curtain") {
-        cmd += zigbeeWriteLongAttribute(CLUSTER_BASIC, 0x0401, 0x42, 0x0700020000040012, [mfgCode: "0x115F"])
-    } else {
-        cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF28, 0x10, 0x00, [mfgCode: "0x115F"])
-    }
-    //logging("curtainOriginalDirection cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> curtainReverseDirection() {
-    logging("curtainReverseDirection()", 1)
-    ArrayList<String> cmd = []
-    if(getDeviceDataByName('model') == "lumi.curtain") {
-        cmd += zigbeeWriteLongAttribute(CLUSTER_BASIC, 0x0401, 0x42, 0x0700020001040012, [mfgCode: "0x115F"])
-    } else {
-        cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF28, 0x10, 0x01, [mfgCode: "0x115F"])
-    }
-    //logging("curtainReverseDirection cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> trackDiscoveryMode() {
-    logging("trackDiscoveryMode()", 1)
-    ArrayList<String> cmd = []
-    if(getDeviceDataByName('model') == "lumi.curtain") {
-        cmd += zigbeeWriteLongAttribute(CLUSTER_BASIC, 0x0401, 0x42, 0x0700010000040012, [mfgCode: "0x115F"])
-    } else {
-        cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF27, 0x10, 0x00, [mfgCode: "0x115F"])
-    }
-    //logging("trackDiscoveryMode cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> stop() {
-    logging("stop()", 1)
-    ArrayList<String> cmd = []
-	cmd += zigbeeCommand(CLUSTER_WINDOW_COVERING, COMMAND_PAUSE)
-    //logging("stop cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> stopLevelChange() {
-    logging("stop()", 1)
-    ArrayList<String> cmd = []
-	cmd += zigbeeCommand(CLUSTER_WINDOW_COVERING, COMMAND_PAUSE)
-    //logging("stop cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> enableAutoClose() {
-    logging("enableAutoClose()", 1)
-    ArrayList<String> cmd = []
-	cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF29, 0x10, 0x00, [mfgCode: "0x115F"])
-    //logging("enableAutoClose cmd=${cmd}", 0)
-    return cmd
-}
-
-ArrayList<String> disableAutoClose() {
-    logging("disableAutoClose()", 1)
-    ArrayList<String> cmd = []
-	cmd += zigbeeWriteAttribute(CLUSTER_BASIC, 0xFF29, 0x10, 0x01, [mfgCode: "0x115F"])
-    //logging("disableAutoClose cmd=${cmd}", 0)
-    return cmd
-}
-
-void setPosition(position) {
-    if(position == null) {position = 0}
-    if(position <= 2) position = 0
-    if(position >= 98) position = 100
-    ArrayList<String> cmd = []
-    position = position as Integer
-    logging("setPosition(position: ${position})", 1)
-    Integer currentPosition = device.currentValue("position")
-    if(position > currentPosition) {
-        sendEvent(name: "windowShade", value: "opening")
-    } else if(position < currentPosition) {
-        sendEvent(name: "windowShade", value: "closing")
-    }
-    if(position == 100 && getDeviceDataByName('model') == "lumi.curtain") {
-        logging("Command: Open", 1)
-        //logging("cluster: ${CLUSTER_ON_OFF}, command: ${COMMAND_OPEN}", 0)
-        cmd += zigbeeCommand(CLUSTER_ON_OFF, COMMAND_CLOSE)
-    } else if(position < 1 && getDeviceDataByName('model') == "lumi.curtain") {
-        logging("Command: Close", 1)
-        //logging("cluster: ${CLUSTER_ON_OFF}, command: ${COMMAND_CLOSE}", 0)
-        cmd += zigbeeCommand(CLUSTER_ON_OFF, COMMAND_OPEN)
-    } else {
-        logging("Set Position: ${position}%", 1)
-        cmd += zigbeeWriteAttribute(CLUSTER_WINDOW_POSITION, POSITION_ATTR_VALUE, ENCODING_SIZE, Float.floatToIntBits(position))
-    }
-    logging("cmd=${cmd}", 1)
-    sendZigbeeCommands(cmd)
-}
-
-ArrayList<String> setLevel(level) {
-    logging("setLevel(level: ${level})", 1)
-    return setPosition(level)
-}
-
-ArrayList<String> setLevel(level, duration) {
-    logging("setLevel(level: ${level})", 1)
-    return setPosition(level)
-}
 
 /**
  *   --------- READ ATTRIBUTE METHODS ---------
  */
-ArrayList<String> getPosition() {
-    logging("getPosition()", 1)
-	ArrayList<String> cmd = []
-	cmd += zigbeeReadAttribute(CLUSTER_WINDOW_POSITION, POSITION_ATTR_VALUE)
-    logging("cmd: $cmd", 1)
-    return cmd
-}
-
-ArrayList<String> getBattery() {
-    logging("getBattery()", 100)
-	ArrayList<String> cmd = []
-    cmd += zigbeeReadAttribute(CLUSTER_POWER, POWER_ATTR_BATTERY_PERCENTAGE_REMAINING)
-    cmd += zigbeeReadAttribute(CLUSTER_BASIC, BASIC_ATTR_POWER_SOURCE)
-    logging("cmd: $cmd", 1)
-    return cmd 
-}
 
 /**
  *  -----------------------------------------------------------------------------
@@ -537,9 +331,9 @@ ArrayList<String> getBattery() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
+    comment = "Works with model WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0521"
+    String version = "v0.6.2.0521"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1361,3 +1155,82 @@ void checkPresence() {
     }
 }
 // END:  getHelperFunctions('driver-default')
+
+// BEGIN:getHelperFunctions('sensor-data')
+private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
+    Integer res = 1
+    if(tempRes != null && tempRes != '') {
+        res = Integer.parseInt(tempRes)
+    }
+    if (tempUnitConversion == "2") {
+        value = celsiusToFahrenheit(value)
+    } else if (tempUnitConversion == "3") {
+        value = fahrenheitToCelsius(value)
+    }
+	if (tempOffset) {
+	   return (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
+	} else {
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
+    }
+}
+
+private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
+    Integer res = 1
+    if(tempRes != null && tempRes != '') {
+        res = Integer.parseInt(tempRes)
+    }
+    String degree = String.valueOf((char)(Integer.parseInt("00B0", 16)))
+    String tempUnit = "${degree}C"
+    if (tempUnitDisplayed == "2") {
+        value = celsiusToFahrenheit(value)
+        tempUnit = "${degree}F"
+    } else if (tempUnitDisplayed == "3") {
+        value = value + 273.15
+        tempUnit = "${degree}K"
+    }
+	if (tempOffset) {
+	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)]
+	} else {
+       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP)]
+    }
+}
+
+private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
+    if (humidityOffset) {
+	   return (value + new BigDecimal(humidityOffset)).setScale(1, BigDecimal.ROUND_HALF_UP)
+	} else {
+       return value.setScale(1, BigDecimal.ROUND_HALF_UP)
+    }
+}
+
+private BigDecimal sensor_data_getAdjustedPressure(BigDecimal value, Integer decimals=2) {
+    if (pressureOffset) {
+	   return (value + new BigDecimal(pressureOffset)).setScale(decimals, BigDecimal.ROUND_HALF_UP)
+	} else {
+       return value.setScale(decimals, BigDecimal.ROUND_HALF_UP)
+    }   
+}
+
+private BigDecimal sensor_data_convertPressure(BigDecimal pressureInkPa) {
+    BigDecimal pressure = pressureInkPa
+    switch(pressureUnitConversion) {
+        case null:
+        case "kPa":
+			pressure = sensor_data_getAdjustedPressure(pressure / 10)
+			break
+		case "inHg":
+			pressure = sensor_data_getAdjustedPressure(pressure * 0.0295299)
+			break
+		case "mmHg":
+            pressure = sensor_data_getAdjustedPressure(pressure * 0.75006157)
+			break
+        case "atm":
+			pressure = sensor_data_getAdjustedPressure(pressure / 1013.25, 5)
+			break
+        default:
+            pressure = sensor_data_getAdjustedPressure(pressure, 1)
+            break
+    }
+    return pressure
+}
+// END:  getHelperFunctions('sensor-data')

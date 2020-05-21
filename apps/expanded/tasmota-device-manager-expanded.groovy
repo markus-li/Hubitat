@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0516Tb
+ *  Version: v1.0.2.0521Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -182,6 +182,37 @@ TreeMap getDeviceConfigurations() {
          installCommands: [["TuyaMCU", "21,2"], 
                            ["DimmerRange", "150,1000"]],
          deviceLink: 'https://templates.blakadder.com/kmc-4.html'],
+        
+        [typeId: 'deta-6911ha-switch',
+         name: 'Deta 6911HA Switch',
+         template: '{"NAME":"Deta 1G Switch","GPIO":[0,0,0,0,157,0,0,0,0,21,0,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6911HA.html'],
+
+        [typeId: 'deta-6912ha-switch',
+         name: 'Deta 6912HA Switch',
+         template: '{"NAME":"DETA 2G Switch","GPIO":[0,0,0,0,157,0,0,0,91,21,22,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [['Rule1', 'on system#boot do Backlog LedPower 1; LedState 0; LedPower 1; LedState 8; endon'],
+                           ['Rule1', '1']],
+         deviceLink: 'https://templates.blakadder.com/deta_6912HA.html'],
+
+        [typeId: 'deta-6903ha-switch',
+         name: 'Deta 6903HA Switch',
+         template: '{"NAME":"DETA 3G Switch","GPIO":[157,0,0,92,91,21,0,0,23,0,22,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6903HA.html'],
+
+        [typeId: 'deta-6904ha-switch',
+         name: 'Deta 6904HA Switch',
+         template: '{"NAME":"Deta 4G Switch","GPIO":[157,0,0,19,18,21,0,0,23,20,22,24,17],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6904HA.html'],
+
+        [typeId: 'deta-6922ha-outlet',
+         name: 'Deta 6922HA Wall Outleet',
+         template: '{"NAME":"DETA 2G GPO","GPIO":[0,0,0,17,157,0,0,0,91,21,22,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6922HA.html'],
 
         [typeId: 'kmc-4-pm-plug',
          name: 'KMC 4 Power Monitor Plug',
@@ -587,7 +618,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.2.0516Tb"
+    String version = "v1.0.2.0521Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }

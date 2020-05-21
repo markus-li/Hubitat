@@ -49,18 +49,19 @@ class HubitatPackageManagerTool:
     self.repository['packages'] = []
     self.packages = []
     
-  def addPackage(self, package, category, location, description, betaLocation=None):
+  def addPackage(self, package):
     package.applyDefaults(minimumHEVersion=self.minimumHEVersionDefault, author=self.authorDefault,
         dateReleased=self.dateReleasedDefault)
+    
     self.packages.append(package)
     repository = {
       "name": package.manifestDict['packageName'],
-      "category": category,
-      "location": location,
-      "betaLocation": betaLocation,
-      "description": description
+      "category": package.category,
+      "location": package.location,
+      "betaLocation": package.betaLocation,
+      "description": package.description
     }
-    if(betaLocation == None):
+    if(package.betaLocation == None):
       del repository["betaLocation"]
     self.repository['packages'].append(repository)
 
@@ -74,14 +75,19 @@ class HubitatPackageManagerTool:
 
 
 class HubitatPackageManagerPackage:
-  def __init__(self, packageName, isBeta=False, minimumHEVersion=None, author=None, dateReleased=None, releaseNotes=None,
-               documentationLink=None, communityLink=None):
+  def __init__(self, packageName, category, location, description, isBeta=False, minimumHEVersion=None, author=None, dateReleased=None, releaseNotes=None,
+               documentationLink=None, communityLink=None, betaLocation=None):
     self.log = logging.getLogger(__name__)
+    self.category = category
+    self.location = location
+    self.description = description
+    self.betaLocation = betaLocation
     self.manifestDict = {
       "packageName": packageName,
       "minimumHEVersion": minimumHEVersion,
       "author": author,
-      "dateReleased": dateReleased
+      "dateReleased": dateReleased,
+      "betaLocation": betaLocation,
     }
     self.isBeta = isBeta
     if(releaseNotes != None):
@@ -92,6 +98,8 @@ class HubitatPackageManagerPackage:
       self.manifestDict['communityLink'] = communityLink
     self.manifestDict['apps'] = []
     self.manifestDict['drivers'] = []
+    if(betaLocation == None or isBeta == True):
+      del self.manifestDict["betaLocation"]
     
   def applyDefaults(self, minimumHEVersion=None, author=None, dateReleased=None):
     if(self.manifestDict['minimumHEVersion'] == None):

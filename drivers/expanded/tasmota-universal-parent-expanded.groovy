@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0514Tb
+ *  Version: v1.0.2.0521Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -243,6 +243,37 @@ TreeMap getDeviceConfigurations() {
          installCommands: [["TuyaMCU", "21,2"], 
                            ["DimmerRange", "150,1000"]],
          deviceLink: 'https://templates.blakadder.com/kmc-4.html'],
+        
+        [typeId: 'deta-6911ha-switch',
+         name: 'Deta 6911HA Switch',
+         template: '{"NAME":"Deta 1G Switch","GPIO":[0,0,0,0,157,0,0,0,0,21,0,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6911HA.html'],
+
+        [typeId: 'deta-6912ha-switch',
+         name: 'Deta 6912HA Switch',
+         template: '{"NAME":"DETA 2G Switch","GPIO":[0,0,0,0,157,0,0,0,91,21,22,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [['Rule1', 'on system#boot do Backlog LedPower 1; LedState 0; LedPower 1; LedState 8; endon'],
+                           ['Rule1', '1']],
+         deviceLink: 'https://templates.blakadder.com/deta_6912HA.html'],
+
+        [typeId: 'deta-6903ha-switch',
+         name: 'Deta 6903HA Switch',
+         template: '{"NAME":"DETA 3G Switch","GPIO":[157,0,0,92,91,21,0,0,23,0,22,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6903HA.html'],
+
+        [typeId: 'deta-6904ha-switch',
+         name: 'Deta 6904HA Switch',
+         template: '{"NAME":"Deta 4G Switch","GPIO":[157,0,0,19,18,21,0,0,23,20,22,24,17],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6904HA.html'],
+
+        [typeId: 'deta-6922ha-outlet',
+         name: 'Deta 6922HA Wall Outleet',
+         template: '{"NAME":"DETA 2G GPO","GPIO":[0,0,0,17,157,0,0,0,91,21,22,0,90],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/deta_6922HA.html'],
 
         [typeId: 'kmc-4-pm-plug',
          name: 'KMC 4 Power Monitor Plug',
@@ -1338,13 +1369,13 @@ void componentOff(com.hubitat.app.DeviceWrapper cd) {
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetLevel(cd=${cd.displayName} (${cd.deviceNetworkId}), level=${level}) actionType=$actionType", 1)
-    setLevel(level)
+    tasmota_rgbw_setLevel(level)
 }
 
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level, BigDecimal duration) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetLevel(cd=${cd.displayName} (${cd.deviceNetworkId}), level=${level}, duration=${duration}) actionType=$actionType", 1)
-    setLevel(level, duration)
+    tasmota_rgbw_setLevel(level, duration)
 }
 
 void componentStartLevelChange(com.hubitat.app.DeviceWrapper cd, String direction) {
@@ -1475,7 +1506,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0514Tb"
+    String version = "v1.0.2.0521Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2139,7 +2170,7 @@ Long secondsSinceLastCheckinEvent() {
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
         if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false) {
-            log.warn("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours...")
+            logging("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours and is perfectly NORMAL as long as the same device don't get this multiple times per day...", 100)
             r = -1
         } else {
             r = (now() - Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime()) / 1000
@@ -2147,7 +2178,7 @@ Long secondsSinceLastCheckinEvent() {
 	}
     if (lastCheckinEpochEnable == true) {
 		if(device.currentValue('lastCheckinEpoch') == null) {
-		    log.warn("No VALID lastCheckinEpoch event available! This should be resolved by itself within 1 or 2 hours...")
+		    logging("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours and is perfectly NORMAL as long as the same device don't get this multiple times per day...", 100)
             r = r == null ? -1 : r
         } else {
             r = (now() - device.currentValue('lastCheckinEpoch').toLong()) / 1000
@@ -3177,6 +3208,10 @@ void tasmota_rgbw_setRGB(r, g, b) {
     state.saturation = hsbColor['saturation']
     state.level = hsbColor['level']
     tasmota_getAction(tasmota_getCommandStringWithModeReset("Color1", rgbcmd))
+}
+
+void tasmota_rgbw_setLevel(l) {
+    tasmota_rgbw_setLevel(l, 0)
 }
 
 void tasmota_rgbw_setLevel(l, duration) {

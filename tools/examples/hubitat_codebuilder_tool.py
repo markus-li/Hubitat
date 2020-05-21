@@ -134,12 +134,17 @@ def main():
         is_beta = False
 
     # Setup the Package Manager objects
-    pm = HubitatPackageManagerTool("Markus", "2.1.7", 
+    pm = HubitatPackageManagerTool("Markus", "2.1.9", 
         gitHubUrl="https://github.com/markus-li/Hubitat")
 
-    t4he_pkg = HubitatPackageManagerPackage("Tasmota for Hubitat Elevation", isBeta=is_beta,
+    t4he_pkg = HubitatPackageManagerPackage("Tasmota for Hubitat Elevation", "Integrations", 
+        "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/t4he.json",
+        "Allows you to integrate Tasmota-based devices with Hubitat Elevation.", isBeta=is_beta,
         documentationLink="https://github.com/markus-li/Hubitat/wiki", 
-        communityLink="https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322")
+        communityLink="https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322",
+        betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/t4he-beta.json")
+
+    zigbee_pkgs = []
 
     # By including our namespace, anything we import in this file is available
     # to call by the include tags in the .groovy files when we process them
@@ -362,11 +367,20 @@ def main():
 
         # Zigbee
         {'id': 579, 'file': 'zigbee-generic-wifi-switch-plug.groovy' },
-        {'id': 801, 'id_2': 368, 'id_3': 335, 'file': 'zigbee-aqara-smart-curtain-motor.groovy', 'version': 'v1.0.1.MMDD',
-         'comment': 'Works with models ZNCLDJ11LM & ZNCLDJ12LM' },        
-        {'id': 1122, 'id_2': 367, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': 'v0.6.1.MMDD',
+        {'id': 801, 'id_2': 368, 'id_3': 335, 'file': 'zigbee-aqara-smart-curtain-motor.groovy', 'version': 'v1.0.2.MMDD',
+         'comment': 'Works with models ZNCLDJ11LM & ZNCLDJ12LM.' },        
+        {'id': 1122, 'id_2': 367, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': 'v0.6.2.MMDD',
          'comment': 'Works with model GZCGQ01LM.' },
-        
+        {'id': 1121, 'id_2': 363, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': 'v0.6.2.MMDD',
+         'comment': 'Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM.' },
+        {'id': 1153, 'id_2': 322, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': 'v0.6.1.MMDD',
+         'comment': 'Works with model MCCGQ01LM & MCCGQ11LM.' },
+        {'id': 1154, 'id_2': 324, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-motion-sensor.groovy', 'version': 'v0.6.2.MMDD',
+         'comment': 'Works with model RTCGQ01LM & RTCGQ11LM.' },
+        {'id': 1345, 'id_2': 326, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-temperature-humidity.groovy', 'version': 'v0.6.2.MMDD',
+         'comment': 'Works with model WSDCGQ01LM & WSDCGQ11LM.' },
+        {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': 'v0.6.2.MMDD',
+         'comment': 'Works with model SJCGQ11LM.' },
         
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
@@ -380,12 +394,7 @@ def main():
         {'id': 547, 'id_3': 341, 'file': 'testing-bare-minimum-driver.groovy', 'version': 'v0.1.0.MMDD' },
 
         # Zigbee:
-        {'id': 1121, 'id_2': 363, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': 'v0.6.1.MMDD',
-         'comment': 'Works with models WXKG01LM, WXKG11LM (2015), WXKG11LM (2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM' },
-        {'id': 1153, 'id_2': 322, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': 'v0.6.1.MMDD',
-         'comment': 'Works with model MCCGQ01LM & MCCGQ11LM.' },
-        {'id': 1154, 'id_2': 324, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-motion-sensor.groovy', 'version': 'v0.6.1.MMDD',
-         'comment': 'Works with model RTCGQ01LM & RTCGQ11LM.' },
+        
         {'id': 1155, 'id_2': 362, 'id_3': 0, 'file': 'zigbee-ihorn-motion-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model LH-992ZB.' },
         {'id': 1185, 'id_2': 325, 'file': 'zigbee-xiaomi-aqara-plug-outlet.groovy', 'version': 'v0.6.1.MMDD',
@@ -396,10 +405,7 @@ def main():
          'comment': 'Works with model WXCJKG13LM.' },
         {'id': 1313, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-5-button-remote.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model ???.' },
-        {'id': 1345, 'id_2': 326, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-temperature-humidity.groovy', 'version': 'v0.6.1.MMDD',
-         'comment': 'Works with model WSDCGQ01LM & WSDCGQ11LM.' },
-        {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': 'v0.6.1.MMDD',
-         'comment': 'Works with model SJCGQ11LM.' },
+        
         {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': 'v0.6.1.MMDD',
          'comment': 'Works with model DJT11LM.' },
     ]
@@ -458,6 +464,11 @@ def main():
         # Zigbee drivers :
         {'id': 1122}, # Xiaomi Mijia Smart Light Sensor
         {'id': 801}, # Aqara Smart Curtain
+        {'id': 1121}, # Xiaomi/Aqara Button/Switch
+        {'id': 1377}, # Aqara Water Leak Sensor
+        {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
+        {'id': 1153}, # Xiaomi/Aqara Contact Sensors
+        {'id': 1154}, # Xiaomi/Aqara Motion Sensors
  
     ]
     
@@ -467,14 +478,10 @@ def main():
 
         # Zigbee
         {'id': 1378}, # Aqara Vibration Sensor
-        {'id': 1377}, # Aqara Water Leak Sensor
-        {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
-        {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1186}, # Aqara Bulb
         {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
-        {'id': 1154}, # Xiaomi/Aqara Motion Sensors
         {'id': 1155}, # iHorn Motion Sensor
-        {'id': 1121}, # Xiaomi/Aqara Button/Switch
+        
         #{'id': 1256}, # Aqara Oppo 6 Buttons
         #{'id': 1313}, # IKEA 5 Button Remote
         
@@ -489,6 +496,11 @@ def main():
         # Zigbee drivers :
         {'id': 1122}, # Xiaomi Mijia Smart Light Sensor
         {'id': 801}, # Aqara Smart Curtain
+        {'id': 1377}, # Aqara Water Leak Sensor
+        {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
+        {'id': 1153}, # Xiaomi/Aqara Contact Sensors
+        {'id': 1121}, # Xiaomi/Aqara Button/Switch
+        {'id': 1154}, # Xiaomi/Aqara Motion Sensors
     ]
     #driver_files_active_2 = []
     driver_files_private_active_2 = [
@@ -498,14 +510,10 @@ def main():
 
         # Zigbee
         {'id': 1378}, # Aqara Vibration Sensor
-        {'id': 1377}, # Aqara Water Leak Sensor
-        {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
-        {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1186}, # Aqara Bulb
         {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
-        {'id': 1154}, # Xiaomi/Aqara Motion Sensors
         {'id': 1155}, # iHorn Motion Sensor
-        {'id': 1121}, # Xiaomi/Aqara Button/Switch
+        
     ]
     #driver_files_private_active_2 = []
 
@@ -559,22 +567,23 @@ def main():
         else:
             sorted_driver_list.append(d)
     for d in sorted_driver_list:
-        if(d['name'].startswith('Tasmota - ')):
-            # Get all Info
-            newD = d.copy()
+        # Get all Info
+        newD = d.copy()
+        # Add the rest of what we know about this ID:
+        for d_info in driver_files_active:
+            if (d['id'] == d_info['id']):
+                #log.debug('d_info: {}'.format(d_info))
+                newD.update(d_info)
+                break
+        # Modify it a little bit
+        newD.update({'file': d['file'].stem + d['file'].suffix,
+                    'filestem': d['file'].stem})
+        newD['filestem'] = newD['filestem'].replace('-expanded', '')
+        newD['wikiname'] = newD['name'].replace(' ', '-').replace('/', '-')
+        newD['nameFull'] = newD['name']
 
-            # Add the rest of what we know about this ID:
-            for d_info in driver_files_active:
-                if (d['id'] == d_info['id']):
-                    #log.debug('d_info: {}'.format(d_info))
-                    newD.update(d_info)
-                    break
-            # Modify it a little bit
-            newD.update({'name': d['name'][10:], 
-                        'file': d['file'].stem + d['file'].suffix,
-                        'filestem': d['file'].stem})
-            newD['filestem'] = newD['filestem'].replace('-expanded', '')
-            newD['wikiname'] = newD['name'].replace(' ', '-').replace('/', '-')
+        if(d['name'].startswith('Tasmota - ')):
+            newD['name'] = newD['name'][10:]
             #log.debug('d_info 2: {}'.format(d_info))
 
             # TODO: Build the Zigbee packages
@@ -590,6 +599,34 @@ def main():
                 parent_drivers.append(newD.copy())
             else:
                 child_drivers.append(newD.copy())
+        if(d['name'].startswith('Zigbee - ')):
+            newD['name'] = newD['name'][9:]
+            if(not 'documentationLink' in newD):
+                newD['documentationLink'] = None
+            if(not 'communityLink' in newD):
+                newD['communityLink'] = None
+
+            zigbee_pkg = HubitatPackageManagerPackage(newD['name'], "Integrations", 
+                "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/" + newD['filestem'] + ".json",
+                newD['comment'], isBeta=is_beta,
+                documentationLink=newD['documentationLink'], 
+                communityLink=newD['documentationLink'],
+                betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/" + newD['filestem'] + "-beta.json")
+
+            zigbee_pkg.addDriver(newD['nameFull'], newD['version'], newD['namespace'], 
+                base_raw_repo_url + newD['file'], True, newD['id'], id=None)
+
+            pm.addPackage(zigbee_pkg)
+
+            if(branch_name == 'release'):
+                zigbee_pkg.buildManifest(extraInput="packages/" + newD['filestem'] + ".json")
+            else:
+                zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + "-beta.json", extraInput="packages/" + newD['filestem'] + ".json")
+
+            zigbee_pkgs.append(zigbee_pkg)
+        #print(zigbee_pkgs)
+
+
   
     # Make Driver Lists if we have all files we expect...
     if(len(used_driver_list) >= expected_num_drivers):
@@ -788,10 +825,7 @@ def main():
                 app_raw_repo_url + a['file'], a['required'], a['oauth'], a['id'], id=None)
 
     #t4he_pkg.clearDrivers()
-    pm.addPackage(t4he_pkg, "Integrations", 
-        "https://raw.githubusercontent.com/markus-li/Hubitat/release/packageManifest.json",
-        "Allows you to integrate Tasmota-based devices with Hubitat Elevation.",
-        betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packageManifestBeta.json")
+    pm.addPackage(t4he_pkg)
     
     
     # Create the Repository file
@@ -799,9 +833,9 @@ def main():
     #pm.printJSON()
 
     if(branch_name == 'release'):
-        t4he_pkg.buildManifest(extraInput="packageManifestBeta.json")
+        t4he_pkg.buildManifest(extraInput="packages/t4he.json")
     else:
-        t4he_pkg.buildManifest(output="packageManifestBeta.json", extraInput="packageManifest.json")
+        t4he_pkg.buildManifest(output="packages/t4he-beta.json", extraInput="packages/t4he.json")
         #t4he_pkg.printJSON()
 
     ###########################################################
@@ -832,18 +866,19 @@ def main():
             repo_tool.copy_files_by_wildcard(repo_private_path + "/drivers/expanded/zigbee-*-expanded.groovy", repo_internal_path + "/drivers")
             repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-aqara-bulb-expanded.groovy", repo_internal_path + "/drivers")
             #repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-aqara-vibration-sensor-expanded.groovy", repo_internal_path + "/drivers")
-            repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-aqara-water-leak-sensor-expanded.groovy", repo_internal_path + "/drivers")
-            repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-contact-sensor-expanded.groovy", repo_internal_path + "/drivers")
-            repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy", repo_internal_path + "/drivers")
-            repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy", repo_internal_path + "/drivers")
+            #repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-aqara-water-leak-sensor-expanded.groovy", repo_internal_path + "/drivers")
+            #repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-contact-sensor-expanded.groovy", repo_internal_path + "/drivers")
+            #repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy", repo_internal_path + "/drivers")
+            #repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy", repo_internal_path + "/drivers")
+            #repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-temperature-humidity-expanded.groovy", repo_internal_path + "/drivers")
             repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-plug-outlet-expanded.groovy", repo_internal_path + "/drivers")
-            repo_tool.copy_files_by_wildcard(repo_private_path + "/private/drivers/expanded/zigbee-xiaomi-aqara-temperature-humidity-expanded.groovy", repo_internal_path + "/drivers")
+            
 
         # Public Apps
         repo_tool.copy_files_by_wildcard(repo_private_path + "/apps/expanded/tasmota-device-manager-expanded.groovy", repo_public_path + "/apps/expanded")
         
         # App Repo Manifests
-        repo_tool.copy_files_by_wildcard(repo_private_path + "/packageManifest*.json", repo_public_path)
+        repo_tool.copy_files_by_wildcard(repo_private_path + "/packages/*.json", repo_public_path + "/packages")
         repo_tool.copy_files_by_wildcard(repo_private_path + "/repository.json", repo_public_path)
 
         # README

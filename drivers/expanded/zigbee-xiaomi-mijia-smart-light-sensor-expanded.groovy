@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0514
+ *  Version: v0.6.1.0521
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -179,8 +179,6 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
-    sendlastCheckinEvent(minimumMinutesToRepeat=55)
-
     if(msgMap["clusterId"] == "8021") {
         //logging("CONFIGURE CONFIRMATION - description: ${description} | parseMap:${msgMap}", 0)
         if(msgMap["data"] != []) {
@@ -242,7 +240,7 @@ ArrayList<String> parse(String description) {
     } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02")) {
         logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data) - description:${description} | parseMap:${msgMap}", 1)
     } else if(msgMap["cluster"] == "0001" && msgMap["attrId"] == "0020") {
-        logging("Battery voltage received - description:${description} | parseMap:${msgMap}", 1)
+        logging("Battery voltage received - description:${description} | parseMap:${msgMap}", 100)
         parseAndSendBatteryStatus(Integer.parseInt(msgMap['value'], 16) / 10.0)
     } else if(msgMap["clusterId"] == "0013") {
         //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
@@ -251,6 +249,9 @@ ArrayList<String> parse(String description) {
 		log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
 	}
     
+    hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90)
+    sendlastCheckinEvent(minimumMinutesToRepeat=30)
+
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
     return cmd
@@ -297,7 +298,7 @@ ArrayList<String> configureAdditional() {
 private String getDriverVersion() {
     comment = "Works with model GZCGQ01LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0514"
+    String version = "v0.6.1.0521"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1077,7 +1078,7 @@ Long secondsSinceLastCheckinEvent() {
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
         if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false) {
-            log.warn("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours...")
+            logging("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours and is perfectly NORMAL as long as the same device don't get this multiple times per day...", 100)
             r = -1
         } else {
             r = (now() - Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime()) / 1000
@@ -1085,7 +1086,7 @@ Long secondsSinceLastCheckinEvent() {
 	}
     if (lastCheckinEpochEnable == true) {
 		if(device.currentValue('lastCheckinEpoch') == null) {
-		    log.warn("No VALID lastCheckinEpoch event available! This should be resolved by itself within 1 or 2 hours...")
+		    logging("No VALID lastCheckin event available! This should be resolved by itself within 1 or 2 hours and is perfectly NORMAL as long as the same device don't get this multiple times per day...", 100)
             r = r == null ? -1 : r
         } else {
             r = (now() - device.currentValue('lastCheckinEpoch').toLong()) / 1000
