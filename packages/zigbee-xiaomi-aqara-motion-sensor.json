@@ -2,7 +2,7 @@
   "packageName": "Xiaomi/Aqara Motion Sensor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-05-21",
+  "dateReleased": "2020-05-22",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-motion-sensor-beta.json",
   "apps": [],
   "drivers": [
