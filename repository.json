@@ -54,8 +54,8 @@
     {
       "name": "Tasmota for Hubitat Elevation",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/t4he.json",
-      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/t4he-beta.json",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/packageManifest.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/packageManifestBeta.json",
       "description": "Allows you to integrate Tasmota-based devices with Hubitat Elevation."
     }
   ]
