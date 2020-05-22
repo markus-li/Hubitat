@@ -147,7 +147,7 @@ ArrayList<String> refresh() {
 }
 
 ArrayList<String> refreshActual(String newModelToSet) {
-    logging("refreshActual() model=$newModelToSet", 100)
+    logging("refreshActual() model=$newModelToSet", 1)
 
     sendEvent(name:"pushed", value: 0, isStateChange: false, descriptionText: "Refresh of pushed state")
     sendEvent(name:"held", value: 0, isStateChange: false, descriptionText: "Refresh of held state")
@@ -236,19 +236,19 @@ void installed() {
 void updated() {
     logging("updated()", 100)
     if(btnDevice1 != null && btnDevice1 != "None") {
-        logging("btnDevice1 = $btnDevice1", 100)
+        logging("btnDevice1 = $btnDevice1", 1)
         createChildDevice("1", null, btnDevice1)
     }
     if(btnDevice1and2 != null && btnDevice1and2 != "None") {
-        logging("btnDevice1and2 = $btnDevice1and2", 100)
+        logging("btnDevice1and2 = $btnDevice1and2", 1)
         createChildDevice("1", "2", btnDevice1and2)
     }
     if(btnDevice3and4 != null && btnDevice3and4 != "None") {
-        logging("btnDevice3and4 = $btnDevice3and4", 100)
+        logging("btnDevice3and4 = $btnDevice3and4", 1)
         createChildDevice("3", "4", btnDevice3and4)
     }
     if(btnDevice5and6 != null && btnDevice5and6 != "None") {
-        logging("btnDevice5and6 = $btnDevice5and6", 100)
+        logging("btnDevice5and6 = $btnDevice5and6", 1)
         createChildDevice("5", "6", btnDevice5and6)
     }
     refreshActual(null)
@@ -693,7 +693,7 @@ void setChildSwitch(String deviceID, String state) {
     --------- CHILD DEVICE ACTION METHODS ---------
 */
 void buttonPushed(Integer button) {
-    logging("buttonPushed(button=$button)", 100)
+    logging("buttonPushed(button=$button)", 1)
     switch(button) {
         case 1:
             if(useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true) {
@@ -747,7 +747,7 @@ void buttonPushed(Integer button) {
 }
 
 void buttonHeld(Integer button) {
-    logging("buttonHeld(button=$button)", 100)
+    logging("buttonHeld(button=$button)", 1)
     switch(button) {
         case 1:
             if(useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true) {
@@ -801,7 +801,7 @@ void buttonHeld(Integer button) {
 }
 
 void buttonDoubleTapped(Integer button) {
-    logging("buttonDoubleTapped(button=$button)", 100)
+    logging("buttonDoubleTapped(button=$button)", 1)
     switch(button) {
         case 1:
             if(useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true) {
@@ -859,26 +859,26 @@ void buttonDoubleTapped(Integer button) {
  */
 
 void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentRefresh() from $cd.deviceNetworkId", 100)
+    logging("componentRefresh() from $cd.deviceNetworkId", 1)
 }
 
 void componentOn(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentOn() from $cd.deviceNetworkId", 100)
+    logging("componentOn() from $cd.deviceNetworkId", 1)
     getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch turned ON"]])
 }
 
 void componentOff(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentOff() from $cd.deviceNetworkId", 100)
+    logging("componentOff() from $cd.deviceNetworkId", 1)
     getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch turned OFF"]])
 }
 
 void componentStopLevelChange(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentStopLevelChange() from $cd.deviceNetworkId", 100)
+    logging("componentStopLevelChange() from $cd.deviceNetworkId", 1)
     unschedule("runLevelChange_${cd.deviceNetworkId.split("-")[1]}")
 }
 
 void componentStartLevelChange(com.hubitat.app.DeviceWrapper cd, String direction) {
-    logging("componentStartLevelChange() from $cd.deviceNetworkId (direction=$direction)", 100)
+    logging("componentStartLevelChange() from $cd.deviceNetworkId (direction=$direction)", 1)
     prepareStartLevelChange(cd.deviceNetworkId, direction)
 }
 
@@ -888,17 +888,17 @@ void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
 
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level, BigDecimal duration) {
     level = level > 100 ? 100 : level < 0 ? 0 : level
-    logging("componentSetLevel() from $cd.deviceNetworkId (level=$level, duration=$duration)", 100)
+    logging("componentSetLevel() from $cd.deviceNetworkId (level=$level, duration=$duration)", 1)
     prepareLevelChange(cd.deviceNetworkId, level, duration)
 }
 
 void prepareStartLevelChange(String deviceID, String direction) {
-    logging("prepareStartLevelChange() from $deviceID (direction=$direction)", 100)
+    logging("prepareStartLevelChange() from $deviceID (direction=$direction)", 1)
     com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
     String cLevelStr = cd.currentState("level", true)?.value
-    logging("cLevelStr = $cLevelStr", 100)
+    logging("cLevelStr = $cLevelStr", 1)
     Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
-    logging("cLevel = $cLevel", 100)
+    logging("cLevel = $cLevel", 1)
     if(direction == "up") {
         prepareLevelChange(cd.deviceNetworkId, 100, (20 / 100.0) * (100 - cLevel))
     } else {
@@ -907,11 +907,11 @@ void prepareStartLevelChange(String deviceID, String direction) {
 }
 
 void stepLevel(String deviceID, String direction) {
-    logging("runLevelChange() from $deviceID (direction=$direction)", 100)
+    logging("runLevelChange() from $deviceID (direction=$direction)", 1)
     com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
     unschedule("runLevelChange_${deviceID.split("-")[1]}")
     String cLevelStr = cd.currentState("level", true)?.value
-    logging("cLevelStr = $cLevelStr", 100)
+    logging("cLevelStr = $cLevelStr", 1)
     Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
     if(direction == "up") {
         cLevel = cLevel + 5 > 100 ? 100 : cLevel + 5
@@ -920,7 +920,7 @@ void stepLevel(String deviceID, String direction) {
         cLevel = cLevel - 5 < 0 ? 0 : cLevel - 5
         prepareLevelChange(cd.deviceNetworkId, cLevel, 0)
     }
-    logging("cLevel = $cLevel", 100)
+    logging("cLevel = $cLevel", 1)
 }
 
 void prepareLevelChange(String deviceID, BigDecimal level, BigDecimal duration) {

@@ -150,7 +150,7 @@ def main():
         "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/t4he.json",
         "Allows you to integrate Tasmota-based devices with Hubitat Elevation.", isBeta=is_beta,
         documentationLink="https://github.com/markus-li/Hubitat/wiki", 
-        communityLink="https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322",
+        communityLink="https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322?u=markus",
         betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/t4he-beta.json")
 
     zigbee_pkgs = []
@@ -613,7 +613,7 @@ def main():
             if(not 'documentationLink' in newD):
                 newD['documentationLink'] = None
             if(not 'communityLink' in newD):
-                newD['communityLink'] = None
+                newD['communityLink'] = 'https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus'
 
             zigbee_pkg = HubitatPackageManagerPackage(newD['name'], "Integrations", 
                 "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/" + newD['filestem'] + ".json",
@@ -843,9 +843,11 @@ def main():
     #pm.printJSON()
 
     if(branch_name == 'release'):
-        t4he_pkg.buildManifest(output="packages/t4he.json", extraInput="packages/t4he-beta.json")
+        #t4he_pkg.buildManifest(output="packages/t4he.json", extraInput="packages/t4he-beta.json")
+        t4he_pkg.buildManifest(output="packageManifest.json", extraInput="packageManifestBeta.json")
     else:
-        t4he_pkg.buildManifest(output="packages/t4he-beta.json", extraInput="packages/t4he.json")
+        #t4he_pkg.buildManifest(output="packages/t4he-beta.json", extraInput="packages/t4he.json")
+        t4he_pkg.buildManifest(output="packageManifestBeta.json", extraInput="packageManifest.json")
         #t4he_pkg.printJSON()
 
     ###########################################################
@@ -889,6 +891,10 @@ def main():
         
         # App Repo Manifests
         repo_tool.copy_files_by_wildcard(repo_private_path + "/packages/*.json", repo_public_path + "/packages")
+        repo_tool.copy_files_by_wildcard(repo_private_path + "/packageManifest.json", repo_public_path)
+        repo_tool.copy_files_by_wildcard(repo_private_path + "/packageManifest.json", repo_public_path + "/packages/t4he.json")
+        repo_tool.copy_files_by_wildcard(repo_private_path + "/packageManifestBeta.json", repo_public_path)
+        repo_tool.copy_files_by_wildcard(repo_private_path + "/packageManifestBeta.json", repo_public_path + "/packages/t4he-beta.json")
         repo_tool.copy_files_by_wildcard(repo_private_path + "/repository.json", repo_public_path)
 
         # README
