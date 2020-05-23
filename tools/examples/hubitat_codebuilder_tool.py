@@ -147,11 +147,11 @@ def main():
         gitHubUrl="https://github.com/markus-li/Hubitat")
 
     t4he_pkg = HubitatPackageManagerPackage("Tasmota for Hubitat Elevation", "Integrations", 
-        "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/packageManifest.json",
+        "https://raw.githubusercontent.com/markus-li/Hubitat/release/packageManifest.json",
         "Allows you to integrate Tasmota-based devices with Hubitat Elevation.", isBeta=is_beta,
         documentationLink="https://github.com/markus-li/Hubitat/wiki", 
         communityLink="https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322?u=markus",
-        betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/packageManifestBeta.json")
+        betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packageManifestBeta.json")
 
     zigbee_pkgs = []
 

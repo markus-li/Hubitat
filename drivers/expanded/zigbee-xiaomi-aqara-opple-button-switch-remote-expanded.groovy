@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0521b
+ *  Version: v0.6.1.0523b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -158,25 +158,18 @@ ArrayList<String> refreshActual(String newModelToSet) {
     resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
 
-    String model = setCleanModelName(newModelToSet=newModelToSet, acceptedModels=[
-        "lumi.sensor_switch.aq3",
-        "lumi.sensor_switch",
-        "lumi.remote.b1acn01",
-        "lumi.sensor_86sw1lu",
-        "lumi.sensor_86sw1",
-        "lumi.sensor_86sw2Un",
-        "lumi.sensor_86sw2",
-        "lumi.remote.b186acn01",
-        "lumi.remote.b286acn01",
-        "lumi.remote.b686opcn01"
-    ])
+    String model = setCleanModelNameWithAcceptedModels(newModelToSet=newModelToSet)
     switch(model) {
         case "lumi.sensor_switch":
             sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Xiaomi Button (WXKG01LM) detected: set to 5 buttons")
             updateDataValue("physicalButtons", "1")
             break
+        case "lumi.sensor_switch.aq2":
+            sendEvent(name:"numberOfButtons", value: 4, isStateChange: false, descriptionText: "Aqara Button (WXKG11LM) 2015 detected: set to 4 buttons")
+            updateDataValue("physicalButtons", "1")
+            break
         case "lumi.remote.b1acn01":
-            sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara Button (WXKG11LM) detected: set to 3 buttons")
+            sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara Button (WXKG11LM) 2018 detected: set to 3 buttons")
             updateDataValue("physicalButtons", "1")
             break
         case "lumi.sensor_switch.aq3":
@@ -252,6 +245,24 @@ void updated() {
         createChildDevice("5", "6", btnDevice5and6)
     }
     refreshActual(null)
+}
+
+String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
+    return setCleanModelName(newModelToSet=newModelToSet, acceptedModels=[
+        "lumi.sensor_switch.aq3",
+        "lumi.sensor_switch.aq2",
+        "lumi.sensor_switch",
+        "lumi.remote.b1acn01",
+        "lumi.sensor_86sw1lu",
+        "lumi.sensor_86sw1",
+        "lumi.sensor_86sw2Un",
+        "lumi.sensor_86sw2",
+        "lumi.remote.b186acn01",
+        "lumi.remote.b286acn01",
+        "lumi.remote.b286opcn01", 
+        "lumi.remote.b486opcn01",
+        "lumi.remote.b686opcn01"
+    ])
 }
 
 boolean isSwitchModel(String model=null) {
@@ -389,7 +400,7 @@ ArrayList<String> parse(String description) {
         }
         logging("Model name received - description:${description} | parseMap:${msgMap}", 1)
         logging("New model to set: ${msgMap["value"]}", 1)
-        String model = setCleanModelName(newModelToSet=msgMap["value"])
+        String model = setCleanModelNameWithAcceptedModels(newModelToSet=msgMap["value"])
         if(isNonSwitchModel(model=model) == true) {
             sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0xFF02, [mfgCode: "0x115F"]))
         } else if(isSwitchModel() == true) {
@@ -537,6 +548,7 @@ void parseButtonEvent(Map msgMap) {
     Integer endpoint = Integer.parseInt(msgMap['endpoint'], 16)
     //logging("parseButtonEvent() (btn: ${btn}, attrId: ${msgMap["attrId"]}, endpoint: $endpoint)", 0)
     btn = btn == 18 ? 4 : btn
+
     Integer totalButtons = device.currentValue('numberOfButtons')
     Integer physicalButtons = getDeviceDataByName("physicalButtons") != null ? getDeviceDataByName("physicalButtons").toInteger() : 1
     Integer btnModified = endpoint + ((btn-1) * physicalButtons)
@@ -561,7 +573,13 @@ void parseButtonEvent(Map msgMap) {
         sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $endpoint was held")
     } else {
         if(btn == 0 || btn == 16) {
-            sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: true)
+            if(getDeviceDataByName('model') == "lumi.sensor_switch.aq2") {
+                logging("Button 1 was pushed (t4)", 100)
+                buttonPushed(1)
+                sendEvent(name:"pushed", value: 1, isStateChange: true, descriptionText: "Button 1 was pushed")     
+            } else {
+                sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: true)
+            }
         } else {
             Long lastHold = 0
             String lastHoldEpoch = device.currentValue('lastHoldEpoch', true) 
@@ -1029,7 +1047,7 @@ void runLevelChange(String deviceID, String methodName, BigDecimal level, Intege
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0521b"
+    String version = "v0.6.1.0523b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
