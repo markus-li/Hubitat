@@ -104,7 +104,7 @@
       "id": "51d9ab13-0d73-59b8-a7e8-8859a093539d",
       "internalId": 866,
       "name": "Tasmota - Universal Multi Sensor (Child)",
-      "version": "v1.0.2.0521T",
+      "version": "v1.0.2.0523T",
       "namespace": "tasmota",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-multi-sensor-child-expanded.groovy",
       "required": false

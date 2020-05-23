@@ -217,24 +217,29 @@ ArrayList<String> parse(String description) {
         List adjustedTemp = sensor_data_getAdjustedTempAlternative(rawValue / 100.0 )
         String tempUnit = adjustedTemp[0]
         BigDecimal t = adjustedTemp[1]
+        BigDecimal tRaw = adjustedTemp[2]
         
-        BigDecimal oldT = device.currentValue('temperature') == null ? null : device.currentValue('temperature')
-        t = t.setScale(1, BigDecimal.ROUND_HALF_UP)
-        if(oldT != null) oldT = oldT.setScale(1, BigDecimal.ROUND_HALF_UP)
-        BigDecimal tChange = null
-        if(oldT == null) {
-            logging("Temperature: $t $tempUnit", 1)
+        if(tRaw >= -50 || tRaw > 100) {
+            BigDecimal oldT = device.currentValue('temperature') == null ? null : device.currentValue('temperature')
+            t = t.setScale(1, BigDecimal.ROUND_HALF_UP)
+            if(oldT != null) oldT = oldT.setScale(1, BigDecimal.ROUND_HALF_UP)
+            BigDecimal tChange = null
+            if(oldT == null) {
+                logging("Temperature: $t $tempUnit", 1)
+            } else {
+                tChange = Math.abs(t - oldT)
+                tChange = tChange.setScale(1, BigDecimal.ROUND_HALF_UP)
+                logging("Temperature: $t $tempUnit (old temp: $oldT, change: $tChange)", 1)
+            }
+            
+            if(oldT == null || tChange > variance) {
+                logging("Sending temperature event (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 100)
+                sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
+            } else {
+                logging("SKIPPING temperature event since the change wasn't large enough (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 1)
+            }
         } else {
-            tChange = Math.abs(t - oldT)
-            tChange = tChange.setScale(1, BigDecimal.ROUND_HALF_UP)
-            logging("Temperature: $t $tempUnit (old temp: $oldT, change: $tChange)", 1)
-        }
-        
-        if(oldT == null || tChange > variance) {
-            logging("Sending temperature event (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 100)
-            sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
-        } else {
-            logging("SKIPPING temperature event since the change wasn't large enough (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 1)
+            log.warn "Incorrect temperature received from the sensor ($tRaw), it is probably time to change batteries!"
         }
 
     } else if(msgMap["cluster"] == "0403" && msgMap["attrId"] == "0000") {
@@ -1191,9 +1196,9 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
         tempUnit = "${degree}K"
     }
 	if (tempOffset) {
-	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)]
+	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), degree]
 	} else {
-       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP)]
+       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), degree]
     }
 }
 

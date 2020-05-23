@@ -109,22 +109,22 @@ metadata {
         List btnDeviceInputs = []
         switch(physicalButtons) {
             case 6:
-                btnDeviceInputs += [name: "btnDevice5and6", type: "enum", title: styling_addTitleDiv("Button Child Device(s) for button 5 & 6"), 
+                btnDeviceInputs += [name: "btnDevice5and6", type: "enum", title: styling_addTitleDiv("Child Device(s) for button 5 & 6"), 
                     description: styling_addDescriptionDiv("Create child devices for button 5 & 6."),
-                    options: ["None", "2 virtual switches", "1 virtual dimmer"], defaultValue: "None"]
+                    options: ["None", "2 virtual switches", "2 virtual momentary switches", "1 virtual dimmer"], defaultValue: "None"]
             case 4:
-                btnDeviceInputs += [name: "btnDevice3and4", type: "enum", title: styling_addTitleDiv("Button Child Device(s) for button 3 & 4"), 
+                btnDeviceInputs += [name: "btnDevice3and4", type: "enum", title: styling_addTitleDiv("Child Device(s) for button 3 & 4"), 
                     description: styling_addDescriptionDiv("Create child devices for button 3 & 4."),
-                    options: ["None", "2 virtual switches", "1 virtual dimmer"], defaultValue: "None"]
+                    options: ["None", "2 virtual switches", "2 virtual momentary switches", "1 virtual dimmer"], defaultValue: "None"]
             case 2:
-                btnDeviceInputs += [name: "btnDevice1and2", type: "enum", title: styling_addTitleDiv("Button Child Device(s) for button 1 & 2"), 
+                btnDeviceInputs += [name: "btnDevice1and2", type: "enum", title: styling_addTitleDiv("Child Device(s) for button 1 & 2"), 
                     description: styling_addDescriptionDiv("Create child devices for button 1 & 2."),
-                    options: ["None", "2 virtual switches", "1 virtual dimmer"], defaultValue: "None"]
+                    options: ["None", "2 virtual switches", "2 virtual momentary switches", "1 virtual dimmer"], defaultValue: "None"]
                 break
             case 1:
-                btnDeviceInputs += [name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Button Child Device(s) for button 1"), 
-                    description: styling_addDescriptionDiv("Create child devices for button 1."),
-                    options: ["None", "1 virtual switch"], defaultValue: "None"]
+                btnDeviceInputs += [name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for button 1"), 
+                    description: styling_addDescriptionDiv("Create a child device for button 1."),
+                    options: ["None", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None"]
                 break
         }
         btnDeviceInputs.reverse().each { input(it) }
@@ -228,22 +228,7 @@ void installed() {
 
 void updated() {
     logging("updated()", 100)
-    if(btnDevice1 != null && btnDevice1 != "None") {
-        logging("btnDevice1 = $btnDevice1", 1)
-        createChildDevice("1", null, btnDevice1)
-    }
-    if(btnDevice1and2 != null && btnDevice1and2 != "None") {
-        logging("btnDevice1and2 = $btnDevice1and2", 1)
-        createChildDevice("1", "2", btnDevice1and2)
-    }
-    if(btnDevice3and4 != null && btnDevice3and4 != "None") {
-        logging("btnDevice3and4 = $btnDevice3and4", 1)
-        createChildDevice("3", "4", btnDevice3and4)
-    }
-    if(btnDevice5and6 != null && btnDevice5and6 != "None") {
-        logging("btnDevice5and6 = $btnDevice5and6", 1)
-        createChildDevice("5", "6", btnDevice5and6)
-    }
+    createAllButtonChildren()
     refreshActual(null)
 }
 
@@ -578,6 +563,7 @@ void parseButtonEvent(Map msgMap) {
                 buttonPushed(1)
                 sendEvent(name:"pushed", value: 1, isStateChange: true, descriptionText: "Button 1 was pushed")     
             } else {
+                buttonDown(1)
                 sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: true)
             }
         } else {
@@ -635,394 +621,6 @@ void parseOppoButtonEvent(Map msgMap) {
     } else if(type == 5) {
         if(sendReleaseEvent(btn, "Button $btn was released (push event: $btnModified)")) {
             sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $btn was released")
-        }
-    }
-}
-
-void createChildDevice(String id1, String id2, String type) {
-    String driver = null
-    String name = null
-    String id = null
-    if(type == "dimmer" || type == "1 virtual dimmer") {
-        driver = "Generic Component Dimmer"
-        name = "Virtual Dimmer"
-        id = "${id1}_$id2"
-    } else {
-        driver = "Generic Component Switch"
-        name = "Virtual Switch"
-        id = id1
-        if(id2 != null) {
-            createChildDevice(id2, null, type)
-        }
-    }
-    try {
-        logging("Making device with type $type and id $device.id-$id", 100)
-        addChildDevice("hubitat", driver, "$device.id-$id", [name: "$name $id", label: "$name $id", isComponent: false])
-    } catch (com.hubitat.app.exception.UnknownDeviceTypeException e) {
-        log.error "'$driver' driver can't be found! This is supposed to be built-in! Is your hub broken?"
-    } catch (java.lang.IllegalArgumentException e) {
-        logging("Do nothing - The device already exists", 100)
-    }
-}
-
-String buildChildDeviceId(String type) {
-    return "$device.id-$type"
-}
-
-boolean useSwitchChildSet(String btnSetting) {
-    if(btnSetting == "2 virtual switches" || btnSetting == "1 virtual switch") {
-        return true
-    } else {
-        return false
-    }
-}
-
-boolean useDimmerChildSet(String btnSetting) {
-    if(btnSetting == "1 virtual dimmer") {
-        return true
-    } else {
-        return false
-    }
-}
-
-void toggleChildSwitch(String deviceID) {
-    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
-    String cSwitch = cd.currentState("switch", true)?.value
-    if(cSwitch == "on") {
-        cd.parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch toggled OFF"]])
-    } else {
-        cd.parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch toggled ON"]])
-    }
-}
-
-void setChildSwitch(String deviceID, String state) {
-    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
-    cd.parse([[name: "switch", value: state, isStateChange: false, descriptionText: "Switch set to ${state.toUpperCase()}"]])
-    if(state == "on") {
-        String cLevelStr = cd.currentState("level", true)?.value
-        Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
-        if(cLevel != null && cLevel == 0) {
-            cd.parse([[name: "level", value: 10, isStateChange: false, descriptionText: "Current level was 0, level set to 10."]])
-        }
-    }
-}
-
-/*
-    --------- CHILD DEVICE ACTION METHODS ---------
-*/
-void buttonPushed(Integer button) {
-    logging("buttonPushed(button=$button)", 1)
-    switch(button) {
-        case 1:
-            if(useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true) {
-                toggleChildSwitch(buildChildDeviceId("1"))
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                stepLevel(buildChildDeviceId("1_2"), "down")
-            }
-            break
-        case 2:
-            if(useSwitchChildSet(btnDevice1and2) == true) {
-                toggleChildSwitch(buildChildDeviceId("2"))
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                stepLevel(buildChildDeviceId("1_2"), "up")
-            }
-            break
-        case 3:
-            if(useSwitchChildSet(btnDevice3and4) == true) {
-                toggleChildSwitch(buildChildDeviceId("3"))
-            }
-            if(useDimmerChildSet(btnDevice3and4) == true) {
-                stepLevel(buildChildDeviceId("3_4"), "down")
-            }
-            break
-        case 4:
-            if(useSwitchChildSet(btnDevice3and4) == true) {
-                toggleChildSwitch(buildChildDeviceId("4"))
-            }
-            if(useDimmerChildSet(btnDevice3and4) == true) {
-                stepLevel(buildChildDeviceId("3_4"), "up")
-            }
-            break
-        case 5:
-            if(useSwitchChildSet(btnDevice5and6) == true) {
-                toggleChildSwitch(buildChildDeviceId("5"))
-            }
-            if(useDimmerChildSet(btnDevice5and6) == true) {
-                stepLevel(buildChildDeviceId("5_6"), "down")
-            }
-            break
-        case 6:
-            if(useSwitchChildSet(btnDevice5and6) == true) {
-                toggleChildSwitch(buildChildDeviceId("6"))
-            }
-            if(useDimmerChildSet(btnDevice5and6) == true) {
-                stepLevel(buildChildDeviceId("5_6"), "up")
-            }
-            break
-    }
-}
-
-void buttonHeld(Integer button) {
-    logging("buttonHeld(button=$button)", 1)
-    switch(button) {
-        case 1:
-            if(useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("1"), "off")
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("1_2"), "off")
-            }
-            break
-        case 2:
-            if(useSwitchChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("2"), "off")
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("1_2"), "on")
-            }
-            break
-        case 3:
-            if(useSwitchChildSet(btnDevice3and4) == true) {
-                setChildSwitch(buildChildDeviceId("3"), "off")
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("3_4"), "off")
-            }
-            break
-        case 4:
-            if(useSwitchChildSet(btnDevice3and4) == true) {
-                setChildSwitch(buildChildDeviceId("4"), "off")
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("3_4"), "on")
-            }
-            break
-        case 5:
-            if(useSwitchChildSet(btnDevice5and6) == true) {
-                setChildSwitch(buildChildDeviceId("5"), "off")
-            }
-            if(useDimmerChildSet(btnDevice5and6) == true) {
-                setChildSwitch(buildChildDeviceId("5_6"), "off")
-            }
-            break
-        case 6:
-            if(useSwitchChildSet(btnDevice5and6) == true) {
-                setChildSwitch(buildChildDeviceId("6"), "off")
-            }
-            if(useDimmerChildSet(btnDevice5and6) == true) {
-                setChildSwitch(buildChildDeviceId("5_6"), "on")
-            }
-            break
-    }
-}
-
-void buttonDoubleTapped(Integer button) {
-    logging("buttonDoubleTapped(button=$button)", 1)
-    switch(button) {
-        case 1:
-            if(useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("1"), "on")
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                prepareStartLevelChange(buildChildDeviceId("1_2"), "down")
-            }
-            break
-        case 2:
-            if(useSwitchChildSet(btnDevice1and2) == true) {
-                setChildSwitch(buildChildDeviceId("2"), "on")
-            }
-            if(useDimmerChildSet(btnDevice1and2) == true) {
-                prepareStartLevelChange(buildChildDeviceId("1_2"), "up")
-            }
-            break
-        case 3:
-            if(useSwitchChildSet(btnDevice3and4) == true) {
-                setChildSwitch(buildChildDeviceId("3"), "on")
-            }
-            if(useDimmerChildSet(btnDevice3and4) == true) {
-                prepareStartLevelChange(buildChildDeviceId("3_4"), "down")
-            }
-            break
-        case 4:
-            if(useSwitchChildSet(btnDevice3and4) == true) {
-                setChildSwitch(buildChildDeviceId("4"), "on")
-            }
-            if(useDimmerChildSet(btnDevice3and4) == true) {
-                prepareStartLevelChange(buildChildDeviceId("3_4"), "up")
-            }
-            break
-        case 5:
-            if(useSwitchChildSet(btnDevice5and6) == true) {
-                setChildSwitch(buildChildDeviceId("5"), "on")
-            }
-            if(useDimmerChildSet(btnDevice5and6) == true) {
-                prepareStartLevelChange(buildChildDeviceId("5_6"), "down")
-            }
-            break
-        case 6:
-            if(useSwitchChildSet(btnDevice5and6) == true) {
-                setChildSwitch(buildChildDeviceId("6"), "on")
-            }
-            if(useDimmerChildSet(btnDevice5and6) == true) {
-                prepareStartLevelChange(buildChildDeviceId("5_6"), "up")
-            }
-            break
-    }
-}
-
-/**
- *  --------- COMPONENT METHODS ---------
- */
-
-void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentRefresh() from $cd.deviceNetworkId", 1)
-}
-
-void componentOn(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentOn() from $cd.deviceNetworkId", 1)
-    getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch turned ON"]])
-}
-
-void componentOff(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentOff() from $cd.deviceNetworkId", 1)
-    getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch turned OFF"]])
-}
-
-void componentStopLevelChange(com.hubitat.app.DeviceWrapper cd) {
-    logging("componentStopLevelChange() from $cd.deviceNetworkId", 1)
-    unschedule("runLevelChange_${cd.deviceNetworkId.split("-")[1]}")
-}
-
-void componentStartLevelChange(com.hubitat.app.DeviceWrapper cd, String direction) {
-    logging("componentStartLevelChange() from $cd.deviceNetworkId (direction=$direction)", 1)
-    prepareStartLevelChange(cd.deviceNetworkId, direction)
-}
-
-void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
-    componentSetLevel(cd, level, null)
-}
-
-void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level, BigDecimal duration) {
-    level = level > 100 ? 100 : level < 0 ? 0 : level
-    logging("componentSetLevel() from $cd.deviceNetworkId (level=$level, duration=$duration)", 1)
-    prepareLevelChange(cd.deviceNetworkId, level, duration)
-}
-
-void prepareStartLevelChange(String deviceID, String direction) {
-    logging("prepareStartLevelChange() from $deviceID (direction=$direction)", 1)
-    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
-    String cLevelStr = cd.currentState("level", true)?.value
-    logging("cLevelStr = $cLevelStr", 1)
-    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
-    logging("cLevel = $cLevel", 1)
-    if(direction == "up") {
-        prepareLevelChange(cd.deviceNetworkId, 100, (20 / 100.0) * (100 - cLevel))
-    } else {
-        prepareLevelChange(cd.deviceNetworkId, 0, (20 / 100.0) * cLevel)
-    }
-}
-
-void stepLevel(String deviceID, String direction) {
-    logging("runLevelChange() from $deviceID (direction=$direction)", 1)
-    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
-    unschedule("runLevelChange_${deviceID.split("-")[1]}")
-    String cLevelStr = cd.currentState("level", true)?.value
-    logging("cLevelStr = $cLevelStr", 1)
-    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
-    if(direction == "up") {
-        cLevel = cLevel + 5 > 100 ? 100 : cLevel + 5
-        prepareLevelChange(cd.deviceNetworkId, cLevel, 0)
-    } else {
-        cLevel = cLevel - 5 < 0 ? 0 : cLevel - 5
-        prepareLevelChange(cd.deviceNetworkId, cLevel, 0)
-    }
-    logging("cLevel = $cLevel", 1)
-}
-
-void prepareLevelChange(String deviceID, BigDecimal level, BigDecimal duration) {
-    level = level > 100 ? 100 : level < 0 ? 0 : level
-    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
-    if(duration == null || duration <= 1) {
-        cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Level set to $level"]])
-    } else {
-        String cLevelStr = cd.currentState("level", true)?.value
-        Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
-        logging("cLevel = $cLevel, level = $level, duration = $duration", 1)
-        if(cLevel == null || level == cLevel) {
-            cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Current level was null, level set to $level"]])
-        } else {
-            Integer levelDiff = Math.abs(cLevel - level)
-            duration = duration > 3600 ? 3600 : duration
-            BigDecimal changePerStep = levelDiff / duration
-            Integer numSteps = duration
-            Integer timeBetweenSteps = 1
-            if(changePerStep > 0 && changePerStep < 1) {
-                timeBetweenSteps = (1 / changePerStep).intValue()
-                changePerStep = 1
-                numSteps = duration / timeBetweenSteps
-            }
-            changePerStep = changePerStep.setScale(2, BigDecimal.ROUND_HALF_UP)
-            changePerStepInt = changePerStep.intValue()
-            changePerStepInt = level < cLevel ? changePerStepInt * -1 : changePerStepInt
-            Integer missingSteps = levelDiff - (numSteps * changePerStepInt)
-            //logging("level: $level, cLevel: $cLevel, levelDiff: $levelDiff, duration: $duration, changePerStep: $changePerStep, timeBetweenSteps: $timeBetweenSteps", 0)
-            //logging("numSteps: $numSteps, numSteps * timeBetweenSteps: ${numSteps * timeBetweenSteps}, numSteps * changePerStepInt: ${numSteps * changePerStepInt}, missingSteps: $missingSteps", 0)
-            runIn(timeBetweenSteps, "runLevelChange_${deviceID.split("-")[1]}", [data: [deviceID: deviceID, level:level, changePerStep:changePerStepInt, timeBetweenSteps:timeBetweenSteps]])
-        }
-        
-    }
-}
-
-void runLevelChange_1_2(Map data) {
-    //logging("runLevelChange_1_2 data: $data", 0)
-    runLevelChange(data["deviceID"], "runLevelChange_1_2", data["level"], data["changePerStep"], data["timeBetweenSteps"])
-}
-
-void runLevelChange_3_4(Map data) {
-    //logging("runLevelChange_3_4 data: $data", 0)
-    runLevelChange(data["deviceID"], "runLevelChange_3_4", data["level"], data["changePerStep"], data["timeBetweenSteps"])
-}
-
-void runLevelChange_5_6(Map data) {
-    //logging("runLevelChange_5_6 data: $data", 0)
-    runLevelChange(data["deviceID"], "runLevelChange_5_6", data["level"], data["changePerStep"], data["timeBetweenSteps"])
-}
-
-void runLevelChange(Map data) {
-    //logging("runLevelChange data: $data", 0)
-    runLevelChange(data["deviceID"], "runLevelChange", data["level"], data["changePerStep"], data["timeBetweenSteps"])
-}
-
-void runLevelChange(String deviceID, String methodName, BigDecimal level, Integer changePerStep, Integer timeBetweenSteps) {
-    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
-    String cLevelStr = cd.currentState("level", true)?.value
-    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
-    if(cLevel == null) {
-        cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Current level was null, can't use duration, level set to $level"]])
-        if(level == 0) {
-            setChildSwitch(cd.deviceNetworkId, "off")
-        } else {
-            setChildSwitch(cd.deviceNetworkId, "on")
-        }
-    } else {
-        Integer nextLevel = cLevel + changePerStep
-        if(changePerStep > 0) {
-            nextLevel = nextLevel > level ? level : nextLevel
-        } else {
-            nextLevel = nextLevel < level ? level : nextLevel
-        }
-        if(nextLevel == 0) {
-            setChildSwitch(cd.deviceNetworkId, "off")
-        } else {
-            setChildSwitch(cd.deviceNetworkId, "on")
-        }
-        if(nextLevel == level) {
-            cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Levelchange done, level set to $level"]])
-        } else {
-            cd.parse([[name: "level", value: nextLevel, isStateChange: false, descriptionText: "Levelchange in progress, level set to $nextLevel"]])
-            runIn(timeBetweenSteps, methodName, [data: [deviceID: deviceID, level:level, changePerStep:changePerStep, timeBetweenSteps:timeBetweenSteps]])
         }
     }
 }
@@ -1869,3 +1467,424 @@ void checkPresence() {
     }
 }
 // END:  getHelperFunctions('driver-default')
+
+// BEGIN:getHelperFunctions('virtual-child-device-for-button')
+void createAllButtonChildren() {
+    if(btnDevice1 != null && btnDevice1 != "None") {
+        logging("btnDevice1 = $btnDevice1", 1)
+        createButtonChildDevice("1", null, btnDevice1)
+    }
+    if(btnDevice1and2 != null && btnDevice1and2 != "None") {
+        logging("btnDevice1and2 = $btnDevice1and2", 1)
+        createButtonChildDevice("1", "2", btnDevice1and2)
+    }
+    if(btnDevice3and4 != null && btnDevice3and4 != "None") {
+        logging("btnDevice3and4 = $btnDevice3and4", 1)
+        createButtonChildDevice("3", "4", btnDevice3and4)
+    }
+    if(btnDevice5and6 != null && btnDevice5and6 != "None") {
+        logging("btnDevice5and6 = $btnDevice5and6", 1)
+        createButtonChildDevice("5", "6", btnDevice5and6)
+    }
+}
+
+void createButtonChildDevice(String id1, String id2, String type) {
+    String driver = null
+    String name = null
+    String id = null
+    if(useDimmerChildSet(type) == true) {
+        driver = "Generic Component Dimmer"
+        name = "Virtual Dimmer"
+        id = "${id1}_$id2"
+    } else if(useMomentarySwitchChildSet(type) == true) {
+        driver = "Generic Component Switch"
+        name = "Virtual Momentary Switch"
+        id = id1
+        if(id2 != null) {
+            createButtonChildDevice(id2, null, type)
+        }
+    } else if(useVirtualButtonChildSet(type) == true) {
+        driver = "Generic Component Button Controller"
+        name = "Virtual Button"
+        id = id1
+        if(id2 != null) {
+            createButtonChildDevice(id2, null, type)
+        }
+    } else {
+        driver = "Generic Component Switch"
+        name = "Virtual Switch"
+        id = id1
+        if(id2 != null) {
+            createButtonChildDevice(id2, null, type)
+        }
+    }
+    try {
+        logging("Making device with type $type and id $device.id-$id", 100)
+        com.hubitat.app.DeviceWrapper cd = addChildDevice("hubitat", driver, "$device.id-$id", [name: "$name $id", label: "$name $id", isComponent: false])
+        if(useDimmerChildSet(type) == true) {
+            cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Switch Initialized as OFF"]])
+            cd.parse([[name: "level", value: 0, isStateChange: true, descriptionText: "Level Initialized as 0"]])
+        } else if(useVirtualButtonChildSet(type) == true) {
+            cd.parse([[name: "numberOfButtons ", value: 4, isStateChange: true, descriptionText: "Number of Buttons set to 4"]])
+            cd.parse([[name: "held", value: 0, isStateChange: true, descriptionText: "Held Initialized as 0"]])
+            cd.parse([[name: "pushed", value: 0, isStateChange: true, descriptionText: "Pushed Initialized as 0"]])
+            cd.parse([[name: "doubleTapped", value: 0, isStateChange: true, descriptionText: "Double Tapped Initialized as 0"]])
+            cd.parse([[name: "released", value: 0, isStateChange: true, descriptionText: "Released Initialized as 0"]])
+        } else {
+            cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Switch Initialized as OFF"]])
+        }
+    } catch (com.hubitat.app.exception.UnknownDeviceTypeException e) {
+        log.error "'$driver' driver can't be found! This is supposed to be built-in! Is your hub broken?"
+    } catch (java.lang.IllegalArgumentException e) {
+        logging("Do nothing - The device already exists", 100)
+    }
+}
+
+String buildChildDeviceId(String type) {
+    return "$device.id-$type"
+}
+
+boolean useSwitchChildSet(String btnSetting) {
+    if(btnSetting == "2 virtual switches" || btnSetting == "1 virtual switch") {
+        return true
+    } else {
+        return false
+    }
+}
+
+boolean useMomentarySwitchChildSet(String btnSetting) {
+    if(btnSetting == "2 virtual momentary switches" || btnSetting == "1 virtual momentary switch") {
+        return true
+    } else {
+        return false
+    }
+}
+
+boolean useVirtualButtonChildSet(String btnSetting) {
+    if(btnSetting == "2 virtual buttons" || btnSetting == "1 virtual button") {
+        return true
+    } else {
+        return false
+    }
+}
+
+boolean useDimmerChildSet(String btnSetting) {
+    if(btnSetting == "1 virtual dimmer" || btnSetting == "dimmer") {
+        return true
+    } else {
+        return false
+    }
+}
+
+void toggleChildSwitch(String deviceID) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    String cSwitch = cd.currentState("switch", true)?.value
+    if(cSwitch == "on") {
+        cd.parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch toggled OFF"]])
+    } else {
+        cd.parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch toggled ON"]])
+    }
+}
+
+void setChildSwitch(String deviceID, String state, boolean levelChange = true) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    cd.parse([[name: "switch", value: state, isStateChange: false, descriptionText: "Switch set to ${state.toUpperCase()}"]])
+    if(levelChange == true && state == "on") {
+        String cLevelStr = cd.currentState("level", true)?.value
+        Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
+        if(cLevel != null && cLevel == 0) {
+            cd.parse([[name: "level", value: 10, isStateChange: false, descriptionText: "Current level was 0, level set to 10."]])
+        }
+    }
+}
+
+void activateMomentarySwitch(String deviceID) {
+    setMomentarySwitch(deviceID)
+    runInMillis(600, "releaseMomentarySwitch", [data: ['deviceID': deviceID]])
+}
+
+void setMomentarySwitch(String deviceID) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    cd.parse([[name: "switch", value: 'on', isStateChange: true, descriptionText: "Momentary Switch set to ON"]])
+}
+
+void releaseMomentarySwitch(String deviceID) {
+    releaseMomentarySwitch(['deviceID': deviceID])
+}
+
+void releaseMomentarySwitch(Map data) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(data["deviceID"])
+    cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Momentary Switch set to OFF"]])
+}
+
+void sendButtonEvent(String deviceID, String name, Integer button) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    cd.parse([[name: name, value: button, isStateChange: true, descriptionText: "Virtual button event '$name' for button $button"]])
+    if(name == 'held') {
+        cd.parse([[name: 'pushed', value: 2, isStateChange: true, descriptionText: "Virtual button event 'pushed' for button 2 (from '$name')"]])
+    }
+}
+
+Map getChildDeviceConfig() {
+    logging("getChildDeviceConfig()", 100)
+    Map childDeviceConfig = [
+        1: ['switch': useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice1) == true || useMomentarySwitchChildSet(btnDevice1and2) == true,
+            'dimmer': useDimmerChildSet(btnDevice1and2) == true,
+            'button': useVirtualButtonChildSet(btnDevice1) == true],
+        2: ['switch': useSwitchChildSet(btnDevice1and2) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice1and2) == true,
+            'dimmer': useDimmerChildSet(btnDevice1and2) == true,
+            'button': false],
+        3: ['switch': useSwitchChildSet(btnDevice3and4) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice3and4) == true,
+            'dimmer': useDimmerChildSet(btnDevice3and4) == true,
+            'button': false],
+        4: [:],
+        5: ['switch': useSwitchChildSet(btnDevice5and6) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice5and6) == true,
+            'dimmer': useDimmerChildSet(btnDevice5and6) == true,
+            'button': false],
+        6: [:],
+    ]
+    childDeviceConfig[4] = childDeviceConfig[3]
+    childDeviceConfig[6] = childDeviceConfig[5]
+    return childDeviceConfig
+}
+
+String getChildDeviceComboId(Integer button) {
+    logging("getChildDeviceComboId(button=$button)", 100)
+    if(button >= 1) {
+        return button % 2 == 0 ? "${button - 1}_${button}" : "${button}_${button + 1}"
+    } else {
+        return null
+    }
+}
+
+boolean buttonDown(Integer button, boolean useEvent=false) {
+    boolean active = false
+    if(useEvent == true) {
+        logging("buttonDown(button=$button)", 100)
+        Map childDeviceConfig = getChildDeviceConfig()
+        if(childDeviceConfig[button]['switchMomentary'] == true) {
+            setMomentarySwitch(buildChildDeviceId("$button"))
+            active = true
+        } else if(childDeviceConfig[button]['button'] == true) {
+            sendButtonEvent(buildChildDeviceId("$button"), "pushed", 1)
+            active = true
+        }
+    } else {
+        logging("buttonDown(button=$button) UNUSED EVENT", 1)
+    }
+    return active
+}
+
+boolean buttonPushed(Integer button, boolean momentaryRelease=false) {
+    logging("buttonPushed(button=$button)", 100)
+    boolean active = false
+    Map childDeviceConfig = getChildDeviceConfig()
+    if(childDeviceConfig[button]['switch'] == true) {
+        toggleChildSwitch(buildChildDeviceId("$button"))
+        active = true
+    } else if(childDeviceConfig[button]['switchMomentary'] == true) {
+        active = true
+        if(momentaryRelease == true) {
+            releaseMomentarySwitch(buildChildDeviceId("$button"))
+        } else {
+            activateMomentarySwitch(buildChildDeviceId("$button"))
+        }
+    } else if(childDeviceConfig[button]['dimmer'] == true) {
+        active = true
+        stepLevel(buildChildDeviceId(getChildDeviceComboId(button)), button % 2 == 0 ? "up" : "down")
+    } else if(childDeviceConfig[button]['button'] == true) {
+        if(momentaryRelease == false) {
+            sendButtonEvent(buildChildDeviceId("$button"), "pushed", 1)
+        } else {
+            sendButtonEvent(buildChildDeviceId("$button"), "released", 1)
+        }
+        active = true
+    }
+    return active
+}
+
+boolean buttonHeld(Integer button) {
+    logging("buttonHeld(button=$button)", 100)
+    boolean active = false
+    Map childDeviceConfig = getChildDeviceConfig()
+    if(childDeviceConfig[button]['switch'] == true) {
+        active = true
+        setChildSwitch(buildChildDeviceId("$button"), "off")
+    } else if(childDeviceConfig[button]['dimmer'] == true) {
+        active = true
+        setChildSwitch(buildChildDeviceId(getChildDeviceComboId(button)), button % 2 == 0 ? "on" : "off")
+    } else if(childDeviceConfig[button]['button'] == true) {
+        sendButtonEvent(buildChildDeviceId("$button"), "held", 1)
+        active = true
+    }
+    return active
+}
+
+boolean buttonDoubleTapped(Integer button) {
+    logging("buttonDoubleTapped(button=$button)", 100)
+    boolean active = false
+    Map childDeviceConfig = getChildDeviceConfig()
+    if(childDeviceConfig[button]['switch'] == true) {
+        active = true
+        setChildSwitch(buildChildDeviceId("$button"), "on")
+    } else if(childDeviceConfig[button]['dimmer'] == true) {
+        active = true
+        prepareStartLevelChange(buildChildDeviceId(getChildDeviceComboId(button)), button % 2 == 0 ? "up" : "down")
+    }
+    return active
+}
+
+void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentRefresh() from $cd.deviceNetworkId", 1)
+}
+
+void componentOn(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOn() from $cd.deviceNetworkId", 1)
+    getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch turned ON"]])
+}
+
+void componentOff(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOff() from $cd.deviceNetworkId", 1)
+    getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch turned OFF"]])
+}
+
+void componentStopLevelChange(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentStopLevelChange() from $cd.deviceNetworkId", 1)
+    unschedule("runLevelChange_${cd.deviceNetworkId.split("-")[1]}")
+}
+
+void componentStartLevelChange(com.hubitat.app.DeviceWrapper cd, String direction) {
+    logging("componentStartLevelChange() from $cd.deviceNetworkId (direction=$direction)", 1)
+    prepareStartLevelChange(cd.deviceNetworkId, direction)
+}
+
+void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
+    componentSetLevel(cd, level, null)
+}
+
+void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level, BigDecimal duration) {
+    level = level > 100 ? 100 : level < 0 ? 0 : level
+    logging("componentSetLevel() from $cd.deviceNetworkId (level=$level, duration=$duration)", 1)
+    prepareLevelChange(cd.deviceNetworkId, level, duration)
+}
+
+void prepareStartLevelChange(String deviceID, String direction) {
+    logging("prepareStartLevelChange() from $deviceID (direction=$direction)", 1)
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    String cLevelStr = cd.currentState("level", true)?.value
+    logging("cLevelStr = $cLevelStr", 1)
+    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
+    logging("cLevel = $cLevel", 1)
+    if(direction == "up") {
+        prepareLevelChange(cd.deviceNetworkId, 100, (20 / 100.0) * (100 - cLevel))
+    } else {
+        prepareLevelChange(cd.deviceNetworkId, 0, (20 / 100.0) * cLevel)
+    }
+}
+
+void stepLevel(String deviceID, String direction) {
+    logging("runLevelChange() from $deviceID (direction=$direction)", 1)
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    unschedule("runLevelChange_${deviceID.split("-")[1]}")
+    String cLevelStr = cd.currentState("level", true)?.value
+    logging("cLevelStr = $cLevelStr", 1)
+    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
+    if(direction == "up") {
+        cLevel = cLevel + 5 > 100 ? 100 : cLevel + 5
+        prepareLevelChange(cd.deviceNetworkId, cLevel, 0)
+    } else {
+        cLevel = cLevel - 5 < 0 ? 0 : cLevel - 5
+        prepareLevelChange(cd.deviceNetworkId, cLevel, 0)
+    }
+    logging("cLevel = $cLevel", 1)
+}
+
+void prepareLevelChange(String deviceID, BigDecimal level, BigDecimal duration) {
+    level = level > 100 ? 100 : level < 0 ? 0 : level
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    if(duration == null || duration <= 1) {
+        cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Level set to $level"]])
+    } else {
+        String cLevelStr = cd.currentState("level", true)?.value
+        Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
+        logging("cLevel = $cLevel, level = $level, duration = $duration", 1)
+        if(cLevel == null || level == cLevel) {
+            cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Current level was null, level set to $level"]])
+        } else {
+            Integer levelDiff = Math.abs(cLevel - level)
+            duration = duration > 3600 ? 3600 : duration
+            BigDecimal changePerStep = levelDiff / duration
+            Integer numSteps = duration
+            Integer timeBetweenSteps = 1
+            if(changePerStep > 0 && changePerStep < 1) {
+                timeBetweenSteps = (1 / changePerStep).intValue()
+                changePerStep = 1
+                numSteps = duration / timeBetweenSteps
+            }
+            changePerStep = changePerStep.setScale(2, BigDecimal.ROUND_HALF_UP)
+            changePerStepInt = changePerStep.intValue()
+            changePerStepInt = level < cLevel ? changePerStepInt * -1 : changePerStepInt
+            Integer missingSteps = levelDiff - (numSteps * changePerStepInt)
+             
+            runIn(timeBetweenSteps, "runLevelChange_${deviceID.split("-")[1]}", [data: [deviceID: deviceID, level:level, changePerStep:changePerStepInt, timeBetweenSteps:timeBetweenSteps]])
+        }
+        
+    }
+}
+
+void runLevelChange_1_2(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange_1_2", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange_3_4(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange_3_4", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange_5_6(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange_5_6", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange(String deviceID, String methodName, BigDecimal level, Integer changePerStep, Integer timeBetweenSteps) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    String cLevelStr = cd.currentState("level", true)?.value
+    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
+    if(cLevel == null) {
+        cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Current level was null, can't use duration, level set to $level"]])
+        if(level == 0) {
+            setChildSwitch(cd.deviceNetworkId, "off")
+        } else {
+            setChildSwitch(cd.deviceNetworkId, "on")
+        }
+    } else {
+        Integer nextLevel = cLevel + changePerStep
+        if(changePerStep > 0) {
+            nextLevel = nextLevel > level ? level : nextLevel
+        } else {
+            nextLevel = nextLevel < level ? level : nextLevel
+        }
+        if(nextLevel == 0) {
+            setChildSwitch(cd.deviceNetworkId, "off")
+        } else {
+            setChildSwitch(cd.deviceNetworkId, "on")
+        }
+        if(nextLevel == level) {
+            cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Levelchange done, level set to $level"]])
+        } else {
+            cd.parse([[name: "level", value: nextLevel, isStateChange: false, descriptionText: "Levelchange in progress, level set to $nextLevel"]])
+            runIn(timeBetweenSteps, methodName, [data: [deviceID: deviceID, level:level, changePerStep:changePerStep, timeBetweenSteps:timeBetweenSteps]])
+        }
+    }
+}
+// END:  getHelperFunctions('virtual-child-device-for-button')
