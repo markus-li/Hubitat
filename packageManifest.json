@@ -2,8 +2,8 @@
   "packageName": "Tasmota for Hubitat Elevation",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-05-22",
-  "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/packageManifestBeta.json",
+  "dateReleased": "2020-05-23",
+  "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packageManifestBeta.json",
   "documentationLink": "https://github.com/markus-li/Hubitat/wiki",
   "communityLink": "https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322?u=markus",
   "apps": [
