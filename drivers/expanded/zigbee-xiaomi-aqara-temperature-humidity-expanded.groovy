@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0521
+ *  Version: v0.6.1.0523
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -272,19 +272,21 @@ ArrayList<String> parse(String description) {
         h = h.setScale(1, BigDecimal.ROUND_HALF_UP)
         if(oldH != null) oldH = oldH.setScale(2, BigDecimal.ROUND_HALF_UP)
         BigDecimal hChange = null
-        if(oldH == null) {
-            logging("Humidity: $h %", 1)
-        } else {
-            hChange = Math.abs(h - oldH)
-            hChange = hChange.setScale(2, BigDecimal.ROUND_HALF_UP)
-            logging("Humidity: $h% (old hummidity: $oldH%, change: $hChange%)", 1)
-        }
-        
-        if(oldH == null || hChange > variance) {
-            logging("Sending humidity event (Humidity: $h%, old hummidity: $oldH%, change: $hChange%)", 100)
-            sendEvent(name:"humidity", value: h, unit: "%", isStateChange: true)
-        } else {
-            logging("SKIPPING humidity event since the change wasn't large enough (Humidity: $h%, old hummidity: $oldH%, change: $hChange%)", 1)
+        if(h <= 100) {
+            if(oldH == null) {
+                logging("Humidity: $h %", 1)
+            } else {
+                hChange = Math.abs(h - oldH)
+                hChange = hChange.setScale(2, BigDecimal.ROUND_HALF_UP)
+                logging("Humidity: $h% (old hummidity: $oldH%, change: $hChange%)", 1)
+            }
+            
+            if(oldH == null || hChange > variance) {
+                logging("Sending humidity event (Humidity: $h%, old hummidity: $oldH%, change: $hChange%)", 100)
+                sendEvent(name:"humidity", value: h, unit: "%", isStateChange: true)
+            } else {
+                logging("SKIPPING humidity event since the change wasn't large enough (Humidity: $h%, old hummidity: $oldH%, change: $hChange%)", 1)
+            }
         }
 
     } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "FF01" && 
@@ -333,7 +335,7 @@ ArrayList<String> parse(String description) {
 private String getDriverVersion() {
     comment = "Works with model WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0521"
+    String version = "v0.6.1.0523"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
