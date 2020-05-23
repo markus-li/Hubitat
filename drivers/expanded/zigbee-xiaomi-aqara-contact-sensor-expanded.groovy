@@ -77,7 +77,7 @@ metadata {
         // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
         input(name: "invertContact", type: "bool", title: styling_addTitleDiv("Invert open/close"), description: styling_addDescriptionDiv("When open show as closed and vice versa (default: false)"), defaultValue: false, range: "5..3600")
         input(name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for the contact sensor"), 
-                    description: styling_addDescriptionDiv("Create a child device for the contact sensor."),
+                    description: styling_addDescriptionDiv("Create a child device for the contact sensor. If changing from Button to Switch or vice versa you need to delete the child device manually for the change to work."),
                     options: ["None", "1 virtual button", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None")
 	}
 

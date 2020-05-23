@@ -2,7 +2,7 @@
   "packageName": "Xiaomi/Aqara Motion Sensor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-05-22",
+  "dateReleased": "2020-05-23",
   "apps": [],
   "drivers": [
     {
