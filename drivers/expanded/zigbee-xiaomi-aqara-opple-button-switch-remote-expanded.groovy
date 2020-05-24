@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0523
+ *  Version: v0.6.1.0524
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -183,16 +183,16 @@ ArrayList<String> refreshActual(String newModelToSet) {
             break
         case "lumi.sensor_86sw2Un":
         case "lumi.sensor_86sw2":
-            sendEvent(name:"numberOfButtons", value: 6, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2016) detected: set to 6 buttons")
-            updateDataValue("physicalButtons", "2")
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2016) detected: set to 6 buttons")
+            updateDataValue("physicalButtons", "3")
             break
         case "lumi.remote.b186acn01":
             sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara 1-button Light Switch (WXKG03LM - 2018) detected: set to 3 buttons")
             updateDataValue("physicalButtons", "1")
             break
         case "lumi.remote.b286acn01":
-            sendEvent(name:"numberOfButtons", value: 6, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2018) detected: set to 6 buttons")
-            updateDataValue("physicalButtons", "2")
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2018) detected: set to 6 buttons")
+            updateDataValue("physicalButtons", "3")
             break
         case "lumi.remote.b286opcn01":
             sendEvent(name:"numberOfButtons", value: 10, isStateChange: false, descriptionText: "Aqara Oppo 2 Button Remote (WXCJKG11LM) detected: set to 10 buttons")
@@ -645,7 +645,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0523"
+    String version = "v0.6.1.0524"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
