@@ -183,7 +183,7 @@ ArrayList<String> refreshActual(String newModelToSet) {
             break
         case "lumi.sensor_86sw2Un":
         case "lumi.sensor_86sw2":
-            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2016) detected: set to 6 buttons")
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2016) detected: set to 9 buttons")
             updateDataValue("physicalButtons", "3")
             break
         case "lumi.remote.b186acn01":
@@ -191,7 +191,7 @@ ArrayList<String> refreshActual(String newModelToSet) {
             updateDataValue("physicalButtons", "1")
             break
         case "lumi.remote.b286acn01":
-            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2018) detected: set to 6 buttons")
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2018) detected: set to 9 buttons")
             updateDataValue("physicalButtons", "3")
             break
         case "lumi.remote.b286opcn01":
