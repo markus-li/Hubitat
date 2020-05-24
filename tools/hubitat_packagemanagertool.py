@@ -166,10 +166,12 @@ class HubitatPackageManagerPackage:
     self.manifestDict['drivers'].append(newDriver)
   
   def _extractSavedManifest(self, savedManifest):
+    mdataFull = None
     if(os.path.isfile(savedManifest) and os.access(savedManifest, os.R_OK)):
       mdata = {}
       with open(savedManifest, 'r') as f:
         mdata = json.load(f)
+      mdataFull = mdata.copy()
       if('drivers' in mdata):
         drivers_dict = {}
         # Extract the driver data from the manifest and store it based on the UUID
@@ -209,13 +211,15 @@ class HubitatPackageManagerPackage:
           if(d['internalId'] in apps_dict and apps_dict[d['internalId']]['id'] != None):
             d['id'] = apps_dict[d['internalId']]['id']
             #print('Found this App ID: ' + apps_dict[d['internalId']]['id'])
+    return mdataFull
 
   def buildManifest(self, output="packageManifest.json", extraInput=None):
     # First check if it already exists and have IDs set
+    mdataSaved = None
     if(self.isBeta == True and extraInput != None):
       self._extractSavedManifest(extraInput)
     
-    self._extractSavedManifest(output)
+    mdataSaved = self._extractSavedManifest(output)
 
     if(self.isBeta == False and extraInput != None):
       self._extractSavedManifest(extraInput)
@@ -230,9 +234,20 @@ class HubitatPackageManagerPackage:
         d['id'] = str(uuid.uuid5(uuid.NAMESPACE_DNS, d['name'] + d['namespace']))
         #print('Made this App ID: ' + d['id'])
 
-    # Then write the update
-    with open(output, 'w') as f:
-      f.write(json.dumps(self.manifestDict, indent=2))
+    
+    tmpManifestDict = self.manifestDict.copy()
+    tmpManifestDict['dateReleased'] = mdataSaved['dateReleased']
+    if(json.dumps(tmpManifestDict, indent=2) == json.dumps(mdataSaved, indent=2)):
+      # No changes, so don't update
+      #print("same output: " + output + ", " + mdataSaved['dateReleased'])
+      self.log.info("No change for '" + output + "'")
+    else:
+      # There were changes, so update
+      #print("NOT same output: " + output + ", " + mdataSaved['dateReleased'])
+      # Then write the update
+      self.log.warn("CHANGE for '" + output + "'")
+      with open(output, 'w') as f:
+        f.write(json.dumps(self.manifestDict, indent=2))
 
   def clearDrivers(self):
     self.manifestDict['drivers'] = []

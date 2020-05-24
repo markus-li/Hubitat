@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0521b
+ *  Version: v0.6.1.0523b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -182,7 +182,6 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
-    
     if(msgMap.containsKey("type") && msgMap["type"] == "zone" && msgMap["parsed"] == true) {
         logging("ZONE event - description:${description} | parseMap:${msgMap}", 1)
         if(msgMap["statusInt"] == 1) {
@@ -254,7 +253,7 @@ void setAsWet() {
 private String getDriverVersion() {
     comment = "Works with model SJCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0521b"
+    String version = "v0.6.1.0523b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

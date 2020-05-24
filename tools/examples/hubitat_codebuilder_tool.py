@@ -57,6 +57,10 @@ log_hs = logging.getLogger(HubitatHubSpider.__module__)
 log_hs.setLevel(logging.DEBUG)
 log_rt = logging.getLogger(repo_tool.__name__)
 log_rt.setLevel(logging.DEBUG)
+log_pmt = logging.getLogger(HubitatPackageManagerTool.__module__)
+log_pmt.setLevel(logging.DEBUG)
+log_pmp = logging.getLogger(HubitatPackageManagerPackage.__module__)
+log_pmp.setLevel(logging.DEBUG)
 
 h = logging.StreamHandler()
 h.setLevel(logging.DEBUG)
@@ -81,7 +85,10 @@ log_hs.addHandler(hhs)
 log_hs.addHandler(hhsa)
 log_rt.addHandler(h)
 log_rt.addHandler(ha)
-
+log_pmt.addHandler(h)
+log_pmt.addHandler(ha)
+log_pmp.addHandler(h)
+log_pmp.addHandler(ha)
 
 try:
     from config.driver_list_2nd_hub import driver_files_2nd
