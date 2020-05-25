@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0521
+ *  Version: v0.6.1.0525
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ metadata {
         // BEGIN:getZigbeeBatteryCommands()
         command "resetBatteryReplacedDate"
         // END:  getZigbeeBatteryCommands()
+        command "resetToActive"
+        command "resetToInactive"
 
         fingerprint deviceJoinName: "Xiaomi Motion Sensor (RTCGQ01LM)", model: "lumi.sensor_motion", profileId: "0104", deviceId: "0104", inClusters: "0000,0003,FFFF,0019", outClusters: "0000,0004,0003,0006,0008,0005,0019", manufacturer: "LUMI", endpointId: "01"
 
@@ -262,6 +264,16 @@ void resetMotionEvent() {
     sendEvent(name:"motion", value: "inactive", isStateChange: false, descriptionText: "Motion Inactive")
 }
 
+void resetToActive() {
+    logging("resetToActive()", 1)
+    sendEvent(name:"motion", value: "active", isStateChange: true, descriptionText: "Motion was Reset to Active")
+}
+
+void resetToInactive() {
+    logging("resetToInactive()", 1)
+    sendEvent(name:"motion", value: "inactive", isStateChange: true, descriptionText: "Motion was Reset to Inactive")
+}
+
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
@@ -282,7 +294,7 @@ void resetMotionEvent() {
 private String getDriverVersion() {
     comment = "Works with model RTCGQ01LM & RTCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0521"
+    String version = "v0.6.1.0525"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
