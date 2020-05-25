@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0523b
+ *  Version: v0.6.1.0525b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,7 +58,9 @@ metadata {
         fingerprint deviceJoinName: "Xiaomi Temperature & Humidity Sensor (WSDCGQ01LM)", model: "lumi.sens", profileId: "0104", endpointId: 01, inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI"
         fingerprint deviceJoinName: "Xiaomi Temperature & Humidity Sensor (WSDCGQ01LM)", model: "lumi.sensor_ht", profileId: "0104", endpointId: 01, inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI"
 
-        fingerprint deviceJoinName: "Aqara Temperature & Humidity Sensor (WSDCGQ11LM)", model: "lumi.weather", modelType: "Aqara WSDCGQ11LM", profileId: "0104", endpointId: 01, application: 03, inClusters: "0000,0003,FFFF,0402,0403,0405", outClusters: "0000,0004,FFFF", manufacturer: "LUMI"
+        fingerprint deviceJoinName: "Aqara Temperature, Humidity & Pressure Sensor (WSDCGQ11LM)", model: "lumi.weather", modelType: "Aqara WSDCGQ11LM", profileId: "0104", endpointId: 01, application: 03, inClusters: "0000,0003,FFFF,0402,0403,0405", outClusters: "0000,0004,FFFF", manufacturer: "LUMI"
+
+        fingerprint deviceJoinName: "Keen Temperature, Humidity & Pressure Sensor (RS-THP-MP-1.0)", model: "RS-THP-MP-1.0", modelType: "Keen RS-THP-MP-1.0", endpointId: 01, application: 0x0A, inClusters: "0000,0003,0001,0020", outClusters: "0000,0004,0003,0005,0019,0402,0405,0403,0020", manufacturer: "LUMI"
     }
 
     preferences {
@@ -109,13 +111,14 @@ ArrayList<String> refresh() {
     
     String model = setCleanModelName(newModelToSet=null, acceptedModels=[
         "lumi.sensor_ht",
-        "lumi.weather"
+        "lumi.weather",
+        "RS-THP-MP-1.0"
     ])
 
-    if(model == "lumi.weather") {
+    if(model == "lumi.weather" || model == "RS-THP-MP-1.0") {
         updateDataValue("hasPressure", "True")
     }
-
+    
     ArrayList<String> cmd = []
     
     logging("refresh cmd: $cmd", 1)
@@ -242,11 +245,13 @@ ArrayList<String> parse(String description) {
             log.warn "Incorrect temperature received from the sensor ($tRaw), it is probably time to change batteries!"
         }
 
-    } else if(msgMap["cluster"] == "0403" && msgMap["attrId"] == "0000") {
+    } else if(msgMap["cluster"] == "0403" && (msgMap["attrId"] == "0000" || msgMap["attrId"] == "0020")) {
         logging("AQARA PRESSURE EVENT - description:${description} | parseMap:${msgMap}", 1)
         Integer rawValue = msgMap['valueParsed']
         BigDecimal variance = 0.0
-        
+        if(msgMap["attrId"] == "0020") {
+            rawValue = rawValue / 1000.0
+        }
         BigDecimal p = sensor_data_getAdjustedPressure(sensor_data_convertPressure(rawValue), decimals=2)
         BigDecimal oldP = device.currentValue('pressure') == null ? null : device.currentValue('pressure')
         p = p.setScale(2, BigDecimal.ROUND_HALF_UP)
@@ -340,7 +345,7 @@ ArrayList<String> parse(String description) {
 private String getDriverVersion() {
     comment = "Works with model WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0523b"
+    String version = "v0.6.1.0525b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
