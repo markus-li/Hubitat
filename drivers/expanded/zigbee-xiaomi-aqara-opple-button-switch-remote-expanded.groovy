@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0524
+ *  Version: v0.6.1.0530
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -321,11 +321,10 @@ ArrayList<String> parse(String description) {
     Map msgMap = null
     if(description.indexOf('encoding: 4C') >= 0) {
     
-      logging("msgMap 4C", 1)
       msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 4C', 'encoding: F2'))
-      logging("msgMap 4C 1: $msgMap", 1)
+    
       msgMap = unpackStructInMap(msgMap)
-      logging("msgMap 4C 2: $msgMap", 1)
+    
     } else if(description.indexOf('attrId: FF01, encoding: 42') >= 0) {
       msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: F2'))
       msgMap["encoding"] = "41"
@@ -452,12 +451,17 @@ ArrayList<String> parse(String description) {
     } else if(msgMap["clusterId"] == "8005") {
         //logging("Confirmation Cluster (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 0)
     } else if(msgMap["cluster"] == "0006") {
+        logging("Description: ${description}", 1)
         parseButtonEvent(msgMap)
+        
     } else if(msgMap["cluster"] == "0012" && isOppleModel() == true) {
         logging("Button was pressed (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
         parseOppoButtonEvent(msgMap)
+        
     } else if(msgMap["cluster"] == "0012") {
+        logging("Description: ${description}", 1)
         parseButtonEvent(msgMap)
+        
     } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02") && msgMap["encoding"] == "4C") {
         logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C) - description:${description} | parseMap:${msgMap}", 100)
         parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
@@ -531,14 +535,14 @@ boolean sendReleaseEvent(Integer btn, String logText=null, String descriptionTex
 void parseButtonEvent(Map msgMap) {
     Integer btn = Integer.parseInt(msgMap['value'], 16)
     Integer endpoint = Integer.parseInt(msgMap['endpoint'], 16)
-    //logging("parseButtonEvent() (btn: ${btn}, attrId: ${msgMap["attrId"]}, endpoint: $endpoint)", 0)
+    //logging("parseButtonEvent() (btn: ${btn}, attrId: ${msgMap["attrId"]}, endpoint: $endpoint, msgMap: $msgMap)", 0)
     btn = btn == 18 ? 4 : btn
 
     Integer totalButtons = device.currentValue('numberOfButtons')
     Integer physicalButtons = getDeviceDataByName("physicalButtons") != null ? getDeviceDataByName("physicalButtons").toInteger() : 1
     Integer btnModified = endpoint + ((btn-1) * physicalButtons)
-    logging("parseButtonEvent() (btn: $btn, btnModified: $btnModified, endpoint: $endpoint, physicalButtons: $physicalButtons)", 1)
-    if((btn <= 4 && btn != 0 && msgMap['attrId'] == '0055') || (msgMap['attrId'] == '8000')) {
+    logging("parseButtonEvent() (btn: $btn, btnModified: $btnModified, endpoint: $endpoint, physicalButtons: $physicalButtons, attrId: ${msgMap["attrId"]}, msgMap: $msgMap)", 1)
+    if((btn <= 4 && btn != 0 && (msgMap['attrId'] == '0000' || msgMap['attrId'] == '0055')) || (msgMap['attrId'] == '8000')) {
         btnModified = btn <= 8 ? btnModified : 5
         logging("Button $btnModified was pushed (t1)", 100)
         if(btnModified <= physicalButtons) buttonPushed(btnModified)
@@ -576,17 +580,19 @@ void parseButtonEvent(Map msgMap) {
             if(lastHold == 0) millisHeld = 0
             logging("millisHeld = $millisHeld, millisForHold = $millisForHoldLong", 1)
             if(millisHeld > millisForHoldLong) {
-                logging("Button 1 was held", 100)
-                buttonHeld(1)
-                sendEvent(name:"held", value: 1, isStateChange: true, descriptionText: "Button 1 was held")
-                String model = model != null ? model : getDeviceDataByName('model')
-                Integer heldButton = 3
-                if(model == "lumi.sensor_switch") {
-                    heldButton = 6
+                if(useTimerForHeld != true) {
+                    logging("Button 1 was held", 100)
+                    buttonHeld(1)
+                    sendEvent(name:"held", value: 1, isStateChange: true, descriptionText: "Button 1 was held")
+                    String model = model != null ? model : getDeviceDataByName('model')
+                    Integer heldButton = 3
+                    if(model == "lumi.sensor_switch") {
+                        heldButton = 6
+                    }
+                    sendReleaseEvent(1)
+                    logging("Button $heldButton was pushed (from hold event)", 100)
+                    sendEvent(name:"pushed", value: heldButton, isStateChange: true, descriptionText: "Button $heldButton was pushed (from hold event)")
                 }
-                sendReleaseEvent(1)
-                logging("Button $heldButton was pushed (from hold event)", 100)
-                sendEvent(name:"pushed", value: heldButton, isStateChange: true, descriptionText: "Button $heldButton was pushed (from hold event)")
             } else {
                 logging("Button 1 was pushed (t3)", 100)
                 buttonPushed(1)
@@ -594,6 +600,10 @@ void parseButtonEvent(Map msgMap) {
             }
         }
     }
+}
+
+void setButtonAsHeld(Map data) {
+
 }
 
 void parseOppoButtonEvent(Map msgMap) {
@@ -645,7 +655,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0524"
+    String version = "v0.6.1.0530"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0521
+ *  Version: v1.0.2.0530
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -157,11 +157,10 @@ ArrayList<String> parse(String description) {
     Map msgMap = null
     if(description.indexOf('encoding: 4C') >= 0) {
     
-      logging("msgMap 4C", 1)
       msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 4C', 'encoding: F2'))
-      logging("msgMap 4C 1: $msgMap", 1)
+    
       msgMap = unpackStructInMap(msgMap)
-      logging("msgMap 4C 2: $msgMap", 1)
+    
     } else if(description.indexOf('attrId: FF01, encoding: 42') >= 0) {
       msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: F2'))
       msgMap["encoding"] = "41"
@@ -539,7 +538,7 @@ ArrayList<String> getBattery() {
 private String getDriverVersion() {
     comment = "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0521"
+    String version = "v1.0.2.0530"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

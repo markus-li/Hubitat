@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0524
+ *  Version: v0.6.1.0530
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ metadata {
 		command "setAsWet"
 
         fingerprint deviceJoinName: "Aqara Water Leak Sensor (SJCGQ11LM)", model: "lumi.sensor_motion", profileId: "0104", endpointId: "01", inClusters: "0000,0003,0001", outClusters: "0019", manufacturer: "LUMI"
+        fingerprint deviceJoinName: "Aqara Water Leak Sensor (SJCGQ11LM)", model: "lumi.sensor_wleak.aq1", profileId: "0104", endpointId: "01", inClusters: "0000,0003,0001", outClusters: "0019", manufacturer: "LUMI"
 
     }
 
@@ -95,10 +96,7 @@ ArrayList<String> refresh() {
     resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
     
-    setCleanModelName(newModelToSet=null, acceptedModels=[
-        "lumi.sensor_motion.aq2",
-        "lumi.sensor_motion"
-    ])
+    setCleanModelNameWithAcceptedModels()
 
     ArrayList<String> cmd = []
     
@@ -122,6 +120,14 @@ void updated() {
     refresh()
 }
 
+String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
+    return setCleanModelName(newModelToSet=newModelToSet, acceptedModels=[
+        "lumi.sensor_motion.aq2",
+        "lumi.sensor_wleak.aq1",
+        "lumi.sensor_motion"
+    ])
+}
+
 ArrayList<String> parse(String description) {
     // BEGIN:getGenericZigbeeParseHeader(loglevel=0)
     //logging("PARSE START---------------------", 0)
@@ -130,11 +136,10 @@ ArrayList<String> parse(String description) {
     Map msgMap = null
     if(description.indexOf('encoding: 4C') >= 0) {
     
-      logging("msgMap 4C", 1)
       msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 4C', 'encoding: F2'))
-      logging("msgMap 4C 1: $msgMap", 1)
+    
       msgMap = unpackStructInMap(msgMap)
-      logging("msgMap 4C 2: $msgMap", 1)
+    
     } else if(description.indexOf('attrId: FF01, encoding: 42') >= 0) {
       msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: F2'))
       msgMap["encoding"] = "41"
@@ -205,8 +210,8 @@ ArrayList<String> parse(String description) {
 
     } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
         logging("Reset button pressed - description:${description} | parseMap:${msgMap}", 1)
-        setCleanModelName(newModelToSet=msgMap["value"])
-        if(msgMap.containsKey("additionalAttrs")) {
+        setCleanModelNameWithAcceptedModels(newModelToSet=msgMap["value"])
+        if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"][0]["value"]["battery"] != null) {
             parseAndSendBatteryStatus(msgMap["additionalAttrs"][0]["value"]["battery"] / 1000.0)
         }
     } else if(msgMap["clusterId"] == "0013") {
@@ -253,7 +258,7 @@ void setAsWet() {
 private String getDriverVersion() {
     comment = "Works with model SJCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0524"
+    String version = "v0.6.1.0530"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
