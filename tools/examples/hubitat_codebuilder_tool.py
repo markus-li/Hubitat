@@ -344,7 +344,7 @@ def main():
          'required': True },
         
         {'id': 866, 'id_2': 364, 'id_3': 343, 'file': 'tasmota-universal-multi-sensor-child.groovy', 
-            'specialDebugLabel': 'descriptionText' },
+            'specialDebugLabel': 'descriptionText', 'required': True },
         {'id': 993, 'file': 'tasmota-universal-fancontrol-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         {'id': 589, 'id_2': 331, 'file': 'tasmota-universal-curtain-child.groovy', 
