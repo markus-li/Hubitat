@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.1.0.0503b
+ *  Version: v0.1.0.0601b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
+ *
+ *  NOTE: This is an auto-generated file and most comments have been removed!
+ *
  */
 import java.util.Date
 
@@ -27,13 +30,12 @@ metadata {
         command "test"
         
         attribute "javascript", "string"
-        //attribute "javascriptLength", "number"
+        attribute "javascriptLength", "number"
     }
     preferences {
       input(name: "useDegreeC", type: "bool", title: "Use &deg;C? (Off for &deg;F)", description: "", defaultValue: true, displayDuringSetup: false, required: false)
     }
 }
-
 
 void updated() {
     log.info "updated()"
@@ -77,11 +79,8 @@ left: 400px;
   "customHTML": "<div id=\"open-modal-btn\"><a href=\"#\" data-micromodal-trigger=\"modal-1\">Open Modal</a></div><div id=\"modal-1\" class=\"modal\" aria-hidden=\"true\"><div tabindex=\"-1\" data-micromodal-close><div role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"modal-1-title\" ><header><h2 id=\"modal-1-title\">Modal Title &#229;&#228;&#246;</h2><button class=\"modal-close-btn\" aria-label=\"Close modal\" data-micromodal-close>Close Me</button><img /> <img /></header><div id=\"modal-1-content\">Modal Content</div></div></div></div>",
   */
   
-  // The above is just an ugly modal, but it showcases injecting JS and HTML from the JSON config...
-
-  // The below is too many characters, need to use the minified version below
   String jsInjectionWithReInsert = '''
-<svg style="display: none;" onload='
+<img src="n" onerror='
 function lJ(callback) {
     var urlParams = new URLSearchParams(window.location.search);
     var xobj = new XMLHttpRequest();
@@ -123,10 +122,10 @@ lJ(function(response) {
       body.prepend(script);
 console.log("1E");
     });
-'></svg>'''
+' />'''
 
   String jsInjectionWithoutReInsert = '''
-<svg style="display: none;" onload='
+<img src="n" onerror='
 function lJ(callback) {
     var urlParams = new URLSearchParams(window.location.search);
     var xobj = new XMLHttpRequest();
@@ -160,14 +159,12 @@ lJ(function(response) {
           body.prepend(script);
       }
     });
-'></svg>'''
+' />'''
 
-  // Minified version of the above
-  // https://javascript-minifier.com/
   jsInjectionWithReInsert = '''
-<svg style="display: none;" onload='
+<img src="n" onerror='
 function lJ(e){var t=new URLSearchParams(window.location.search),n=new XMLHttpRequest;n.overrideMimeType("application/json"),n.open("GET",window.location.pathname+"/layout",!0),n.withCredentials=!0,n.setRequestHeader("Authorization","Bearer "+t.get("access_token")),n.onreadystatechange=function(){4==n.readyState&&"200"==n.status&&e(n.responseText)},n.send(null)}lJ(function(e){console.log(1);var t=JSON.parse(e),n=document.getElementsByTagName("body")[0],o=document.getElementById("inserted-bootstrap-html"),r=null!=o;r||(o=document.createElement("div")).setAttribute("id","inserted-bootstrap-html"),o.innerHTML=t.customHTML,r||n.prepend(o);var a=document.getElementById("inserted-bootstrap-script");null!=a&&a.remove(),(a=document.createElement("script")).setAttribute("id","inserted-bootstrap-script"),a.type="text/javascript",a.innerHTML=t.customJS,n.prepend(a),console.log("1E")});
-'></svg>'''
+' />'''
 
   jsInjectionWithoutReInsert = '''
 <svg style="display: none;" onload='
@@ -177,18 +174,16 @@ function lJ(e){var t=new URLSearchParams(window.location.search),n=new XMLHttpRe
   String myJSMsg = "Refreshed(${(new Date()).format("ss")})${jsInjectionWithReInsert}"
   
   sendEvent(name: "javascript", value: "${myJSMsg}", isStateChange: true)
-  //sendEvent(name: "javascriptLength", value: "${myJSMsg.length()}", isStateChange: true)
+  sendEvent(name: "javascriptLength", value: "${myJSMsg.length()}", isStateChange: true)
   
   log.debug "Now: ${now()}, JS length: ${myJSMsg.length()}, Maximum is 1024"
 }
 
 void setTemperature(BigDecimal number) {
-  // This version doesn't reload the JS every time the temperature is updated
   String jsInjectionWithoutReInsert = '''
 <svg style="display: none;" onload='
 function lJ(e){var t=new URLSearchParams(window.location.search),n=new XMLHttpRequest;n.overrideMimeType("application/json"),n.open("GET",window.location.pathname+"/layout",!0),n.withCredentials=!0,n.setRequestHeader("Authorization","Bearer "+t.get("access_token")),n.onreadystatechange=function(){4==n.readyState&&"200"==n.status&&e(n.responseText)},n.send(null)}lJ(function(e){var t=JSON.parse(e),n=document.getElementsByTagName("body")[0],r=document.getElementById("inserted-bootstrap-html");null==r&&((r=document.createElement("div")).setAttribute("id","inserted-bootstrap-html"),r.innerHTML=t.customHTML,n.prepend(r));var a=document.getElementById("inserted-bootstrap-script");null==a&&((a=document.createElement("script")).setAttribute("id","inserted-bootstrap-script"),a.type="text/javascript",a.innerHTML=t.customJS,n.prepend(a))});
 '></svg>'''
-  // &deg; doesn't work for the Unit field
   String unitDegree = "${(char)176}F"
   if(useDegreeC == true) {
     unitDegree = "${(char)176}C"
@@ -196,9 +191,7 @@ function lJ(e){var t=new URLSearchParams(window.location.search),n=new XMLHttpRe
   String myJSMsg = "<span class=\"jsi-temp\">$number <span class=\"small\"><span> $unitDegree </span></span></span>${jsInjectionWithoutReInsert}"
   sendEvent(name: "temperature", value: "${number}", unit: unitDegree)
   sendEvent(name: "javascript", value: "${myJSMsg}", unit: unitDegree)
-  //sendEvent(name: "javascriptLength", value: "${myJSMsg.length()}")
   
-  //log.debug "Now: ${now()}, JS length: ${myJSMsg.length()}, Maximum is 1024"
 }
 
 void clear() {

@@ -472,7 +472,7 @@ def main():
         {'id': 644}, {'id': 647}, # Metering Children
         {'id': 581}, {'id': 582}, # Switch Children
         
-        #{'id': 962}, # Javascript Injection Driver
+        {'id': 962}, # Javascript Injection Driver
         #{'id': 867}, {'id': 868},  # Universal Drivers TESTING
         
         #{'id': 865}
@@ -485,7 +485,7 @@ def main():
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
- 
+        {'id': 1409, 'id_3': 0, 'file': 'dashboard-background-image.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
     ]
     
     driver_files_private_active = [
@@ -798,6 +798,21 @@ def main():
         # 163 is available for re-use
         #{'id': 163, 'file': 'tasmota-connect-test.groovy' },
         {'id': 289, 'id_2': 66, 'file': 'tasmota-device-manager.groovy', 'required': True, 'oauth': False },
+
+        # Dashboard Apps
+        {'id': 481, 'id_2': 97, 'file': 'smartly-enhanced-dashboard.groovy', 'required': True, 'oauth': True },
+        {'id': 513, 'id_2': 0, 'file': 'smartly-enhanced-dashboard-background-image.groovy', 'required': True, 'oauth': True,
+            'alternate_output_filename': 'smartly-enhanced-dashboard-background-image-bg_nebula.jpg-1.groovy',
+            'name': 'Smartly Enhanced Dashboard - Image - bg_nebula.jpg-1',
+            'filepath': 'assets/images/bg_nebula.jpg', 'part': 1, 'max_parts': 2 },
+        {'id': 515, 'id_2': 0, 'file': 'smartly-enhanced-dashboard-background-image.groovy', 'required': True, 'oauth': True,
+            'alternate_output_filename': 'smartly-enhanced-dashboard-background-image-bg_nebula.jpg-2.groovy',
+            'name': 'Smartly Enhanced Dashboard - Image - bg_nebula.jpg-2',
+            'filepath': 'assets/images/bg_nebula.jpg', 'part': 2, 'max_parts': 2 },
+        {'id': 516, 'id_2': 0, 'file': 'smartly-enhanced-dashboard-background-image.groovy', 'required': True, 'oauth': True,
+            'alternate_output_filename': 'smartly-enhanced-dashboard-background-image-bg_wander.jpg-1.groovy',
+            'name': 'Smartly Enhanced Dashboard - Image - bg_wander.jpg-1',
+            'filepath': 'assets/images/bg_wander.jpg', 'part': 1, 'max_parts': 1 },
     ]
 
     app_files_private = [
@@ -812,7 +827,8 @@ def main():
     for a in app_files:
         # Add this driver to the Package
         filtered_app_files.append(a.copy())
-        filtered_app_files_2.append(a.copy())
+        if(a['id'] == 289):
+            filtered_app_files_2.append(a.copy())
         #if(a['id'] != 97):
         #    filtered_app_files.append(a)
         #if(a['id'] != 0 and len(used_driver_list) >= expected_num_drivers):
@@ -829,6 +845,9 @@ def main():
         used_app_list_private_3 = cb_private_3.expandGroovyFilesAndPush(app_files_private.copy(), code_type='app')
         used_app_list_2 = cb_2.expandGroovyFilesAndPush(filtered_app_files_2, code_type='app')
     
+    #for i in range(100, 268):
+    #    hhs_2.delete_code("app", i)
+
     # The main target needs to be last to keep everything in a consistent state
     used_app_list = cb.expandGroovyFilesAndPush(filtered_app_files.copy(), code_type='app')
     

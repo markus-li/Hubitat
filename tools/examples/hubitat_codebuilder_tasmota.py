@@ -94,6 +94,15 @@ class HubitatCodeBuilderTasmota(HubitatCodeBuilder):
             self.log.debug("Executing appRawRepoURL()...")
             output = "// IMPORT URL: {}{}".format(self.app_raw_repo_url, str(self._output_groovy_file))
             return(True, output)
+        elif(eval_cmd == 'getImageInit()'):
+            self.log.debug("Executing getImageInit()...")
+            output = self.calling_namespace.getImageAsBase64(self._config_dict['filepath'], "base64Image", self._config_dict['part'], self._config_dict['max_parts'])
+            return(True, output)
+        elif(eval_cmd == 'getImageAppDefinitionName()'):
+            self.log.debug("Executing getImageAppDefinitionName()...")
+            print(self._config_dict)
+            output = "name: \"" + self._config_dict['name'] + "\","
+            return(True, output)
         elif('numSwitches' in self._config_dict and eval_cmd.startswith('getDefaultMetadataPreferencesForParentDevices(')):
             self.log.debug("Executing getDefaultMetadataPreferencesForParentDevices(numSwitches={})...".format(self._config_dict['numSwitches']))
             output = self.calling_namespace.getDefaultMetadataPreferencesForParentDevices(self._config_dict['numSwitches'])

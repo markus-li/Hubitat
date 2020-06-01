@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0528b
+ *  Version: v0.6.1.0601b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -221,7 +221,7 @@ ArrayList<String> parse(String description) {
         BigDecimal t = adjustedTemp[1]
         BigDecimal tRaw = adjustedTemp[2]
         
-        if(tRaw >= -50 || tRaw > 100) {
+        if(tRaw >= -50 && tRaw < 100) {
             BigDecimal oldT = device.currentValue('temperature') == null ? null : device.currentValue('temperature')
             t = t.setScale(1, BigDecimal.ROUND_HALF_UP)
             if(oldT != null) oldT = oldT.setScale(1, BigDecimal.ROUND_HALF_UP)
@@ -344,7 +344,7 @@ ArrayList<String> parse(String description) {
 private String getDriverVersion() {
     comment = "Works with model WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0528b"
+    String version = "v0.6.1.0601b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1187,6 +1187,7 @@ private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
 
 private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     Integer res = 1
+    BigDecimal rawValue = value
     if(tempRes != null && tempRes != '') {
         res = Integer.parseInt(tempRes)
     }
@@ -1200,9 +1201,9 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
         tempUnit = "${degree}K"
     }
 	if (tempOffset) {
-	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), degree]
+	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
 	} else {
-       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), degree]
+       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
     }
 }
 

@@ -12,6 +12,11 @@
 #  limitations under the License.
 
 from datetime import date
+import base64
+import binascii
+import cv2
+import math
+import os
 
 driverVersion = "v0.0.0MMDDb"
 
@@ -532,3 +537,104 @@ def getChildComponentMetaConfigCommands():
 def metaConfig = clearThingsToHide()
 metaConfig = setDatasToHide(['metaConfig', 'isComponent', 'preferences', 'label', 'name'], metaConfig=metaConfig)
 """
+
+def splitImage(image_path, max_parts):
+    (image_rootname, image_extension) = os.path.splitext(image_path)
+    #print(image_path)
+    #print(max_parts)
+    img = cv2.imread(image_path)
+    img_shape = img.shape
+    img_width = int(img_shape[1])
+    img_height = int(img_shape[0])
+
+    img_piece_height = math.ceil(img_height / max_parts)
+    #print(img_shape)
+    #print('width:' + str(img_width))
+    #print('height:' + str(img_height))
+    #print(img_piece_height)
+    #print(image_rootname)
+    #print(image_extension)
+    img_height_used = 0
+    for i in range(1, max_parts + 1):
+        if(img_height_used + img_piece_height > img_height):
+            img_piece_height = img_height - img_height_used
+        #cropped_img = img[0:img_height, 0:img_width].copy()
+        cropped_img = img[img_height_used:img_height_used+img_piece_height, 0:img_width]
+        #print(img_height_used)
+        #print(img_piece_height)
+        if(image_extension == ".jpg"):
+            cv2.imwrite(image_rootname + "_" + str(i) + image_extension, cropped_img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+        else:
+            cv2.imwrite(image_rootname + "_" + str(i) + image_extension, cropped_img, [int(cv2.IMWRITE_PNG_COMPRESSION), 5])
+        img_height_used += img_piece_height
+    #print(img_height_used)
+
+def getImageAsBase64(image_path, variable_name, current_part, max_parts):
+    # Maximum App file size is 473 822 bytes
+    # Split the image and get current_part
+    splitImage(image_path, max_parts)
+
+    (image_rootname, image_extension) = os.path.splitext(image_path)
+    image_basename = os.path.basename(image_path)
+    image_path_for_part = image_rootname + "_" + str(current_part) + image_extension
+    mimetype = "image/png"
+    if(image_extension == ".jpg"):
+        mimetype = "image/jpg"
+    with open(image_path_for_part, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+
+    img = cv2.imread(image_path_for_part)
+    img_shape = img.shape
+    img_width = int(img_shape[1])
+    img_height = int(img_shape[0])
+    
+    decoded_string = encoded_string.decode('utf-8')
+    l = len(decoded_string)
+    pieces = round(l / 65400)
+    print("Length: " + str(l) + ", pieces: " + str(pieces))
+    r = "Integer " + variable_name + "Pieces = " + str(pieces) + "\n"
+    r += "Integer part = " + str(current_part) + "\n"
+    r += "Integer partsTotal = " + str(max_parts) + "\n"
+    r += "Integer imgWidth = " + str(img_width) + "\n"
+    r += "Integer imgHeight = " + str(img_height) + "\n"
+    r += "Integer imgOffset = " + str((current_part - 1) * img_height) + "\n"
+    r += "String filename = \"" + image_basename + "\"\n"
+    r += "String mimetype = \"" + mimetype + "\"\n"
+    r += "List<String> " + variable_name + " = []\n"
+    #if(pieces > 7):
+    #     pieces = 7
+    for i in range(0, pieces + 1):
+        decoded_string_part, decoded_string = decoded_string[:65400], decoded_string[65400:]
+        r += variable_name + "["+str(i)+"] = '''" + decoded_string_part + "'''\n"
+    #r += variable_name + "["+str(7)+"] = '''" + decoded_string[:4174] + "'''\n"
+    return r
+
+def getImageAsBinaryString(image_path, variable_name):
+    with open(image_path, "rb") as image_file:
+        encoded_string = image_file.read()
+    print(encoded_string.decode('latin-1').replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\'))
+    return "String " + variable_name + " = '''" + encoded_string.decode('latin-1').replace('\\', '\\\\').replace('\n', '\\n') + "'''"
+
+def getHtmlAsString(html_path, variable_name):
+    # Maximum App file size is 473 822 bytes
+    # Split the image and get current_part
+    with open(html_path, "r") as html_file:
+        html_string = html_file.read()
+
+    html_string = html_string.replace("'''", "\\'\\'\\'")
+
+    l = len(html_string)
+    pieces = round(l / 65400)
+    print("Length: " + str(l) + ", pieces: " + str(pieces))
+    r = "Integer " + variable_name + "Pieces = " + str(pieces) + "\n"
+    r += "List<String> " + variable_name + " = []\n"
+    #if(pieces > 7):
+    #     pieces = 7
+    for i in range(0, pieces + 1):
+        html_string_part, html_string = html_string[:65400], html_string[65400:]
+        r += variable_name + "["+str(i)+"] = '''" + html_string_part + "'''\n"
+    #r += variable_name + "["+str(7)+"] = '''" + decoded_string[:4174] + "'''\n"
+    return r
+
+def getTextAsString(text_path, variable_name):
+    return getHtmlAsString(text_path, variable_name)

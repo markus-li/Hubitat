@@ -350,3 +350,26 @@ class HubitatHubSpider:
           return(-2)
     else:
       self.log.error("Can't get the code version for ID: " + str(codeID))
+
+  def delete_code(self, codeType, codeID):
+    #/driver/editor/update
+    # For DELETE:
+    # POST: id=615&_action_delete=Delete
+    # The response is empty with a redirect to /driver/list
+    self._prepare_session()
+    if(codeType == 'driver'):
+      APIUrl = self.API_base_url + '/driver/edit/update'
+    elif(codeType == 'app'):
+      APIUrl = self.API_base_url + '/app/edit/update'
+    else:
+      raise Exception('Unknown code type: ' + str(codeType))
+    
+    data = {
+      'id': codeID,
+      '_action_delete': "Delete"
+    }
+    
+    self.log.debug("Starting the Deletion of ID '" + str(codeID) + "'")
+    response = self.session.post(APIUrl, data=data)
+    # There's no return value here
+    return(1)
