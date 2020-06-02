@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0530b
+ *  Version: v0.6.1.0602b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -542,7 +542,7 @@ void parseButtonEvent(Map msgMap) {
     Integer physicalButtons = getDeviceDataByName("physicalButtons") != null ? getDeviceDataByName("physicalButtons").toInteger() : 1
     Integer btnModified = endpoint + ((btn-1) * physicalButtons)
     logging("parseButtonEvent() (btn: $btn, btnModified: $btnModified, endpoint: $endpoint, physicalButtons: $physicalButtons, attrId: ${msgMap["attrId"]}, msgMap: $msgMap)", 1)
-    if((btn <= 4 && btn != 0 && (msgMap['attrId'] == '0000' || msgMap['attrId'] == '0055')) || (msgMap['attrId'] == '8000')) {
+    if((btn <= 4 && btn != 0 && ((isSwitchModel() && msgMap['attrId'] == '0000') || msgMap['attrId'] == '0055')) || (msgMap['attrId'] == '8000')) {
         btnModified = btn <= 8 ? btnModified : 5
         logging("Button $btnModified was pushed (t1)", 100)
         if(btnModified <= physicalButtons) buttonPushed(btnModified)
@@ -655,7 +655,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0530b"
+    String version = "v0.6.1.0602b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
