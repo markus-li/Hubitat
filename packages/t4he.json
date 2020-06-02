@@ -2,11 +2,51 @@
   "packageName": "Tasmota for Hubitat Elevation",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-05-30",
+  "dateReleased": "2020-06-02",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packageManifestBeta.json",
   "documentationLink": "https://github.com/markus-li/Hubitat/wiki",
   "communityLink": "https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322?u=markus",
   "apps": [
+    {
+      "id": "ea43b8eb-89eb-5794-9678-36bd5c236d81",
+      "internalId": 481,
+      "name": "Smartly Enhanced Dashboard",
+      "version": "v1.0.2.0602T",
+      "namespace": "markus-li",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/apps/expanded/smartly-enhanced-dashboard-expanded.groovy",
+      "required": true,
+      "oauth": true
+    },
+    {
+      "id": "53ab84ef-7596-5ca3-a17e-c0d745bc2791",
+      "internalId": 513,
+      "name": "Smartly Enhanced Dashboard - Image - bg_nebula.jpg-1",
+      "version": "v1.0.2.0602T",
+      "namespace": "markus-li",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/apps/expanded/smartly-enhanced-dashboard-background-image-bg_nebula.jpg-1.groovy-expanded.groovy",
+      "required": true,
+      "oauth": true
+    },
+    {
+      "id": "2ee51e09-c0d5-5830-b717-f8c589c75caa",
+      "internalId": 515,
+      "name": "Smartly Enhanced Dashboard - Image - bg_nebula.jpg-2",
+      "version": "v1.0.2.0602T",
+      "namespace": "markus-li",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/apps/expanded/smartly-enhanced-dashboard-background-image-bg_nebula.jpg-2.groovy-expanded.groovy",
+      "required": true,
+      "oauth": true
+    },
+    {
+      "id": "15de1e51-8ff6-59a5-9726-2915ce411e9a",
+      "internalId": 516,
+      "name": "Smartly Enhanced Dashboard - Image - bg_wander.jpg-1",
+      "version": "v1.0.2.0602T",
+      "namespace": "markus-li",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/apps/expanded/smartly-enhanced-dashboard-background-image-bg_wander.jpg-1.groovy-expanded.groovy",
+      "required": true,
+      "oauth": true
+    },
     {
       "id": "a1ac29fa-f00a-5e58-822a-472f71bf3c1d",
       "internalId": 289,
@@ -104,7 +144,7 @@
       "id": "51d9ab13-0d73-59b8-a7e8-8859a093539d",
       "internalId": 866,
       "name": "Tasmota - Universal Multi Sensor (Child)",
-      "version": "v1.0.2.0523T",
+      "version": "v1.0.2.0602T",
       "namespace": "tasmota",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-multi-sensor-child-expanded.groovy",
       "required": true
