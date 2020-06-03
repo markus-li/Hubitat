@@ -797,26 +797,26 @@ def main():
         #{'id': 97, 'file': 'tasmota-connect.groovy' },
         # 163 is available for re-use
         #{'id': 163, 'file': 'tasmota-connect-test.groovy' },
-        {'id': 289, 'id_2': 66, 'file': 'tasmota-device-manager.groovy', 'required': True, 'oauth': False },
+        {'id': 289, 'id_2': 66, 'file': 'tasmota-device-manager.groovy', 'required': True, 'oauth': False, 'publish': True },
 
         # Dashboard Apps
-        {'id': 481, 'id_2': 97, 'file': 'smartly-enhanced-dashboard.groovy', 'required': True, 'oauth': True },
+        {'id': 481, 'id_2': 97, 'file': 'smartly-enhanced-dashboard.groovy', 'required': True, 'oauth': True, 'publish': False },
         {'id': 513, 'id_2': 0, 'file': 'smartly-enhanced-dashboard-background-image.groovy', 'required': True, 'oauth': True,
             'alternate_output_filename': 'smartly-enhanced-dashboard-background-image-bg_nebula.jpg-1.groovy',
             'name': 'Smartly Enhanced Dashboard - Image - bg_nebula.jpg-1',
-            'filepath': 'assets/images/bg_nebula.jpg', 'part': 1, 'max_parts': 2 },
+            'filepath': 'assets/images/bg_nebula.jpg', 'part': 1, 'max_parts': 2, 'publish': False },
         {'id': 515, 'id_2': 0, 'file': 'smartly-enhanced-dashboard-background-image.groovy', 'required': True, 'oauth': True,
             'alternate_output_filename': 'smartly-enhanced-dashboard-background-image-bg_nebula.jpg-2.groovy',
             'name': 'Smartly Enhanced Dashboard - Image - bg_nebula.jpg-2',
-            'filepath': 'assets/images/bg_nebula.jpg', 'part': 2, 'max_parts': 2 },
+            'filepath': 'assets/images/bg_nebula.jpg', 'part': 2, 'max_parts': 2, 'publish': False },
         {'id': 516, 'id_2': 0, 'file': 'smartly-enhanced-dashboard-background-image.groovy', 'required': True, 'oauth': True,
             'alternate_output_filename': 'smartly-enhanced-dashboard-background-image-bg_wander.jpg-1.groovy',
             'name': 'Smartly Enhanced Dashboard - Image - bg_wander.jpg-1',
-            'filepath': 'assets/images/bg_wander.jpg', 'part': 1, 'max_parts': 1 },
+            'filepath': 'assets/images/bg_wander.jpg', 'part': 1, 'max_parts': 1, 'publish': False },
     ]
 
     app_files_private = [
-        {'id': 353, 'id_3': 67, 'file': 'custom-lighting.groovy', 'required': True, 'oauth': False },
+        {'id': 353, 'id_3': 67, 'file': 'custom-lighting.groovy', 'required': True, 'oauth': False, 'publish': False },
     ]
 
     cb.setUsedDriverList(used_driver_list.copy())
@@ -856,9 +856,11 @@ def main():
 
     # Add the Apps to the T4HE package
     for a in sorted(used_app_list.values(), key=lambda k: k['name']):
-        a['file'] = a['file'].stem + a['file'].suffix
-        t4he_pkg.addApp(a['name'], a['version'], a['namespace'], 
-                app_raw_repo_url + a['file'], a['required'], a['oauth'], a['id'], id=None)
+        if(a['publish'] == True):
+            print("Publish: " + str(a))
+            a['file'] = a['file'].stem + a['file'].suffix
+            t4he_pkg.addApp(a['name'], a['version'], a['namespace'], 
+                    app_raw_repo_url + a['file'], a['required'], a['oauth'], a['id'], id=None)
 
     #t4he_pkg.clearDrivers()
     pm.addPackage(t4he_pkg)

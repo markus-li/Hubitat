@@ -606,7 +606,8 @@ class HubitatCodeBuilder:
                     #self.log.debug(str(self.he_drivers_dict))
                     self.he_drivers_dict[id].update(expanded_result)
                     if(id in self.he_drivers_dict):
-                        used_code_list[id] = self.he_drivers_dict[id]
+                        used_code_list[id] = d.copy()
+                        used_code_list[id].update(self.he_drivers_dict[id])
                     #log.debug("code_files 2: {}".format(str(code_files[id])))
                     self.log.debug("Just worked on Driver ID " + str(id) + " (id_main=" + str(d['id_main']) +")")
                 elif(code_type == 'app'):
@@ -616,7 +617,8 @@ class HubitatCodeBuilder:
                     self.he_apps_dict[id].update(expanded_result)
                     #print(self.he_apps_dict[id])
                     if(id in self.he_apps_dict):
-                        used_code_list[id] = self.he_apps_dict[id]
+                        used_code_list[id] = d.copy()
+                        used_code_list[id].update(self.he_apps_dict[id])
                     #print(used_code_list[id])
                     self.log.debug("Just worked on App ID " + str(id) + " (id_main=" + str(d['id_main']) + ")")
             else:
