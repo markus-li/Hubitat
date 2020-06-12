@@ -2,7 +2,7 @@
   "packageName": "Xiaomi/Aqara Contact Sensor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-05-30",
+  "dateReleased": "2020-06-13",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-contact-sensor-beta.json",
   "apps": [],
   "drivers": [
@@ -10,7 +10,7 @@
       "id": "65d80480-31bf-5af4-be58-a1179790b4db",
       "internalId": 1153,
       "name": "Zigbee - Xiaomi/Aqara Contact Sensor",
-      "version": "v0.6.1.0530",
+      "version": "v0.7.1.0613",
       "namespace": "markusl",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-xiaomi-aqara-contact-sensor-expanded.groovy",
       "required": true

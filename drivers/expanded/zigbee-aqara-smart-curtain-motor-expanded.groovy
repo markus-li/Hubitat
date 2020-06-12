@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0530
+ *  Version: v1.0.2.0613
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,9 +56,14 @@ metadata {
         // END:  getDefaultMetadataAttributes()
         // BEGIN:getMetadataAttributesForLastCheckin()
         attribute "lastCheckin", "Date"
-        attribute "lastCheckinEpoch", "String"
+        attribute "lastCheckinEpoch", "number"
+        attribute "notPresentCounter", "number"
+        attribute "restoredCounter", "number"
         // END:  getMetadataAttributesForLastCheckin()
         
+        // BEGIN:getCommandsForPresence()
+        command "resetRestoredCounter"
+        // END:  getCommandsForPresence()
         command "stop"
         command "manualOpenEnable"
         command "manualOpenDisable"
@@ -100,6 +105,7 @@ ArrayList<String> refresh() {
 
     getDriverVersion()
     configurePresence()
+    startCheckEventInterval()
     setLogsOffTask(noLogWarning=true)
 
     ArrayList<String> cmd = []
@@ -256,7 +262,7 @@ ArrayList<String> parse(String description) {
     } else if(msgMap["cluster"] == "0102" && msgMap["attrId"] == "0008") {
         logging("Position event (after pressing stop) - description:${description} | parseMap:${msgMap}", 1)
         Long theValue = Long.parseLong(msgMap["value"], 16)
-        curtainPosition = theValue.intValue()
+        Integer curtainPosition = theValue.intValue()
         logging("GETTING POSITION from cluster 0102: int => ${curtainPosition}", 1)
         positionEvent(curtainPosition)
     } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02")) {
@@ -288,7 +294,7 @@ ArrayList<String> parse(String description) {
 		}
 	} else if(msgMap["cluster"] == "0001" && msgMap["attrId"] == "0021") {
         if(getDeviceDataByName('model') != "lumi.curtain") {
-            def bat = msgMap["value"]
+            Map bat = msgMap["value"]
             Long value = Long.parseLong(bat, 16)/2
             logging("Battery: ${value}%, ${bat}", 100)
             sendEvent(name:"battery", value: value)
@@ -300,6 +306,7 @@ ArrayList<String> parse(String description) {
     
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
+    msgMap = null
     return cmd
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
@@ -538,7 +545,7 @@ ArrayList<String> getBattery() {
 private String getDriverVersion() {
     comment = "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0530"
+    String version = "v1.0.2.0613"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1176,6 +1183,37 @@ Integer kelvinToMired(Integer kelvin) {
     if(t > 500) t = 500
     return t
 }
+
+void reconnectEvent() {
+    try {
+        reconnectEventDeviceSpecific()
+    } catch(Exception e) {
+        logging("reconnectEvent()", 1)
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
+    checkPresence(displayWarnings=false)
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90, displayWarnings=false) == true) {
+        log.warn("Event interval normal, reconnect mode DEACTIVATED!")
+        unschedule('reconnectEvent')
+    }
+}
+
+void checkEventInterval(boolean displayWarnings=true) {
+    prepareCounters()
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+        if(displayWarnings == true) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
+    }
+    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+}
+
+void startCheckEventInterval() {
+    logging("startCheckEventInterval()", 100)
+    Random rnd = new Random()
+    schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)}/59 * * * ? *", 'checkEventInterval')
+    checkEventInterval(displayWarnings=true)
+}
 // END:  getHelperFunctions('zigbee-generic')
 
 // BEGIN:getHelperFunctions('styling')
@@ -1270,13 +1308,19 @@ void configureDelayed() {
 }
 
 void configurePresence() {
+    prepareCounters()
     if(presenceEnable == null || presenceEnable == true) {
-        sendEvent(name: "presence", value: "present")
         Random rnd = new Random()
         schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
     } else {
         unschedule('checkPresence')
     }
+}
+
+void prepareCounters() {
+    if(device.currentValue('restoredCounter') == null) sendEvent(name: "restoredCounter", value: 0, descriptionText: "Initialized to 0" )
+    if(device.currentValue('notPresentCounter') == null) sendEvent(name: "notPresentCounter", value: 0, descriptionText: "Initialized to 0" )
+    if(device.currentValue('presence') == null) sendEvent(name: "presence", value: "unknown", descriptionText: "Initialized as Unknown" )
 }
 
 boolean isValidDate(String dateFormat, String dateString) {
@@ -1309,7 +1353,7 @@ boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
              
         }
 	}
-    if(r == true) sendEvent(name: "presence", value: "present")
+    if(r == true) setAsPresent()
     return r
 }
 
@@ -1335,16 +1379,17 @@ Long secondsSinceLastCheckinEvent() {
     return r
 }
 
-boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90) {
+boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90, boolean displayWarnings=true) {
     Long secondsSinceLastCheckin = secondsSinceLastCheckinEvent()
     if(secondsSinceLastCheckin != null && secondsSinceLastCheckin > maximumMinutesBetweenEvents * 60) {
-        log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
+        if(displayWarnings == true) log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
         return false
     }
     return true
 }
 
-void checkPresence() {
+boolean checkPresence(boolean displayWarnings=true) {
+    boolean isPresent = false
     Long lastCheckinTime = null
     String lastCheckinVal = device.currentValue('lastCheckin')
     if ((lastCheckinEnable == true || lastCheckinEnable == null) && isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == true) {
@@ -1353,10 +1398,37 @@ void checkPresence() {
         lastCheckinTime = device.currentValue('lastCheckinEpoch').toLong()
     }
     if(lastCheckinTime != null && lastCheckinTime >= now() - (3 * 60 * 60 * 1000)) {
-        sendEvent(name: "presence", value: "present")
+        setAsPresent()
+        isPresent = true
     } else {
         sendEvent(name: "presence", value: "not present")
-        log.warn("No event seen from the device for over 3 hours! Something is not right...")
+        if(displayWarnings == true) {
+            Integer numNotPresent = device.currentValue('notPresentCounter')
+            numNotPresent = numNotPresent == null ? 1 : numNotPresent + 1
+            sendEvent(name: "notPresentCounter", value: numNotPresent )
+            log.warn("No event seen from the device for over 3 hours! Something is not right... (consecutive events: $numNotPresent)")
+        }
     }
+    return isPresent
+}
+
+void setAsPresent() {
+    if(device.currentValue('presence') == "not present") {
+        Integer numRestored = device.currentValue('restoredCounter')
+        numRestored = numRestored == null ? 1 : numRestored + 1
+        sendEvent(name: "restoredCounter", value: numRestored )
+        sendEvent(name: "notPresentCounter", value: 0 )
+    }
+    sendEvent(name: "presence", value: "present")
+}
+
+void resetNotPresentCounter() {
+    logging("resetNotPresentCounter()", 100)
+    sendEvent(name: "notPresentCounter", value: 0, descriptionText: "Reset notPresentCounter to 0" )
+}
+
+void resetRestoredCounter() {
+    logging("resetRestoredCounter()", 100)
+    sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')

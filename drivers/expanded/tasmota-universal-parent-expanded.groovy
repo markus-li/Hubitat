@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0521T
+ *  Version: v1.0.2.0613T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,7 +47,9 @@ metadata {
         // END:  getDefaultMetadataAttributes()
         // BEGIN:getMetadataAttributesForLastCheckin()
         attribute "lastCheckin", "Date"
-        attribute "lastCheckinEpoch", "String"
+        attribute "lastCheckinEpoch", "number"
+        attribute "notPresentCounter", "number"
+        attribute "restoredCounter", "number"
         // END:  getMetadataAttributesForLastCheckin()
         attribute "commandSent", "string"
         attribute "commandResult", "string"
@@ -58,6 +60,9 @@ metadata {
         // BEGIN:getDefaultMetadataCommands()
         command "reboot"
         // END:  getDefaultMetadataCommands()
+        // BEGIN:getCommandsForPresence()
+        command "resetRestoredCounter"
+        // END:  getCommandsForPresence()
         command "sendCommand", [[name:"Command*", type: "STRING", description: "Tasmota Command"],
             [name:"Argument", type: "STRING", description: "Argument (optional)"]]
         
@@ -783,13 +788,14 @@ def refresh() {
         log.warn e2
         metaConfig = setStateVariablesToHide(['comment'], metaConfig=metaConfig)
     }
+    metaConfig = setDatasToHide(["preferences", "metaConfig"], metaConfig=metaConfig)
 }
 
 /* The parse(description) function is included and auto-expanded from external files */
-void parse(description) {
+void parse(String description) {
     // BEGIN:getGenericTasmotaNewParseHeader()
-    def descMap = tasmota_parseDescriptionAsMap(description)
-    def body
+    Map descMap = tasmota_parseDescriptionAsMap(description)
+    String body = null
     //logging("descMap: ${descMap}", 0)
     
     boolean missingChild = false
@@ -808,13 +814,14 @@ void parse(description) {
     if (body && body != "") {
         if(body.startsWith("{") || body.startsWith("[")) {
             boolean log99 = logging("========== Parsing Report ==========", 99)
-            def slurper = new JsonSlurper()
-            def result = slurper.parseText(body)
+            JsonSlurper slurper = new JsonSlurper()
+            Map result = slurper.parseText(body)
     
             //logging("result: ${result}",0)
     // END:  getGenericTasmotaNewParseHeader()
         missingChild = parseResult(result, missingChild)
     // BEGIN:getGenericTasmotaNewParseFooter()
+        result = null
     } else {
     
         }
@@ -825,27 +832,30 @@ void parse(description) {
     
     }
     if (device.currentValue("ip") == null) {
-        def curIP = getDataValue("ip")
+        String curIP = getDataValue("ip")
         logging("Setting IP from Data: $curIP", 1)
         sendEvent(name: 'ip', value: curIP, isStateChange: false)
         sendEvent(name: "ipLink", value: "<a target=\"device\" href=\"http://$curIP\">$curIP</a>", isStateChange: false)
     }
+    descMap = null
+    body = null
     // END:  getGenericTasmotaNewParseFooter()
 }
 
-boolean parseResult(result) {
+boolean parseResult(Map result) {
     boolean missingChild = false
     missingChild = parseResult(result, missingChild)
     return missingChild
 }
 
-void parseJSON(jsonData) {
+void parseJSON(String jsonData) {
     boolean missingChild = false
-    def jsonSlurper = new JsonSlurper()
+    JsonSlurper jsonSlurper = new JsonSlurper()
     parseResult(jsonSlurper.parseText(jsonData), missingChild)
+    jsonSlurper = null
 }
 
-boolean parseResult(result, missingChild) {
+boolean parseResult(Map result, boolean missingChild) {
     boolean log99 = logging("parseResult: $result", 99)
     // BEGIN:getTasmotaNewParserForStatusSTS()
     if (result.containsKey("StatusSTS")) {
@@ -882,7 +892,7 @@ boolean parseResult(result, missingChild) {
     // END:  getTasmotaNewParserForParentSwitch()
     // BEGIN:getTasmotaNewParserForDimmableDevice()
     if(true) {
-        def childDevice = tasmota_getChildDeviceByActionType("POWER1")
+        com.hubitat.app.ChildDeviceWrapper childDevice = tasmota_getChildDeviceByActionType("POWER1")
         if(result.containsKey("Dimmer")) {
             def dimmer = result.Dimmer
             logging("Dimmer: ${dimmer}", 1)
@@ -906,7 +916,7 @@ boolean parseResult(result, missingChild) {
     // BEGIN:getTasmotaNewParserForRGBWDevice()
     if(true) {
     
-        def childDevice = tasmota_getChildDeviceByActionType("POWER1")
+        com.hubitat.app.ChildDeviceWrapper childDevice = tasmota_getChildDeviceByActionType("POWER1")
         String mode = "RGB"
         if (result.containsKey("Color")) {
             String color = result.Color
@@ -922,7 +932,7 @@ boolean parseResult(result, missingChild) {
             if(childDevice?.currentValue('effectNumber') != result.Scheme ) missingChild = callChildParseByTypeId("POWER1", [[name: "effectNumber", value: result.Scheme]], missingChild)
         }
         if (mode == "RGB" && result.containsKey("HSBColor")) {
-            def hsbColor = result.HSBColor.tokenize(",")
+            List hsbColor = result.HSBColor.tokenize(",")
             hsbColor[0] = Math.round((hsbColor[0] as Integer) / 3.6) as Integer
             hsbColor[1] = hsbColor[1] as Integer
     
@@ -1172,11 +1182,11 @@ boolean parseResult(result, missingChild) {
 
 void updateNeededSettings() {
     // BEGIN:getUpdateNeededSettingsTasmotaHeader()
-    def currentProperties = state.currentProperties ?: [:]
+    Map currentProperties = state.currentProperties ?: [:]
     
     state.settings = settings
     
-    def isUpdateNeeded = "NO"
+    String isUpdateNeeded = "NO"
     
     if(runReset != null && runReset == 'RESET') {
         for ( e in state.settings ) {
@@ -1192,25 +1202,36 @@ void updateNeededSettings() {
     // END:  getUpdateNeededSettingsTasmotaHeader()
 
     if(deviceConfig == null) deviceConfig = "01generic-device"
-    def deviceConfigMap = getDeviceConfiguration(deviceConfig)
+    Map deviceConfigMap = getDeviceConfiguration(deviceConfig)
     
-    def deviceTemplateInput = deviceConfigMap?.template
-    def moduleNumber = deviceConfigMap?.module
+    String originalDeviceTemplateInput = deviceTemplateInput
+    String deviceTemplateInput = deviceConfigMap?.template
+    if(deviceTemplateInput == null) deviceTemplateInput = originalDeviceTemplateInput
     if(deviceTemplateInput == "") deviceTemplateInput = null
+
+    String originalModuleNumber = moduleNumber
+    String moduleNumber = deviceConfigMap?.module
+    if(moduleNumber == null) moduleNumber = originalModuleNumber
     if(moduleNumber == "") moduleNumber = null
 
     if(deviceTemplateInput != null && moduleNumber == null) moduleNumber = 0
 
     logging("updateNeededSettings: deviceConfigMap=$deviceConfigMap, deviceTemplateInput=$deviceTemplateInput, moduleNumber=$moduleNumber", 1)
-
+    
     // BEGIN:getUpdateNeededSettingsTasmotaDynamicModuleCommand()
     tasmota_getAction(tasmota_getCommandString("Module", null))
     tasmota_getAction(tasmota_getCommandString("Template", null))
-    if(disableModuleSelection == null) disableModuleSelection = false
-    def moduleNumberUsed = moduleNumber
-    if(moduleNumber == null || moduleNumber == -1) moduleNumberUsed = -1
+    boolean disableModuleSelectionSetting = disableModuleSelection
+    if(disableModuleSelectionSetting == null) disableModuleSelectionSetting = false
+    
+    Integer moduleNumberUsed = null
+    if(moduleNumber == null || moduleNumber == '-1') {
+        moduleNumberUsed = -1
+    } else {
+        moduleNumberUsed = moduleNumber.toInteger()
+    }
     boolean useDefaultTemplate = false
-    def defaultDeviceTemplate = ''
+    String defaultDeviceTemplate = ''
     if(deviceTemplateInput != null && deviceTemplateInput == "0") {
         useDefaultTemplate = true
         defaultDeviceTemplate = ''
@@ -1221,7 +1242,8 @@ void updateNeededSettings() {
         defaultDeviceTemplate = ''
     }
     if(deviceTemplateInput != null) deviceTemplateInput = deviceTemplateInput.replaceAll(' ','')
-    if(disableModuleSelection == false && ((deviceTemplateInput != null && deviceTemplateInput != "") ||
+    logging("disableModuleSelectionSetting=$disableModuleSelectionSetting, deviceTemplateInput=$deviceTemplateInput, moduleNumberUsed=$moduleNumberUsed, moduleNumber=$moduleNumber", 1)
+    if(disableModuleSelectionSetting == false && ((deviceTemplateInput != null && deviceTemplateInput != "") ||
                                            (useDefaultTemplate && defaultDeviceTemplate != ""))) {
         def usedDeviceTemplate = defaultDeviceTemplate
         if(useDefaultTemplate == false && deviceTemplateInput != null && deviceTemplateInput != "") {
@@ -1246,7 +1268,7 @@ void updateNeededSettings() {
         logging(device.currentValue('templateData'), 10)
     
     }
-    if(disableModuleSelection == false && moduleNumberUsed != null && moduleNumberUsed >= 0) {
+    if(disableModuleSelectionSetting == false && moduleNumberUsed != null && moduleNumberUsed >= 0) {
         logging("Setting the Module (${moduleNumberUsed}) soon...", 100)
         logging("device.currentValue('module'): '${device.currentValue('module')}'", 10)
     
@@ -1304,14 +1326,14 @@ void updateNeededSettings() {
 }
 
 /** Calls TO Child devices */
-boolean callChildParseByTypeId(String deviceTypeId, event, boolean missingChild) {
+boolean callChildParseByTypeId(String deviceTypeId, List<Map> event, boolean missingChild) {
     event.each{
         if(it.containsKey("descriptionText") == false) {
             it["descriptionText"] = "'$it.name' set to '$it.value'"
         }
         it["isStateChange"] = false
     }
-    def cd = getChildDevice("$device.id-$deviceTypeId")
+    com.hubitat.app.ChildDeviceWrapper cd = getChildDevice("$device.id-$deviceTypeId")
     if(cd != null) {
         cd.parse(event)
     } else {
@@ -1506,7 +1528,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0521T"
+    String version = "v1.0.2.0613T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2122,13 +2144,19 @@ void configureDelayed() {
 }
 
 void configurePresence() {
+    prepareCounters()
     if(presenceEnable == null || presenceEnable == true) {
-        sendEvent(name: "presence", value: "present")
         Random rnd = new Random()
         schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
     } else {
         unschedule('checkPresence')
     }
+}
+
+void prepareCounters() {
+    if(device.currentValue('restoredCounter') == null) sendEvent(name: "restoredCounter", value: 0, descriptionText: "Initialized to 0" )
+    if(device.currentValue('notPresentCounter') == null) sendEvent(name: "notPresentCounter", value: 0, descriptionText: "Initialized to 0" )
+    if(device.currentValue('presence') == null) sendEvent(name: "presence", value: "unknown", descriptionText: "Initialized as Unknown" )
 }
 
 boolean isValidDate(String dateFormat, String dateString) {
@@ -2161,7 +2189,7 @@ boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
              
         }
 	}
-    if(r == true) sendEvent(name: "presence", value: "present")
+    if(r == true) setAsPresent()
     return r
 }
 
@@ -2187,16 +2215,17 @@ Long secondsSinceLastCheckinEvent() {
     return r
 }
 
-boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90) {
+boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90, boolean displayWarnings=true) {
     Long secondsSinceLastCheckin = secondsSinceLastCheckinEvent()
     if(secondsSinceLastCheckin != null && secondsSinceLastCheckin > maximumMinutesBetweenEvents * 60) {
-        log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
+        if(displayWarnings == true) log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
         return false
     }
     return true
 }
 
-void checkPresence() {
+boolean checkPresence(boolean displayWarnings=true) {
+    boolean isPresent = false
     Long lastCheckinTime = null
     String lastCheckinVal = device.currentValue('lastCheckin')
     if ((lastCheckinEnable == true || lastCheckinEnable == null) && isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == true) {
@@ -2205,30 +2234,57 @@ void checkPresence() {
         lastCheckinTime = device.currentValue('lastCheckinEpoch').toLong()
     }
     if(lastCheckinTime != null && lastCheckinTime >= now() - (3 * 60 * 60 * 1000)) {
-        sendEvent(name: "presence", value: "present")
+        setAsPresent()
+        isPresent = true
     } else {
         sendEvent(name: "presence", value: "not present")
-        log.warn("No event seen from the device for over 3 hours! Something is not right...")
+        if(displayWarnings == true) {
+            Integer numNotPresent = device.currentValue('notPresentCounter')
+            numNotPresent = numNotPresent == null ? 1 : numNotPresent + 1
+            sendEvent(name: "notPresentCounter", value: numNotPresent )
+            log.warn("No event seen from the device for over 3 hours! Something is not right... (consecutive events: $numNotPresent)")
+        }
     }
+    return isPresent
+}
+
+void setAsPresent() {
+    if(device.currentValue('presence') == "not present") {
+        Integer numRestored = device.currentValue('restoredCounter')
+        numRestored = numRestored == null ? 1 : numRestored + 1
+        sendEvent(name: "restoredCounter", value: numRestored )
+        sendEvent(name: "notPresentCounter", value: 0 )
+    }
+    sendEvent(name: "presence", value: "present")
+}
+
+void resetNotPresentCounter() {
+    logging("resetNotPresentCounter()", 100)
+    sendEvent(name: "notPresentCounter", value: 0, descriptionText: "Reset notPresentCounter to 0" )
+}
+
+void resetRestoredCounter() {
+    logging("resetRestoredCounter()", 100)
+    sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')
 
 // BEGIN:getHelperFunctions('childDevices')
-private channelNumber(String dni) {
-    def ch = dni.split("-")[-1] as Integer
+Integer channelNumber(String dni) {
+    Integer ch = dni.split("-")[-1] as Integer
     return ch
 }
 
-def childOn(String dni) {
+void childOn(String dni) {
     onOffCmd(1, channelNumber(dni))
 }
 
-def childOff(String dni) {
+void childOff(String dni) {
     onOffCmd(0, channelNumber(dni))
 }
 
-private childSendState(String currentSwitchNumber, String state) {
-    def childDevice = childDevices.find{it.deviceNetworkId.endsWith("-${currentSwitchNumber}")}
+void childSendState(String currentSwitchNumber, String state) {
+    com.hubitat.app.ChildDeviceWrapper childDevice = childDevices.find{it.deviceNetworkId.endsWith("-${currentSwitchNumber}")}
     if (childDevice) {
         logging("childDevice.sendEvent ${currentSwitchNumber} ${state}",1)
         childDevice.sendEvent(name: "switch", value: state, type: type)
@@ -2237,8 +2293,8 @@ private childSendState(String currentSwitchNumber, String state) {
     }
 }
 
-private areAllChildrenSwitchedOn(Integer skip = 0) {
-    def children = getChildDevices()
+boolean areAllChildrenSwitchedOn(Integer skip = 0) {
+    List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
     boolean status = true
     Integer i = 1
     children.each {child->
@@ -2252,15 +2308,14 @@ private areAllChildrenSwitchedOn(Integer skip = 0) {
     return status
 }
 
-private sendParseEventToChildren(data) {
-    def children = getChildDevices()
+void sendParseEventToChildren(data) {
+    List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
     children.each {child->
         child.parseParentData(data)
     }
-    return status
 }
 
-private void createChildDevices() {
+void createChildDevices() {
     Integer numSwitchesI = numSwitches.toInteger()
     logging("createChildDevices: creating $numSwitchesI device(s)",1)
     
@@ -2275,10 +2330,10 @@ private void createChildDevices() {
     }
 }
 
-def recreateChildDevices() {
+void recreateChildDevices() {
     Integer numSwitchesI = numSwitches.toInteger()
     logging("recreateChildDevices: recreating $numSwitchesI device(s)",1)
-    def childDevice = null
+    com.hubitat.app.ChildDeviceWrapper childDevice = null
 
     for (i in 1..numSwitchesI) {
         childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$i")}
@@ -2309,9 +2364,9 @@ def recreateChildDevices() {
     }
 }
 
-def deleteChildren() {
+void deleteChildren() {
 	logging("deleteChildren()", 100)
-	def children = getChildDevices()
+	List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
     
     children.each {child->
   		deleteChildDevice(child.deviceNetworkId)
@@ -2320,7 +2375,7 @@ def deleteChildren() {
 // END:  getHelperFunctions('childDevices')
 
 // BEGIN:getHelperFunctions('tasmota')
-def parse(asyncResponse, data) {
+void parse(hubitat.scheduling.AsyncResponse asyncResponse, data) {
     if(asyncResponse != null) {
         try{
             logging("tasmota: parse(asyncResponse.getJson() = \"${asyncResponse.getJson()}\")", 1)
@@ -2389,7 +2444,7 @@ void tasmota_refreshChildrenAgain() {
     tasmota_refreshChildren()
 }
 
-def tasmota_refresh(metaConfig=null) {
+Map tasmota_refresh(Map metaConfig=null) {
 	logging("tasmota_refresh(metaConfig=$metaConfig)", 100)
     state.clear()
 
@@ -2415,7 +2470,7 @@ def tasmota_refresh(metaConfig=null) {
     return metaConfig
 }
 
-void tasmota_runInstallCommands(installCommands) {
+void tasmota_runInstallCommands(List installCommands) {
     logging("tasmota_runInstallCommands(installCommands=$installCommands)", 1)
     List backlogs = []
     List rule1 = []
@@ -2465,12 +2520,12 @@ Map tasmota_parseDescriptionAsMap(description) {
 	}
 }
 
-private tasmota_getAction(uri, callback="parse") { 
+void tasmota_getAction(String uri, String callback="parse") { 
      
     tasmota_httpGetAction(uri, callback=callback)
 }
 
-void tasmota_parseConfigureChildDevices(asyncResponse, data) {
+void tasmota_parseConfigureChildDevices(hubitat.scheduling.AsyncResponse asyncResponse, data) {
     if(asyncResponse != null) {
         try{
             logging("tasmota_parseConfigureChildDevices(asyncResponse.getJson() 2= \"${asyncResponse.getJson()}\", data = \"${data}\")", 1)
@@ -2489,11 +2544,11 @@ void tasmota_parseConfigureChildDevices(asyncResponse, data) {
     }
 }
 
-void tasmota_configureChildDevices(asyncResponse, data) {
-    def statusMap = asyncResponse.getJson()
+void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncResponse, data) {
+    Map statusMap = asyncResponse.getJson()
     logging("tasmota_configureChildDevices() statusMap=$statusMap", 1)
 
-    def deviceInfo = [:]
+    Map deviceInfo = [:]
     deviceInfo["hasEnergy"] = false
     deviceInfo["numTemperature"] = 0
     deviceInfo["numHumidity"] = 0
@@ -2539,8 +2594,8 @@ void tasmota_configureChildDevices(asyncResponse, data) {
     }
     logging("Device info found: $deviceInfo", 100)
 
-    def driverName = ["Tasmota - Universal Plug/Outlet (Child)", "Generic Component Switch"]
-    def namespace = "tasmota"
+    List driverName = ["Tasmota - Universal Plug/Outlet (Child)", "Generic Component Switch"]
+    String namespace = "tasmota"
     if(deviceInfo["numSwitch"] > 0) {
          
         if(deviceInfo["hasEnergy"]  == true && (deviceInfo["isAddressable"] == false && deviceInfo["isRGB"] == false && deviceInfo["hasCT"] == false)) {
@@ -2571,9 +2626,9 @@ void tasmota_configureChildDevices(asyncResponse, data) {
         
         for(i in 1..deviceInfo["numSwitch"]) {
             namespace = "tasmota"
-            def childId = "POWER$i"
-            def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
-            def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($i)"
+            String childId = "POWER$i"
+            String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+            String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($i)"
             logging("createChildDevice: POWER$i", 1)
             tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
             
@@ -2585,9 +2640,9 @@ void tasmota_configureChildDevices(asyncResponse, data) {
          
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Fan Control (Child)"]
-        def childId = "FAN"
-        def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
-        def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        String childId = "FAN"
+        String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
         tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
     }
 
@@ -2595,12 +2650,14 @@ void tasmota_configureChildDevices(asyncResponse, data) {
          
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Multi Sensor (Child)"]
-        def childId = "${it.key}"
-        def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
-        def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        String childId = "${it.key}"
+        String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
         tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
     }
+    deviceInfo = null
     parseResult(statusMap)
+    statusMap = null
 }
 
 String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
@@ -2647,13 +2704,13 @@ String tasmota_getMinimizedDriverName(String driverName) {
     return driverName
 }
 
-def tasmota_getChildDeviceByActionType(String actionType) {
+com.hubitat.app.ChildDeviceWrapper tasmota_getChildDeviceByActionType(String actionType) {
     return childDevices.find{it.deviceNetworkId.endsWith("-$actionType")}
 }
 
 private void tasmota_createChildDevice(String namespace, List driverName, String childId, String childName, String childLabel) {
     logging("tasmota_createChildDevice(namespace=$namespace, driverName=$driverName, childId=$childId, childName=$childName, childLabel=$childLabel)", 1)
-    def childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$childId")}
+    com.hubitat.app.ChildDeviceWrapper childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$childId")}
     if(!childDevice && childId.toLowerCase().startsWith("power")) {
         logging("Looking for $childId, ending in ${childId.substring(5)}", 1)
         childDevice = childDevices.find{it.deviceNetworkId.endsWith("-${childId.substring(5)}")}
@@ -2662,7 +2719,7 @@ private void tasmota_createChildDevice(String namespace, List driverName, String
             childDevice.setDeviceNetworkId("$device.id-$childId")
         }
     }
-    if (childDevice) {
+    if (childDevice != null) {
         childDevice.setName(childName)
         logging("childDevice.getData(): ${childDevice.getData()}", 1)
     } else {
@@ -2709,7 +2766,7 @@ private String tasmota_determineDeviceNetworkId(String macOrIP, boolean isIP = f
 
 void tasmota_prepareDNI() {
     if (useIPAsID) {
-        def hexIPAddress = tasmota_determineDeviceNetworkId(ipAddress, true)
+        String hexIPAddress = tasmota_determineDeviceNetworkId(ipAddress, true)
         if(hexIPAddress != null && state.dni != hexIPAddress) {
             state.dni = hexIPAddress
             tasmota_updateDNI()
@@ -2748,7 +2805,7 @@ private String tasmota_getHostAddress() {
     }
 }
 
-private String tasmota_convertIPtoHex(ipAddress) {
+private String tasmota_convertIPtoHex(String ipAddress) {
     String hex = null
     if(ipAddress != null) {
         hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02X', it.toInteger() ) }.join()
@@ -2762,7 +2819,7 @@ private String tasmota_convertIPtoHex(ipAddress) {
     return hex
 }
 
-private String tasmota_getFirstTwoIPBytes(ipAddress) {
+private String tasmota_getFirstTwoIPBytes(String ipAddress) {
     String ipStart = null
     if(ipAddress != null) {
         ipStart = ipAddress.tokenize( '.' ).take(2).join('.') + '.'
@@ -2794,10 +2851,10 @@ Integer tasmota_dBmToQuality(Integer dBm) {
     return dBm
 }
 
-private void tasmota_httpGetAction(String uri, callback="parse") { 
+private void tasmota_httpGetAction(String uri, String callback="parse") { 
   tasmota_updateDNI()
   
-  def headers = tasmota_getHeader()
+  Map headers = tasmota_getHeader()
   logging("tasmota_httpGetAction for 'http://${tasmota_getHostAddress()}$uri'...", 1)
   try {
      
@@ -2811,12 +2868,12 @@ private void tasmota_httpGetAction(String uri, callback="parse") {
   }
 }
 
-private tasmota_postAction(String uri, String data) { 
+private hubitat.device.HubAction tasmota_postAction(String uri, String data) { 
   tasmota_updateDNI()
 
-  def headers = tasmota_getHeader()
+  Map headers = tasmota_getHeader()
 
-  def hubAction = null
+  hubitat.device.HubAction hubAction = null
   try {
     hubAction = new hubitat.device.HubAction(
     method: "POST",
@@ -2830,10 +2887,10 @@ private tasmota_postAction(String uri, String data) {
   return hubAction    
 }
 
-def tasmota_sendCommandParse(asyncResponse, data) {
+void tasmota_sendCommandParse(hubitat.scheduling.AsyncResponse asyncResponse, data) {
     if(asyncResponse != null) {
         try{
-            def r = asyncResponse.getJson()
+            Map r = asyncResponse.getJson()
             logging("tasmota_sendCommandParse(asyncResponse.getJson() = \"${r}\")", 1)
             sendEvent(name: "commandResult", value: asyncResponse.getData(), isStateChange: true)
             parseResult(r)
@@ -2852,7 +2909,7 @@ def tasmota_sendCommandParse(asyncResponse, data) {
 }
 
 String tasmota_getCommandString(String command, String value) {
-    def uri = "/cm?"
+    String uri = "/cm?"
     if (password != null) {
         uri += "user=admin&password=${tasmota_urlEscape(password)}&"
     }
@@ -2865,7 +2922,7 @@ String tasmota_getCommandString(String command, String value) {
     return uri
 }
 
-String tasmota_getMultiCommandString(commands) {
+String tasmota_getMultiCommandString(List<Map> commands) {
     String uri = "/cm?"
     if (password != null) {
         uri += "user=admin&password=${password}&"
@@ -2893,7 +2950,7 @@ private String tasmota_convertPortToHex(Integer port) {
     return hexport
 }
 
-private tasmota_encodeCredentials(String username, String password) {
+private String tasmota_encodeCredentials(String username, String password) {
 	String userpassascii = "${username}:${password}"
     String userpass = "Basic " + userpassascii.bytes.encodeBase64().toString()
     return userpass
