@@ -18,8 +18,8 @@
 def getGenericTasmotaNewParseHeader():
     return """// parse() Generic Tasmota-device header BEGINS here
 //logging("Parsing: ${description}", 0)
-def descMap = tasmota_parseDescriptionAsMap(description)
-def body
+Map descMap = tasmota_parseDescriptionAsMap(description)
+String body = null
 logging("descMap: ${descMap}", 0)
 
 boolean missingChild = false
@@ -38,15 +38,17 @@ if (descMap["body"] && descMap["body"] != "T04=") body = new String(descMap["bod
 if (body && body != "") {
     if(body.startsWith("{") || body.startsWith("[")) {
         boolean log99 = logging("========== Parsing Report ==========", 99)
-        def slurper = new JsonSlurper()
-        def result = slurper.parseText(body)
+        JsonSlurper slurper = new JsonSlurper()
+        Map result = slurper.parseText(body)
         
         logging("result: ${result}",0)
         // parse() Generic header ENDS here
         """
 
 def getGenericTasmotaNewParseFooter():
+    
     return """// parse() Generic Tasmota-device footer BEGINS here
+    result = null
 } else {
         //log.debug "Response is not JSON: $body"
     }
@@ -60,12 +62,13 @@ if(missingChild == true) {
     //refresh()
 }
 if (device.currentValue("ip") == null) {
-    def curIP = getDataValue("ip")
+    String curIP = getDataValue("ip")
     logging("Setting IP from Data: $curIP", 1)
     sendEvent(name: 'ip', value: curIP, isStateChange: false)
     sendEvent(name: "ipLink", value: "<a target=\\"device\\" href=\\"http://$curIP\\">$curIP</a>", isStateChange: false)
 }
-
+descMap = null
+body = null
 // parse() Generic footer ENDS here"""
 
 def getTasmotaNewParserForStatusSTS():
@@ -361,7 +364,7 @@ def getTasmotaNewParserForRGBWDevice():
 if(true) {
     //[POWER:ON, Dimmer:100, Color:0,0,255,0,0, HSBColor:240,100,100, Channel:[0, 0, 100, 0, 0], CT:167]
     //[POWER:ON, Dimmer:100, Color:0,0,0,245,10, HSBColor:240,100,0, Channel:[0, 0, 0, 96, 4], CT:167]
-    def childDevice = tasmota_getChildDeviceByActionType("POWER1")
+    com.hubitat.app.ChildDeviceWrapper childDevice = tasmota_getChildDeviceByActionType("POWER1")
     String mode = "RGB"
     if (result.containsKey("Color")) {
         String color = result.Color
@@ -377,7 +380,7 @@ if(true) {
         if(childDevice?.currentValue('effectNumber') != result.Scheme ) missingChild = callChildParseByTypeId("POWER1", [[name: "effectNumber", value: result.Scheme]], missingChild)
     }
     if (mode == "RGB" && result.containsKey("HSBColor")) {
-        def hsbColor = result.HSBColor.tokenize(",")
+        List hsbColor = result.HSBColor.tokenize(",")
         hsbColor[0] = Math.round((hsbColor[0] as Integer) / 3.6) as Integer
         hsbColor[1] = hsbColor[1] as Integer
         //hsbColor[2] = hsbColor[2] as Integer
@@ -407,7 +410,7 @@ def getTasmotaNewParserForDimmableDevice():
     return """
 // Standard Dimmable Device Data parsing
 if(true) {
-    def childDevice = tasmota_getChildDeviceByActionType("POWER1")
+    com.hubitat.app.ChildDeviceWrapper childDevice = tasmota_getChildDeviceByActionType("POWER1")
     if(result.containsKey("Dimmer")) {
         def dimmer = result.Dimmer
         logging("Dimmer: ${dimmer}", 1)
@@ -435,7 +438,7 @@ def getTasmotaNewParserForRGBWIRRemote():
 if (result.containsKey("IrReceived")) {
     logging("Found key IrReceived in parse()", 1)
     if (result.IrReceived.containsKey("Data")) {
-        def irData = result.IrReceived.Data
+        String irData = result.IrReceived.Data
         if(irData == '0x00F7C03F') on()
         if(irData == '0x00F740BF') off()
         if(irData == '0x00F7E01F') rgbw_white()
@@ -462,11 +465,11 @@ if (result.containsKey("IrReceived")) {
 def getGenericZigbeeParseHeader():
     return """// parse() Generic Zigbee-device header BEGINS here
 logging("Parsing: ${description}", 0)
-def msgMap = zigbee.parseDescriptionAsMap(description)
+Map msgMap = zigbee.parseDescriptionAsMap(description)
 logging("msgMap: ${msgMap}", 0)
 // parse() Generic header ENDS here"""
 
 def getGenericZigbeeParseFooter():
     return """// parse() Generic Zigbee-device footer BEGINS here
-
+msgMap = null
 // parse() Generic footer ENDS here"""

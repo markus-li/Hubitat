@@ -17,6 +17,13 @@
       "description": "Works with model SJCGQ11LM."
     },
     {
+      "name": "IKEA Tradfri On/Off Switch",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-ikea-tradfri-on-off-switch.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-ikea-tradfri-on-off-switch-beta.json",
+      "description": "Works with model E1743."
+    },
+    {
       "name": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-mijia-smart-light-sensor.json",

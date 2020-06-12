@@ -137,14 +137,14 @@ def main():
     log.debug(hhs_3.login())
 
     default_version = "v1.0.2.MMDDTb"
-    default_zigbee_version = "v0.6.1.MMDDb"
+    default_zigbee_version = "v0.7.1.MMDDb"
     version_suffix = "b"
     checksum_file_suffix = None
     remove_comments = True
     is_beta = True
     if(branch_name == 'release'):
         default_version = "v1.0.2.MMDDT"
-        default_zigbee_version = "v0.6.1.MMDD"
+        default_zigbee_version = "v0.7.1.MMDD"
         version_suffix = ""
         checksum_file_suffix = "release"
         is_beta = False
@@ -298,12 +298,12 @@ def main():
         {'id': 587, 'file': 'tasmota-znsn-tuyamcu-wifi-curtain-wall-panel.groovy',
          'comment': 'NOT GENERIC - read the instructions', },
         
+        # RF/IR drivers
         # https://tasmota.github.io/docs/#/devices/Sonoff-RF-Bridge-433pi 
         {'id': 648, 'file': 'tasmota-sonoff-rf-bridge-parent.groovy' , 
          'comment': 'Functional - Need feedback',
          'deviceLink': 'https://templates.blakadder.com/sonoff_RF_bridge.html',
          'numSwitches': 1, 'specialDebugLabel': 'RF Codes', 'childType': 'not_component'},
-        
         {'id': 650, 'file': 'tasmota-rflink-parent.groovy' , 
          'comment': 'Functional - Need feedback',
          'deviceLink': 'http://www.rflink.nl/blog2/wiring',
@@ -397,6 +397,9 @@ def main():
          'comment': 'Works with model WSDCGQ01LM & WSDCGQ11LM.' },
         {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model SJCGQ11LM.' },
+        {'id': 1441, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-tradfri-on-off-switch.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with model E1743.' },
+        
         
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
@@ -424,6 +427,7 @@ def main():
         
         {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model DJT11LM.' },
+         
     ]
 
     # Future devices to implement support for:
@@ -486,6 +490,18 @@ def main():
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
         {'id': 1409, 'id_3': 0, 'file': 'dashboard-background-image.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
+
+        {'id': 1441},
+
+        # RF/IR Drivers
+        #{'id': 648},
+        #{'id': 650},
+        #{'id': 649},
+        #{'id': 673},
+        #{'id': 674},
+        #{'id': 675},
+        #{'id': 676},
+        
     ]
     
     driver_files_private_active = [
@@ -857,7 +873,7 @@ def main():
     # Add the Apps to the T4HE package
     for a in sorted(used_app_list.values(), key=lambda k: k['name']):
         if(a['publish'] == True):
-            print("Publish: " + str(a))
+            #print("Publish: " + str(a))
             a['file'] = a['file'].stem + a['file'].suffix
             t4he_pkg.addApp(a['name'], a['version'], a['namespace'], 
                     app_raw_repo_url + a['file'], a['required'], a['oauth'], a['id'], id=None)

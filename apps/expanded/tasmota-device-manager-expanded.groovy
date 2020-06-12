@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0521Tb
+ *  Version: v1.0.2.0612Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -618,7 +618,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.2.0521Tb"
+    String version = "v1.0.2.0612Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -1458,16 +1458,16 @@ div.mdl-button--raised h4.pre {
 }
 
 /* Configure Devices List Styles */
-#collapse4 .hrefElem::before {
+#collapse5 .hrefElem::before {
     filter: invert(100%);
 }
-#collapse4 .hrefElem:hover::before, #collapse4 .hrefElem:focus::before {
+#collapse5 .hrefElem:hover::before, #collapse5 .hrefElem:focus::before {
     filter: invert(0%);
 }
-#collapse4 table .hrefElem::before {
+#collapse5 table .hrefElem::before {
     filter: invert(0%);
 }
-#collapse4 .btn-block {
+#collapse5 .btn-block {
     color: #f5f5f5;
     background-color: #382e2b;
     
@@ -1478,15 +1478,15 @@ div.mdl-button--raised h4.pre {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-#collapse4 .btn-block span {
+#collapse5 .btn-block span {
     white-space: nowrap !important;
     max-width: inherit;
 }
-#collapse4 .btn-block:hover, #collapse4 .btn-block:focus {
+#collapse5 .btn-block:hover, #collapse5 .btn-block:focus {
     color: #212121;
     background-color: #e0e0e0;
 }
-#collapse4 div.mdl-textfield {
+#collapse5 div.mdl-textfield {
     margin: 0px;
 }
 .device-config_table {
@@ -1522,14 +1522,14 @@ div.mdl-button--raised h4.pre {
 }
 
 /* Action Buttons */
-#collapse4 [name*="refreshDevices"] {
+#collapse5 [name*="refreshDevices"] {
     float: right !important;
 }
-#collapse4 [name*="resultPage"] {
+#collapse5 [name*="resultPage"] {
     float: left !important;
     visibility: hidden;
 }
-#collapse4 [name*="refreshDevices"], #collapse4 [name*="resultPage"] {
+#collapse5 [name*="refreshDevices"], #collapse5 [name*="resultPage"] {
     color: #000;
     width: 170px !important;
     min-width: 170px;
@@ -1543,16 +1543,16 @@ div.mdl-button--raised h4.pre {
     padding: 0px 16px;
     display:inline;
 }
-#collapse4 .mdl-cell--12-col:nth-of-type(2), #collapse4 .mdl-cell--12-col:nth-of-type(3) {
+#collapse5 .mdl-cell--12-col:nth-of-type(2), #collapse5 .mdl-cell--12-col:nth-of-type(3) {
     width: 50% !important;
     display:inline !important;
 }
-#collapse4 [name*="refreshDevices"] span, #collapse4 [name*="resultPage"] span {
+#collapse5 [name*="refreshDevices"] span, #collapse5 [name*="resultPage"] span {
     font-weight: 500;
     text-align: center !important;
     white-space: nowrap !important;
 }
-#collapse4 [name*="refreshDevices"]::before, #collapse4 [name*="resultPage"]::before {
+#collapse5 [name*="refreshDevices"]::before, #collapse5 [name*="resultPage"]::before {
     content: "";
 }
 
@@ -1740,7 +1740,7 @@ def discoveredAddConfirm() {
         if(passwordDevice == null || passwordDevice == "") {
            passwordDevice = "[installed]"
         }
-        def child = addChildDevice("tasmota", deviceType ? deviceType : "Tasmota - Universal Parent", "${tasmota_convertIPtoHex(ipAddress)}", location.hubs[0].id, [
+        com.hubitat.app.ChildDeviceWrapper child = addChildDevice("tasmota", deviceType ? deviceType : "Tasmota - Universal Parent", "${tasmota_convertIPtoHex(ipAddress)}", location.hubs[0].id, [
            "label": (deviceLabel ? deviceLabel : "Tasmota - Universal Parent (%device_ip%)").replace("%device_ip%", "${ipAddress}"),
            "data": [
                 "ip": ipAddress,
@@ -1890,7 +1890,7 @@ private Integer convertHexToInt(hex) {
 // END:  getHelperFunctions('app-tasmota-device-discovery')
 
 // BEGIN:getHelperFunctions('tasmota')
-def parse(asyncResponse, data) {
+void parse(hubitat.scheduling.AsyncResponse asyncResponse, data) {
     if(asyncResponse != null) {
         try{
             logging("tasmota: parse(asyncResponse.getJson() = \"${asyncResponse.getJson()}\")", 1)
@@ -1959,7 +1959,7 @@ void tasmota_refreshChildrenAgain() {
     tasmota_refreshChildren()
 }
 
-def tasmota_refresh(metaConfig=null) {
+Map tasmota_refresh(Map metaConfig=null) {
 	logging("tasmota_refresh(metaConfig=$metaConfig)", 100)
     state.clear()
 
@@ -1985,7 +1985,7 @@ def tasmota_refresh(metaConfig=null) {
     return metaConfig
 }
 
-void tasmota_runInstallCommands(installCommands) {
+void tasmota_runInstallCommands(List installCommands) {
     logging("tasmota_runInstallCommands(installCommands=$installCommands)", 1)
     List backlogs = []
     List rule1 = []
@@ -2035,12 +2035,12 @@ Map tasmota_parseDescriptionAsMap(description) {
 	}
 }
 
-private tasmota_getAction(uri, callback="parse") { 
+void tasmota_getAction(String uri, String callback="parse") { 
      
     tasmota_httpGetAction(uri, callback=callback)
 }
 
-void tasmota_parseConfigureChildDevices(asyncResponse, data) {
+void tasmota_parseConfigureChildDevices(hubitat.scheduling.AsyncResponse asyncResponse, data) {
     if(asyncResponse != null) {
         try{
             logging("tasmota_parseConfigureChildDevices(asyncResponse.getJson() 2= \"${asyncResponse.getJson()}\", data = \"${data}\")", 1)
@@ -2059,11 +2059,11 @@ void tasmota_parseConfigureChildDevices(asyncResponse, data) {
     }
 }
 
-void tasmota_configureChildDevices(asyncResponse, data) {
-    def statusMap = asyncResponse.getJson()
+void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncResponse, data) {
+    Map statusMap = asyncResponse.getJson()
     logging("tasmota_configureChildDevices() statusMap=$statusMap", 1)
 
-    def deviceInfo = [:]
+    Map deviceInfo = [:]
     deviceInfo["hasEnergy"] = false
     deviceInfo["numTemperature"] = 0
     deviceInfo["numHumidity"] = 0
@@ -2109,8 +2109,8 @@ void tasmota_configureChildDevices(asyncResponse, data) {
     }
     logging("Device info found: $deviceInfo", 100)
 
-    def driverName = ["Tasmota - Universal Plug/Outlet (Child)", "Generic Component Switch"]
-    def namespace = "tasmota"
+    List driverName = ["Tasmota - Universal Plug/Outlet (Child)", "Generic Component Switch"]
+    String namespace = "tasmota"
     if(deviceInfo["numSwitch"] > 0) {
          
         if(deviceInfo["hasEnergy"]  == true && (deviceInfo["isAddressable"] == false && deviceInfo["isRGB"] == false && deviceInfo["hasCT"] == false)) {
@@ -2141,9 +2141,9 @@ void tasmota_configureChildDevices(asyncResponse, data) {
         
         for(i in 1..deviceInfo["numSwitch"]) {
             namespace = "tasmota"
-            def childId = "POWER$i"
-            def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
-            def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($i)"
+            String childId = "POWER$i"
+            String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+            String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($i)"
             logging("createChildDevice: POWER$i", 1)
             tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
             
@@ -2155,9 +2155,9 @@ void tasmota_configureChildDevices(asyncResponse, data) {
          
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Fan Control (Child)"]
-        def childId = "FAN"
-        def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
-        def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        String childId = "FAN"
+        String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
         tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
     }
 
@@ -2165,12 +2165,14 @@ void tasmota_configureChildDevices(asyncResponse, data) {
          
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Multi Sensor (Child)"]
-        def childId = "${it.key}"
-        def childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
-        def childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        String childId = "${it.key}"
+        String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
         tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
     }
+    deviceInfo = null
     parseResult(statusMap)
+    statusMap = null
 }
 
 String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
@@ -2217,13 +2219,13 @@ String tasmota_getMinimizedDriverName(String driverName) {
     return driverName
 }
 
-def tasmota_getChildDeviceByActionType(String actionType) {
+com.hubitat.app.ChildDeviceWrapper tasmota_getChildDeviceByActionType(String actionType) {
     return childDevices.find{it.deviceNetworkId.endsWith("-$actionType")}
 }
 
 private void tasmota_createChildDevice(String namespace, List driverName, String childId, String childName, String childLabel) {
     logging("tasmota_createChildDevice(namespace=$namespace, driverName=$driverName, childId=$childId, childName=$childName, childLabel=$childLabel)", 1)
-    def childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$childId")}
+    com.hubitat.app.ChildDeviceWrapper childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$childId")}
     if(!childDevice && childId.toLowerCase().startsWith("power")) {
         logging("Looking for $childId, ending in ${childId.substring(5)}", 1)
         childDevice = childDevices.find{it.deviceNetworkId.endsWith("-${childId.substring(5)}")}
@@ -2232,7 +2234,7 @@ private void tasmota_createChildDevice(String namespace, List driverName, String
             childDevice.setDeviceNetworkId("$device.id-$childId")
         }
     }
-    if (childDevice) {
+    if (childDevice != null) {
         childDevice.setName(childName)
         logging("childDevice.getData(): ${childDevice.getData()}", 1)
     } else {
@@ -2279,7 +2281,7 @@ private String tasmota_determineDeviceNetworkId(String macOrIP, boolean isIP = f
 
 void tasmota_prepareDNI() {
     if (useIPAsID) {
-        def hexIPAddress = tasmota_determineDeviceNetworkId(ipAddress, true)
+        String hexIPAddress = tasmota_determineDeviceNetworkId(ipAddress, true)
         if(hexIPAddress != null && state.dni != hexIPAddress) {
             state.dni = hexIPAddress
             tasmota_updateDNI()
@@ -2318,7 +2320,7 @@ private String tasmota_getHostAddress() {
     }
 }
 
-private String tasmota_convertIPtoHex(ipAddress) {
+private String tasmota_convertIPtoHex(String ipAddress) {
     String hex = null
     if(ipAddress != null) {
         hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02X', it.toInteger() ) }.join()
@@ -2332,7 +2334,7 @@ private String tasmota_convertIPtoHex(ipAddress) {
     return hex
 }
 
-private String tasmota_getFirstTwoIPBytes(ipAddress) {
+private String tasmota_getFirstTwoIPBytes(String ipAddress) {
     String ipStart = null
     if(ipAddress != null) {
         ipStart = ipAddress.tokenize( '.' ).take(2).join('.') + '.'
@@ -2364,10 +2366,10 @@ Integer tasmota_dBmToQuality(Integer dBm) {
     return dBm
 }
 
-private void tasmota_httpGetAction(String uri, callback="parse") { 
+private void tasmota_httpGetAction(String uri, String callback="parse") { 
   tasmota_updateDNI()
   
-  def headers = tasmota_getHeader()
+  Map headers = tasmota_getHeader()
   logging("tasmota_httpGetAction for 'http://${tasmota_getHostAddress()}$uri'...", 1)
   try {
      
@@ -2381,12 +2383,12 @@ private void tasmota_httpGetAction(String uri, callback="parse") {
   }
 }
 
-private tasmota_postAction(String uri, String data) { 
+private hubitat.device.HubAction tasmota_postAction(String uri, String data) { 
   tasmota_updateDNI()
 
-  def headers = tasmota_getHeader()
+  Map headers = tasmota_getHeader()
 
-  def hubAction = null
+  hubitat.device.HubAction hubAction = null
   try {
     hubAction = new hubitat.device.HubAction(
     method: "POST",
@@ -2400,10 +2402,10 @@ private tasmota_postAction(String uri, String data) {
   return hubAction    
 }
 
-def tasmota_sendCommandParse(asyncResponse, data) {
+void tasmota_sendCommandParse(hubitat.scheduling.AsyncResponse asyncResponse, data) {
     if(asyncResponse != null) {
         try{
-            def r = asyncResponse.getJson()
+            Map r = asyncResponse.getJson()
             logging("tasmota_sendCommandParse(asyncResponse.getJson() = \"${r}\")", 1)
             sendEvent(name: "commandResult", value: asyncResponse.getData(), isStateChange: true)
             parseResult(r)
@@ -2422,7 +2424,7 @@ def tasmota_sendCommandParse(asyncResponse, data) {
 }
 
 String tasmota_getCommandString(String command, String value) {
-    def uri = "/cm?"
+    String uri = "/cm?"
     if (password != null) {
         uri += "user=admin&password=${tasmota_urlEscape(password)}&"
     }
@@ -2435,7 +2437,7 @@ String tasmota_getCommandString(String command, String value) {
     return uri
 }
 
-String tasmota_getMultiCommandString(commands) {
+String tasmota_getMultiCommandString(List<Map> commands) {
     String uri = "/cm?"
     if (password != null) {
         uri += "user=admin&password=${password}&"
@@ -2463,7 +2465,7 @@ private String tasmota_convertPortToHex(Integer port) {
     return hexport
 }
 
-private tasmota_encodeCredentials(String username, String password) {
+private String tasmota_encodeCredentials(String username, String password) {
 	String userpassascii = "${username}:${password}"
     String userpass = "Basic " + userpassascii.bytes.encodeBase64().toString()
     return userpass

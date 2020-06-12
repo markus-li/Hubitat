@@ -7,23 +7,23 @@
 */
 
 // Get the button number
-private channelNumber(String dni) {
-    def ch = dni.split("-")[-1] as Integer
+Integer channelNumber(String dni) {
+    Integer ch = dni.split("-")[-1] as Integer
     return ch
 }
 
-def childOn(String dni) {
+void childOn(String dni) {
     // Make sure to create an onOffCmd that sends the actual command
     onOffCmd(1, channelNumber(dni))
 }
 
-def childOff(String dni) {
+void childOff(String dni) {
     // Make sure to create an onOffCmd that sends the actual command
     onOffCmd(0, channelNumber(dni))
 }
 
-private childSendState(String currentSwitchNumber, String state) {
-    def childDevice = childDevices.find{it.deviceNetworkId.endsWith("-${currentSwitchNumber}")}
+void childSendState(String currentSwitchNumber, String state) {
+    com.hubitat.app.ChildDeviceWrapper childDevice = childDevices.find{it.deviceNetworkId.endsWith("-${currentSwitchNumber}")}
     if (childDevice) {
         logging("childDevice.sendEvent ${currentSwitchNumber} ${state}",1)
         childDevice.sendEvent(name: "switch", value: state, type: type)
@@ -32,8 +32,8 @@ private childSendState(String currentSwitchNumber, String state) {
     }
 }
 
-private areAllChildrenSwitchedOn(Integer skip = 0) {
-    def children = getChildDevices()
+boolean areAllChildrenSwitchedOn(Integer skip = 0) {
+    List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
     boolean status = true
     Integer i = 1
     children.each {child->
@@ -47,15 +47,14 @@ private areAllChildrenSwitchedOn(Integer skip = 0) {
     return status
 }
 
-private sendParseEventToChildren(data) {
-    def children = getChildDevices()
+void sendParseEventToChildren(data) {
+    List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
     children.each {child->
         child.parseParentData(data)
     }
-    return status
 }
 
-private void createChildDevices() {
+void createChildDevices() {
     Integer numSwitchesI = numSwitches.toInteger()
     logging("createChildDevices: creating $numSwitchesI device(s)",1)
     
@@ -66,10 +65,10 @@ private void createChildDevices() {
     }
 }
 
-def recreateChildDevices() {
+void recreateChildDevices() {
     Integer numSwitchesI = numSwitches.toInteger()
     logging("recreateChildDevices: recreating $numSwitchesI device(s)",1)
-    def childDevice = null
+    com.hubitat.app.ChildDeviceWrapper childDevice = null
 
     for (i in 1..numSwitchesI) {
         childDevice = childDevices.find{it.deviceNetworkId.endsWith("-$i")}
@@ -100,9 +99,9 @@ def recreateChildDevices() {
     }
 }
 
-def deleteChildren() {
+void deleteChildren() {
 	logging("deleteChildren()", 100)
-	def children = getChildDevices()
+	List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
     
     children.each {child->
   		deleteChildDevice(child.deviceNetworkId)

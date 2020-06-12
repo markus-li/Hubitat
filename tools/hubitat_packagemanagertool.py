@@ -236,18 +236,19 @@ class HubitatPackageManagerPackage:
 
     
     tmpManifestDict = self.manifestDict.copy()
-    tmpManifestDict['dateReleased'] = mdataSaved['dateReleased']
-    if(json.dumps(tmpManifestDict, indent=2) == json.dumps(mdataSaved, indent=2)):
-      # No changes, so don't update
-      #print("same output: " + output + ", " + mdataSaved['dateReleased'])
-      self.log.info("No change for '" + output + "'")
-    else:
-      # There were changes, so update
-      #print("NOT same output: " + output + ", " + mdataSaved['dateReleased'])
-      # Then write the update
-      self.log.warn("CHANGE for '" + output + "'")
-      with open(output, 'w') as f:
-        f.write(json.dumps(self.manifestDict, indent=2))
+    if(mdataSaved != None):
+      tmpManifestDict['dateReleased'] = mdataSaved['dateReleased']
+      if(json.dumps(tmpManifestDict, indent=2) == json.dumps(mdataSaved, indent=2)):
+        # No changes, so don't update
+        #print("same output: " + output + ", " + mdataSaved['dateReleased'])
+        self.log.info("No change for '" + output + "'")
+      else:
+        # There were changes, so update
+        #print("NOT same output: " + output + ", " + mdataSaved['dateReleased'])
+        # Then write the update
+        self.log.warn("CHANGE for '" + output + "'")
+        with open(output, 'w') as f:
+          f.write(json.dumps(self.manifestDict, indent=2))
 
   def clearDrivers(self):
     self.manifestDict['drivers'] = []

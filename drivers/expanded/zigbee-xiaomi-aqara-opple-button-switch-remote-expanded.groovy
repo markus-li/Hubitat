@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.1.0602b
+ *  Version: v0.7.1.0613b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,7 +46,9 @@ metadata {
         // END:  getDefaultMetadataAttributes()
         // BEGIN:getMetadataAttributesForLastCheckin()
         attribute "lastCheckin", "Date"
-        attribute "lastCheckinEpoch", "String"
+        attribute "lastCheckinEpoch", "number"
+        attribute "notPresentCounter", "number"
+        attribute "restoredCounter", "number"
         // END:  getMetadataAttributesForLastCheckin()
         // BEGIN:getZigbeeBatteryMetadataAttributes()
         attribute "batteryLastReplaced", "String"
@@ -57,6 +59,9 @@ metadata {
         // BEGIN:getZigbeeBatteryCommands()
         command "resetBatteryReplacedDate"
         // END:  getZigbeeBatteryCommands()
+        // BEGIN:getCommandsForPresence()
+        command "resetRestoredCounter"
+        // END:  getCommandsForPresence()
 
         fingerprint deviceJoinName: "Xiaomi Button (WXKG01LM)",                      model: "lumi.sensor_switch",     inClusters: "0000,0003,FFFF,0019", outClusters: "0000,0004,0003,0006,0008,0005,0019", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
 
@@ -210,6 +215,7 @@ ArrayList<String> refreshActual(String newModelToSet) {
             sendEvent(name:"numberOfButtons", value: 0, isStateChange: false, descriptionText: "UNKNOWN Button detected: set to 1 button")
     }
     configurePresence()
+    startCheckEventInterval()
 
     ArrayList<String> cmd = []
     logging("refresh cmd: $cmd", 1)
@@ -406,6 +412,9 @@ ArrayList<String> parse(String description) {
     } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0001") {
         logging("Application version (also requested when receiving hourly checkin) - description:${description} | parseMap:${msgMap}", 1)
         
+    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
+        logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
+        
     } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "FFF0") {
         logging("Unparsed event FFF0 - description:${description}", 1)
 
@@ -496,11 +505,14 @@ ArrayList<String> parse(String description) {
 		log.warn "Unhandled Event PLEASE REPORT TO THE DEV - description:${description} | msgMap:${msgMap}"
 	}
 
-    hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90)
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
     sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
+    msgMap = null
     return cmd
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
@@ -655,7 +667,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.6.1.0602b"
+    String version = "v0.7.1.0613b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1293,6 +1305,37 @@ Integer kelvinToMired(Integer kelvin) {
     if(t > 500) t = 500
     return t
 }
+
+void reconnectEvent() {
+    try {
+        reconnectEventDeviceSpecific()
+    } catch(Exception e) {
+        logging("reconnectEvent()", 1)
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
+    checkPresence(displayWarnings=false)
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90, displayWarnings=false) == true) {
+        log.warn("Event interval normal, reconnect mode DEACTIVATED!")
+        unschedule('reconnectEvent')
+    }
+}
+
+void checkEventInterval(boolean displayWarnings=true) {
+    prepareCounters()
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+        if(displayWarnings == true) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
+    }
+    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+}
+
+void startCheckEventInterval() {
+    logging("startCheckEventInterval()", 100)
+    Random rnd = new Random()
+    schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)}/59 * * * ? *", 'checkEventInterval')
+    checkEventInterval(displayWarnings=true)
+}
 // END:  getHelperFunctions('zigbee-generic')
 
 // BEGIN:getHelperFunctions('styling')
@@ -1387,13 +1430,19 @@ void configureDelayed() {
 }
 
 void configurePresence() {
+    prepareCounters()
     if(presenceEnable == null || presenceEnable == true) {
-        sendEvent(name: "presence", value: "present")
         Random rnd = new Random()
         schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
     } else {
         unschedule('checkPresence')
     }
+}
+
+void prepareCounters() {
+    if(device.currentValue('restoredCounter') == null) sendEvent(name: "restoredCounter", value: 0, descriptionText: "Initialized to 0" )
+    if(device.currentValue('notPresentCounter') == null) sendEvent(name: "notPresentCounter", value: 0, descriptionText: "Initialized to 0" )
+    if(device.currentValue('presence') == null) sendEvent(name: "presence", value: "unknown", descriptionText: "Initialized as Unknown" )
 }
 
 boolean isValidDate(String dateFormat, String dateString) {
@@ -1426,7 +1475,7 @@ boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
              
         }
 	}
-    if(r == true) sendEvent(name: "presence", value: "present")
+    if(r == true) setAsPresent()
     return r
 }
 
@@ -1452,16 +1501,17 @@ Long secondsSinceLastCheckinEvent() {
     return r
 }
 
-boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90) {
+boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90, boolean displayWarnings=true) {
     Long secondsSinceLastCheckin = secondsSinceLastCheckinEvent()
     if(secondsSinceLastCheckin != null && secondsSinceLastCheckin > maximumMinutesBetweenEvents * 60) {
-        log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
+        if(displayWarnings == true) log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
         return false
     }
     return true
 }
 
-void checkPresence() {
+boolean checkPresence(boolean displayWarnings=true) {
+    boolean isPresent = false
     Long lastCheckinTime = null
     String lastCheckinVal = device.currentValue('lastCheckin')
     if ((lastCheckinEnable == true || lastCheckinEnable == null) && isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == true) {
@@ -1470,11 +1520,38 @@ void checkPresence() {
         lastCheckinTime = device.currentValue('lastCheckinEpoch').toLong()
     }
     if(lastCheckinTime != null && lastCheckinTime >= now() - (3 * 60 * 60 * 1000)) {
-        sendEvent(name: "presence", value: "present")
+        setAsPresent()
+        isPresent = true
     } else {
         sendEvent(name: "presence", value: "not present")
-        log.warn("No event seen from the device for over 3 hours! Something is not right...")
+        if(displayWarnings == true) {
+            Integer numNotPresent = device.currentValue('notPresentCounter')
+            numNotPresent = numNotPresent == null ? 1 : numNotPresent + 1
+            sendEvent(name: "notPresentCounter", value: numNotPresent )
+            log.warn("No event seen from the device for over 3 hours! Something is not right... (consecutive events: $numNotPresent)")
+        }
     }
+    return isPresent
+}
+
+void setAsPresent() {
+    if(device.currentValue('presence') == "not present") {
+        Integer numRestored = device.currentValue('restoredCounter')
+        numRestored = numRestored == null ? 1 : numRestored + 1
+        sendEvent(name: "restoredCounter", value: numRestored )
+        sendEvent(name: "notPresentCounter", value: 0 )
+    }
+    sendEvent(name: "presence", value: "present")
+}
+
+void resetNotPresentCounter() {
+    logging("resetNotPresentCounter()", 100)
+    sendEvent(name: "notPresentCounter", value: 0, descriptionText: "Reset notPresentCounter to 0" )
+}
+
+void resetRestoredCounter() {
+    logging("resetRestoredCounter()", 100)
+    sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')
 
@@ -1636,7 +1713,7 @@ void sendButtonEvent(String deviceID, String name, Integer button) {
 }
 
 Map getChildDeviceConfig() {
-    logging("getChildDeviceConfig()", 100)
+    logging("getChildDeviceConfig()", 1)
     Map childDeviceConfig = [
         1: ['switch': useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true,
             'switchMomentary': useMomentarySwitchChildSet(btnDevice1) == true || useMomentarySwitchChildSet(btnDevice1and2) == true,
@@ -1663,7 +1740,7 @@ Map getChildDeviceConfig() {
 }
 
 String getChildDeviceComboId(Integer button) {
-    logging("getChildDeviceComboId(button=$button)", 100)
+    logging("getChildDeviceComboId(button=$button)", 1)
     if(button >= 1) {
         return button % 2 == 0 ? "${button - 1}_${button}" : "${button}_${button + 1}"
     } else {

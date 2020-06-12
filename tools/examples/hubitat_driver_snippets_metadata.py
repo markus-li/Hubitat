@@ -67,7 +67,9 @@ def getMetadataAttributesForLastCheckin():
     return """
 // Device Attributes for Last Checkin
 attribute "lastCheckin", "Date"
-attribute "lastCheckinEpoch", "String"
+attribute "lastCheckinEpoch", "number"
+attribute "notPresentCounter", "number"
+attribute "restoredCounter", "number"
 """
 
 def getZigbeeBatteryMetadataAttributes():
@@ -120,6 +122,13 @@ def getDefaultMetadataCommands():
     return """
 // Default Commands
 command "reboot"
+"""
+
+def getCommandsForPresence():
+    return """
+// Presence Commands
+//command "resetNotPresentCounter"
+command "resetRestoredCounter"
 """
 
 def getMetadataCommandsForHandlingChildDevices():
