@@ -51,6 +51,8 @@ metadata {
         attribute "batteryLastReplaced", "String"
         // END:  getZigbeeBatteryMetadataAttributes()
         attribute "lastHoldEpoch", "String"
+        attribute "lastOpened", "String"
+        attribute "lastClosed", "String"
 
         // BEGIN:getZigbeeBatteryCommands()
         command "resetBatteryReplacedDate"
@@ -80,10 +82,11 @@ metadata {
         input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
         input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
         // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "invertContact", type: "bool", title: styling_addTitleDiv("Invert open/close"), description: styling_addDescriptionDiv("When open show as closed and vice versa (default: false)"), defaultValue: false, range: "5..3600")
+        input(name: "invertContact", type: "bool", title: styling_addTitleDiv("Invert open/close"), description: styling_addDescriptionDiv("When open show as closed and vice versa (default: false)"), defaultValue: false)
         input(name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for the contact sensor"), 
                     description: styling_addDescriptionDiv("Create a child device for the contact sensor. If changing from Button to Switch or vice versa you need to delete the child device manually for the change to work."),
                     options: ["None", "1 virtual button", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None")
+        input(name: "logOpenCloseDatetime", type: "bool", title: styling_addTitleDiv("Log Open/Close Time"), description: styling_addDescriptionDiv("Logs the date and time of when the last Open/Closed event occured (default: false)"), defaultValue: false)
 	}
 
 }
@@ -241,6 +244,8 @@ ArrayList<String> parse(String description) {
         
     } else if(msgMap["cluster"] == "0006" && msgMap["attrId"] == "0000") {
         sendOpenCloseEvent(Integer.parseInt(msgMap['value'], 16) == 1)
+    } else if(msgMap["clusterId"] == "0006") {
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
     } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02") && msgMap["encoding"] == "4C") {
         logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C - hourly checkin) - description:${description} | parseMap:${msgMap}", 100)
 
@@ -307,6 +312,9 @@ void sendOpenCloseEvent(boolean openClose, sendAsStateChange=true) {
         if(buttonDown(1, useEvent=true) == true) {
             sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: sendAsStateChange)
         }
+        if(logOpenCloseDatetime == true) {
+            sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+        }
     } else {
         sendEvent(name:"contact", value: "open", isStateChange: false, descriptionText: "Contact was Opened")
         if(buttonPushed(1, momentaryRelease=true) == true) {
@@ -323,17 +331,26 @@ void sendOpenCloseEvent(boolean openClose, sendAsStateChange=true) {
                 buttonHeld(1)
             }
         }
+        if(logOpenCloseDatetime == true) {
+            sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+        }
     }
 }
 
 void resetToOpen() {
     logging("resetToOpen()", 1)
     sendEvent(name:"contact", value: "open", isStateChange: true, descriptionText: "Contact was Reset to Open")
+    if(logOpenCloseDatetime == true) {
+        sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+    }
 }
 
 void resetToClosed() {
     logging("resetToClosed()", 1)
     sendEvent(name:"contact", value: "closed", isStateChange: true, descriptionText: "Contact was Reset to Closed")
+    if(logOpenCloseDatetime == true) {
+        sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+    }
 }
 
 /**
