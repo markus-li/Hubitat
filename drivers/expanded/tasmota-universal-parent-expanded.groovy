@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0612Tb
+ *  Version: v1.0.2.0625Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -247,7 +247,7 @@ TreeMap getDeviceConfigurations() {
          template: '{"NAME":"TL DS01 Dimmer","GPIO":[0,107,0,108,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}',
          installCommands: [["TuyaMCU", "21,2"], 
                            ["DimmerRange", "150,1000"]],
-         deviceLink: 'https://templates.blakadder.com/kmc-4.html'],
+         deviceLink: 'https://templates.blakadder.com/treatlife_DS01.html'],
         
         [typeId: 'deta-6911ha-switch',
          name: 'Deta 6911HA Switch',
@@ -275,10 +275,16 @@ TreeMap getDeviceConfigurations() {
          deviceLink: 'https://templates.blakadder.com/deta_6904HA.html'],
 
         [typeId: 'deta-6922ha-outlet',
-         name: 'Deta 6922HA Wall Outleet',
+         name: 'Deta 6922HA Wall Outlet',
          template: '{"NAME":"DETA 2G GPO","GPIO":[0,0,0,17,157,0,0,0,91,21,22,0,90],"FLAG":0,"BASE":18}',
          installCommands: [],
          deviceLink: 'https://templates.blakadder.com/deta_6922HA.html'],
+
+        [typeId: 'lh-znb22-001-9w ',
+         name: 'Lohas ZN033 9W 810lm RGBCCT Bulb ',
+         template: '{"NAME":"Lohas RGBCW","GPIO":[0,0,0,0,38,37,0,0,41,39,40,0,0],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/lohas-ZN033-B22.html'],
 
         [typeId: 'kmc-4-pm-plug',
          name: 'KMC 4 Power Monitor Plug',
@@ -1528,7 +1534,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0612Tb"
+    String version = "v1.0.2.0625Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1595,7 +1601,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      
@@ -2110,7 +2116,7 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
-void refresh(cmd) {
+void refresh(String cmd) {
     deviceCommand(cmd)
 }
 def installedDefault() {

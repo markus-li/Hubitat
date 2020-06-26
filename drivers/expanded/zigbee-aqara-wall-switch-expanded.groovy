@@ -28,38 +28,64 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy") {
+	definition (name: "Zigbee - Aqara Wall Switch", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-wall-switch-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
         capability "Initialize"
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
-        capability "Battery"
-        capability "IlluminanceMeasurement"
+        capability "Actuator"
+        capability "PowerMeter"
+        capability "PushableButton"
+        capability "DoubleTapableButton"
+        capability "TemperatureMeasurement"
         
+        attribute   "powerWithUnit", "string"
+        attribute   "button1", "string"
+        attribute   "button2", "string"
+        attribute   "button3", "string"
+
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
         // END:  getDefaultMetadataAttributes()
+
         // BEGIN:getMetadataAttributesForLastCheckin()
         attribute "lastCheckin", "Date"
         attribute "lastCheckinEpoch", "number"
         attribute "notPresentCounter", "number"
         attribute "restoredCounter", "number"
         // END:  getMetadataAttributesForLastCheckin()
-        // BEGIN:getZigbeeBatteryMetadataAttributes()
-        attribute "batteryLastReplaced", "String"
-        // END:  getZigbeeBatteryMetadataAttributes()
 
-        // BEGIN:getZigbeeBatteryCommands()
-        command "resetBatteryReplacedDate"
-        // END:  getZigbeeBatteryCommands()
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
+        /* command "sendToFF22", [[name:"Hex*", type: "STRING", description: "hex"]] */
+        /* command "sendToFF23", [[name:"Hex*", type: "STRING", description: "hex"]] */
 
-        fingerprint deviceJoinName: "Xiaomi Mijia Smart Light Sensor (GZCGQ01LM)", model: "lumi.sen_ill.mgl01", profileId: "0104", inClusters: "0000,0400,0003,0001", outClusters: "0003", manufacturer: "LUMI", endpointId: "01", deviceId: "0104"	
-    }
+        command "setAsDisconnected", [[name:"Button*", type: "NUMBER", description: "Button Number"]]
+        command "setAsConnected", [[name:"Button*", type: "NUMBER", description: "Button Number"]]
+
+        /* Fingerprints and some device information comes from Guyeeba for QBKG12LM, QBKG11LM and LLZKMK11LM */
+
+        /* Models WITH Neutral wire */
+		fingerprint profileId: "0104", inClusters: "0000,0004,0003,0006,0010,0005,000A,0001,0002", outClusters: "0019,000A", manufacturer: "LUMI", model: "lumi.ctrl_ln1.aq1", deviceJoinName: "Aqara Wall switch"
+		fingerprint profileId: "0104", inClusters: "0000,0004,0003,0006,0010,0005,000A,0001,0002", outClusters: "0019,000A", manufacturer: "LUMI", model: "lumi.ctrl_ln2.aq1", deviceJoinName: "Aqara Wall switch"
+        fingerprint profileId: "0104", inClusters: "0000,0003,0004,0005,0001,0002,000A,0006,0010,0B04,000C", outClusters: "0019,000A", manufacturer: "LUMI", model: "lumi.relay.c2acn01", deviceJoinName: "Aqara Double Relay"
+
+        /* Models WITHOUT Neutral wire */
+        fingerprint profileId: "0104", inClusters: "0000,0003,0001,0002,0019,000A", outClusters: "0000,000A,0019", manufacturer: "LUMI", model: "lumi.ctrl_neutral1", deviceJoinName: "Aqara Wall switch"
+        fingerprint profileId: "0104", inClusters: "0000,0003,0001,0002,0019,000A", outClusters: "0000,000A,0019", manufacturer: "LUMI", model: "lumi.ctrl_neutral2", deviceJoinName: "Aqara Wall switch"
+
+        /* D1 Models WITH Neutral wire */
+        
+        fingerprint profileId: "0104", inClusters: "0000,0004,0003,0006,0010,0005,000A,0001,0002", outClusters: "0019,000A", manufacturer: "LUMI", model: "lumi.switch.b1nacn02", application: "3D", deviceJoinName: "Aqara D1 Double Relay"
+
+        fingerprint profileId: "0104", inClusters: "0000,0004,0003,0006,0010,0005,000A,0001,0002", outClusters: "0019,000A", manufacturer: "LUMI", model: "lumi.switch.b2nacn02", application: "3D", deviceJoinName: "Aqara D1 Double Relay"
+
+        fingerprint profileId: "0104", inClusters: "0000,0004,0003,0006,0010,0005,000A,0001,0002", outClusters: "0019,000A", manufacturer: "LUMI", model: "lumi.switch.b3nacn02", application: "3D", deviceJoinName: "Aqara D1 Double Relay"
+
+        }
 
     preferences {
         // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
@@ -71,18 +97,19 @@ metadata {
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
-        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
-        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
-        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "secondsMinLux", type: "number", title: styling_addTitleDiv("Minimum Update Time"), description: styling_addDescriptionDiv("Set the minimum number of seconds between Lux updates (5 to 3600, default: 10)"), defaultValue: "10", range: "5..3600")
+        // BEGIN:getDefaultMetadataPreferencesForDeviceTemperature()
+        input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]], displayDuringSetup: false)
+        input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
+        // END:  getDefaultMetadataPreferencesForDeviceTemperature()
+        input(name: "powerOffset", type: "decimal", title: styling_addTitleDiv("Power Offset"), description: styling_addDescriptionDiv("Power Measurement Offset in Watt (-5000 to 5000, default: 0)"), defaultValue: "0", range: "-5000..5000")
+        input(name: "powerMinimum", type: "decimal", title: styling_addTitleDiv("Power Minimum"), description: styling_addDescriptionDiv("Power Measurement Minimum in Watt, less than this amount is considered 0 (applied AFTER offset), default: 0)"), defaultValue: "0", range: "0..5000")
 	}
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Aqara Wall Switch', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-wall-switch-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -90,38 +117,166 @@ String getDeviceInfoByName(infoName) {
 
 /* These functions are unique to each driver */
 
-ArrayList<String> refresh() {
+Integer refresh(boolean connectButtons=false) {
     logging("refresh() model='${getDeviceDataByName('model')}'", 10)
     
     getDriverVersion()
     configurePresence()
     startCheckEventInterval()
-    resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
     
-    setCleanModelName(newModelToSet=null, acceptedModels=[
-        "lumi.sen_ill.mgl01"
-    ])
-
     ArrayList<String> cmd = []
-    
+
+    String model = setCleanModelNameWithAcceptedModels(newModelToSet=null)
+    Integer physicalButtons = 0
+    switch(model) {
+        case "lumi.ctrl_ln1.aq1":
+            sendEvent(name:"numberOfButtons", value: 2, isStateChange: false, descriptionText: "Aqara Switch (QBKG11LM) detected: set to 2 buttons (physical 1)")
+            physicalButtons = 1
+            break
+        case "lumi.ctrl_ln2.aq1":
+            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (QBKG12LM) detected: set to 5 buttons (physical 2)")
+            physicalButtons = 2
+            break
+        case "lumi.relay.c2acn01":
+            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (LLZKMK11LM) detected: set to 5 buttons (physical 2)")
+            physicalButtons = 2
+            break
+        case "lumi.switch.b1nacn02":
+            sendEvent(name:"numberOfButtons", value: 2, isStateChange: false, descriptionText: "Aqara Switch (???) detected: set to 2 buttons (physical 1)")
+            physicalButtons = 1
+            break
+        case "lumi.switch.b2nacn02":
+            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (QBKG24LM) detected: set to 5 buttons (physical 2)")
+            physicalButtons = 2
+            break
+        case "lumi.switch.b3nacn02":
+            sendEvent(name:"numberOfButtons", value: 7, isStateChange: false, descriptionText: "Aqara Switch (???) detected: set to 7 buttons (physical 3)")
+            physicalButtons = 3
+            break
+        default:
+            sendEvent(name:"numberOfButtons", value: 0, isStateChange: false, descriptionText: "UNKNOWN Button detected: set to 1 button")
+            updateDataValue("physicalButtons", "0")
+    }
+    updateDataValue("physicalButtons", "$physicalButtons")
+
+    switch(physicalButtons) {
+        case 3:
+            createChildDevice("3")
+            if(connectButtons == true) setAsConnected(3)
+        case 2:
+            createChildDevice("2")
+            if(connectButtons == true) setAsConnected(2)
+        case 1:
+            createChildDevice("1")
+            if(connectButtons == true) setAsConnected(1)
+            break
+    }
+
+    cmd += zigbee.readAttribute(0x000, 0x0005)
     logging("refresh cmd: $cmd", 1)
-    return cmd
+    sendZigbeeCommands(cmd)
+    return physicalButtons
 }
 
-void initialize() {
+def initialize() {
     logging("initialize()", 100)
-    refresh()
+    Integer physicalButtons = refresh()
+    configureDevice(physicalButtons)
 }
 
 void installed() {
     logging("installed()", 100)
-    refresh()
+    Integer physicalButtons = refresh(connectButtons=true)
+    configureDevice(physicalButtons)
+}
+
+void configureDevice(Integer physicalButtons) {
+    /* Binding commands borrowed (but modified) from Guyeebas driver */
+    ArrayList<String> cmd = []
+    if(physicalButtons > 0) {
+        for(endpointId in 1..physicalButtons) {
+            cmd += [
+                "zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200",
+
+                "zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x000C {${device.zigbeeId}} {}", "delay 200",
+
+                "he cr 0x${device.deviceNetworkId} ${endpointId} 0x0006 0 0x10 0 0xE10 {}", "delay 200",
+            ]
+        }
+    }
+    sendZigbeeCommands(cmd)
 }
 
 void updated() {
     logging("updated()", 100)
     refresh()
+}
+
+String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
+    return setCleanModelName(newModelToSet=newModelToSet, acceptedModels=[
+        "lumi.ctrl_neutral1",
+        "lumi.ctrl_neutral2",
+        "lumi.ctrl_ln1.aq1",
+        "lumi.ctrl_ln2.aq1",
+        "lumi.switch.b1nacn02",
+        "lumi.switch.b2nacn02",
+        "lumi.switch.b3nacn02"
+    ])
+}
+
+boolean isOldNeutralSwitch(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "lumi.ctrl_ln1.aq1":
+        case "lumi.ctrl_ln2.aq1":
+            return true
+            break
+        default:
+            return false
+    }
+}
+
+boolean isOldNoNeutralSwitch(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "lumi.ctrl_neutral1":
+        case "lumi.ctrl_neutral2":
+            return true
+            break
+        default:
+            return false
+    }
+}
+
+boolean isD1NeutralSwitch(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "lumi.switch.b1nacn02":
+        case "lumi.switch.b2nacn02":
+        case "lumi.switch.b3nacn02":
+            return true
+            break
+        default:
+            return false
+    }
+}
+
+boolean isKnownModel(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "lumi.ctrl_neutral1":
+        case "lumi.ctrl_neutral2":
+        case "lumi.ctrl_ln1.aq1":
+        case "lumi.ctrl_ln2.aq1":
+        case "lumi.switch.b1nacn02":
+        case "lumi.switch.b2nacn02":
+        case "lumi.switch.b3nacn02":
+            return true
+            break
+        default:
+            return false
+    }
 }
 
 ArrayList<String> parse(String description) {
@@ -183,85 +338,129 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
-
-    if(msgMap["clusterId"] == "8021") {
-        //logging("CONFIGURE CONFIRMATION - description: ${description} | parseMap:${msgMap}", 0)
-        if(msgMap["data"] != []) {
-            logging("Received BIND Confirmation with sequence number 0x${msgMap["data"][0]} (a total minimum of FOUR unique numbers expected, same number may repeat).", 100)
-        }
-    } else if(msgMap["clusterId"] == "8034") {
-        //logging("CLUSTER LEAVE REQUEST - description: ${description} | parseMap:${msgMap}", 0)
-    } else if(msgMap["clusterId"] == "0013") {
-        logging("Pairing event - description: ${description} | parseMap:${msgMap}", 1)
-        sendZigbeeCommands(configureAdditional())
-        refresh()
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
-        logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if((msgMap["clusterId"] == "0000" || msgMap["clusterId"] == "0001" || msgMap["clusterId"] == "0003" || msgMap["clusterId"] == "0400") && msgMap["command"] == "07" && msgMap["data"] != [] && msgMap["data"][0] == "00") {
-        logging("CONFIGURE CONFIRMATION - description:${description} | parseMap:${msgMap}", 1)
-        if(msgMap["clusterId"] == "0400") {
-            logging("Device confirmed LUX Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0000") {
-            logging("Device confirmed BASIC Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0001") {
-            logging("Device confirmed BATTERY Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0003") {
-            logging("Device confirmed IDENTIFY Report configuration ACCEPTED by the device", 100)
-        }
-
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
-        logging("Reset button pressed - description:${description} | parseMap:${msgMap}", 1)
-        setCleanModelName(newModelToSet=msgMap["value"])
-        sendZigbeeCommands(configureAdditional())
-        refresh()
-    } else if(msgMap["clusterId"] == "0006") {
-        logging("Match Descriptor Request - description:${description} | parseMap:${msgMap}", 1)
-
-    } else if(msgMap["clusterId"] == "0003" && msgMap["command"] == "01") {
-        logging("IDENTIFY QUERY - description:${description} | parseMap:${msgMap}", 1)
-        sendZigbeeCommands(["he raw ${device.deviceNetworkId} 1 1 0xFCC0 {04 6E 12 00 0B 03 83}"])
-    } else if(msgMap["cluster"] == "0400" && msgMap["attrId"] == "0000") {
-        Integer rawValue = Integer.parseInt(msgMap['value'], 16)
-        Integer variance = 190
-        
-        BigDecimal lux = rawValue > 0 ? Math.pow(10, rawValue / 10000.0) - 1.0 : 0
-        BigDecimal oldLux = device.currentValue('illuminance') == null ? null : device.currentValue('illuminance')
-        Integer oldRaw = oldLux == null ? null : oldLux == 0 ? 0 : Math.log10(oldLux + 1) * 10000
-        lux = lux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        if(oldLux != null) oldLux = oldLux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        BigDecimal luxChange = null
-        if(oldRaw == null) {
-            logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRawold lux: $oldLux)", 1)
-        } else {
-            luxChange = lux - oldLux
-            luxChange = luxChange.setScale(1, BigDecimal.ROUND_HALF_UP)
-            logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRaw, diff: ${rawValue - oldRaw}, lower: ${oldRaw - variance}, upper: ${oldRaw + variance}, old lux: $oldLux)", 1)
-        }
-        
-        if(oldLux == null || Math.abs(luxChange) >= 2 && (rawValue < oldRaw - variance || rawValue > oldRaw + variance)) {
-            logging("Sending lux event (lux: $lux, change: $luxChange)", 100)
-            sendEvent(name:"illuminance", value: lux, unit: "lux", isStateChange: true)
-        } else {
-            logging("SKIPPING lux event since the change wasn't large enough (lux: $lux, change: $luxChange)", 1)
-        }
-    } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02")) {
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data) - description:${description} | parseMap:${msgMap}", 1)
-    } else if(msgMap["cluster"] == "0001" && msgMap["attrId"] == "0020") {
-        logging("Battery voltage received - description:${description} | parseMap:${msgMap}", 100)
-        parseAndSendBatteryStatus(Integer.parseInt(msgMap['value'], 16) / 10.0)
-    } else if(msgMap["clusterId"] == "0013") {
-        //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
-
-    } else {
-		log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
-	}
     
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
-    }
-    sendlastCheckinEvent(minimumMinutesToRepeat=30)
+    //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
 
+    switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
+        case "0000_FF01":
+            if(msgMap["encoding"] == "42") {
+                msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
+                msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
+            }
+            if(sendlastCheckinEvent(minimumMinutesToRepeat=45) == true) {
+                logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 100)
+                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+            }
+            if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+                log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+            }
+
+            logging("KNOWN event (Xiaomi/Aqara specific data structure) - description:${description} | parseMap:${msgMap}", 1)
+            
+            if(msgMap["value"].containsKey("power")) {
+                sendPowerEvent(msgMap["value"]["power"])
+            }
+            if(msgMap["value"].containsKey("deviceTemperature")) {
+                List adjustedTemp = sensor_data_getAdjustedTempAlternative(msgMap["value"]["deviceTemperature"] )
+                String tempUnit = adjustedTemp[0]
+                BigDecimal t = adjustedTemp[1]
+                logging("Sending temperature event (Temperature: $t $tempUnit)", 100)
+                sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
+            }
+            break
+        case "0000_FFF0":
+            //logging("KNOWN event - Button held - description:${description} | parseMap:${msgMap}", 0)
+        case "0000_0004":
+            //logging("Manufacturer Name Received - description:${description} | parseMap:${msgMap}", 0)
+            break
+        case "0000_0005":
+            logging("Model Name Received - description:${description} | parseMap:${msgMap}", 1)
+            setCleanModelName(newModelToSet=msgMap["value"])
+            break
+        case "x0000_0006":
+            logging("Manufacturer Date Received - description:${description} | parseMap:${msgMap}", 100)
+            break
+        case "0006_0000":
+            logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 100)
+            if(isD1NeutralSwitch() == true) {
+                sendOnOffEvent(Integer.parseInt(msgMap['endpoint'], 16), msgMap['valueParsed'])
+            } else {
+                log.warn("Cluster 0x0006 NOT YET IMPLEMENTED for this model ($model) - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+            }
+
+            break
+        case "000C_0055":
+            
+            if(msgMap["valueParsed"] < 1 || msgMap["value"].reverse().take(4) != "0000") {
+                if(sendPowerEvent(msgMap["valueParsed"]) == true) {
+                    logging("WATT - description:${description} | parseMap:${msgMap}", 100)
+                }
+            } else {
+                logging("SKIP WATT - description:${description} | parseMap:${msgMap}", 1)
+            }
+
+            if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+                log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+            }
+            
+            break
+        case "0012_0055":
+            logging("Multistate - description:${description} | parseMap:${msgMap}", 100)
+            Integer taps = msgMap["valueParsed"]
+            Integer endpoint = Long.parseLong(msgMap["endpoint"], 16)
+            Integer physicalButtons = getDeviceDataByName('physicalButtons') != null ? getDeviceDataByName('physicalButtons').toInteger() :  0
+            Integer physicalButton = endpoint - 4
+            Integer button = physicalButton + ((taps - 1) * (physicalButtons + 1))
+            logging("Multistate - endpoint: $endpoint, taps: $taps, physicalButton: $physicalButton, physicalButtons: $physicalButtons, button: $button", 100)
+            logging("Button $button was pushed", 100)
+            sendEvent(name:"pushed", value: button, isStateChange: true, descriptionText: "Button $physicalButton was tapped $taps time(s)")
+            if(taps == 2) {
+                logging("Button $physicalButton was double tapped", 100)
+                sendEvent(name:"doubleTapped", value: physicalButton, isStateChange: true, descriptionText: "Button $physicalButton was double tapped")
+            }
+            if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+                log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+            }
+            
+            break
+        default:
+            switch(msgMap["clusterId"]) {
+                case "0000":
+                    break
+                case "0006":
+                    logging("Power Cluster 0006 catchall - description:${description} | parseMap:${msgMap}", 100)
+                    sendOnOffEvent(Integer.parseInt(msgMap['sourceEndpoint'], 16), msgMap['data'][0] == '01')
+                    if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+                        log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+                    }
+
+                    break
+                case "000A":
+                    //logging("KNOWN QUERY TIME CLUSTER - heartbeat - description:${description} | parseMap:${msgMap}", 0)
+                    if(msgMap["command"] == "00" && sendlastCheckinEvent(minimumMinutesToRepeat=60) == true) {
+                        logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 1)
+                        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+                    }
+                    if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+                        log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+                    }
+                    
+                    break
+                case "0013":
+                    //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
+
+                    break
+                default:
+                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    break
+            }
+            break
+    }
+
+    if(isKnownModel() == false) {
+        log.warn("Unknown model ($model) - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+    }
+    
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
     msgMap = null
@@ -269,28 +468,115 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
+void sendOnOffEvent(Integer endpoint, boolean state) {
+    if(state == true) {
+        getChildDevice(buildChildDeviceId(endpoint)).parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch turned ON"]])
+    } else {
+        getChildDevice(buildChildDeviceId(endpoint)).parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch turned OFF"]])
+    }
+}
+
+boolean sendPowerEvent(Float power) {
+    Float variancePercent = 0.10
+    
+    if(powerOffset != null) power = power + powerOffset
+    if(power < 0 ) power = 0
+    if(powerMinimum != null && power < powerMinimum) power = 0
+
+    Float oldPower = device.currentValue('power') == null ? null : device.currentValue('power')
+    
+    if(oldPower == null) {
+        logging("Power: $power (oldPower: $oldPower)", 1)
+    } else {
+        logging("Power: $power (oldPower: $oldPower, lower: ${oldPower * (1-variancePercent)}, upper: ${oldPower * (1+variancePercent)})", 1)
+    }
+    
+    if(oldPower == null || power < oldPower * (1-variancePercent) || power > oldPower * (1+variancePercent)) {
+        logging("Sending Power event: ${power}W (old Power: ${oldPower}W)", 1)
+        sendEvent(name:"power", value: power, unit: "W", isStateChange: true)
+        sendEvent(name:"powerWithUnit", value: "${power}W", isStateChange: true)
+        return true
+    } else {
+        logging("SKIPPING Power event: ${power}W (old Power: ${oldPower}W)", 1)
+        return false
+    }
+}
+
+String buildChildDeviceId(Integer relayId) {
+    return "$device.id-$relayId"
+}
+
+Integer getRelayIdFromChildId(String childId) {
+    return childId.split('-')[1].toInteger()
+}
+
+void createChildDevice(String id) {
+    String driver = "Generic Component Switch"
+    String name = "Virtual Switch"
+    String type = "1 virtual switch"
+    try {
+        logging("Making device with type $type and id $device.id-$id", 100)
+        com.hubitat.app.DeviceWrapper cd = addChildDevice("hubitat", driver, "$device.id-$id", [name: "$name $id", label: "$name $id", isComponent: false])
+        cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Switch Initialized as OFF"]])
+    } catch (com.hubitat.app.exception.UnknownDeviceTypeException e) {
+        log.error "'$driver' driver can't be found! This is supposed to be built-in! Is your hub broken?"
+    } catch (java.lang.IllegalArgumentException e) {
+        logging("Do nothing - The device already exists", 100)
+    }
+}
+
+/**
+ *  --------- COMPONENT METHODS ---------
+ */
+
+void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentRefresh() from $cd.deviceNetworkId", 1)
+    Integer relayId = getRelayIdFromChildId(cd.deviceNetworkId)
+    sendZigbeeCommands(zigbeeReadAttribute(relayId, 0x0006, 0x00))
+}
+
+void componentOn(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOn() from $cd.deviceNetworkId", 1)
+    Integer relayId = getRelayIdFromChildId(cd.deviceNetworkId)
+    sendZigbeeCommands(zigbeeCommand(relayId, 0x006, 0x01))
+}
+
+void componentOff(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOff() from $cd.deviceNetworkId", 1)
+    Integer relayId = getRelayIdFromChildId(cd.deviceNetworkId)
+    sendZigbeeCommands(zigbeeCommand(relayId, 0x006, 0x00))
+}
+
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
-ArrayList<String> configureAdditional() {
-    logging("configureAdditional()", 100)
-    Integer msDelay = 50
-    Integer variance = 300
-    ArrayList<String> cmd = [
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0000 {${device.zigbeeId}} {}", "delay $msDelay",
-        "zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0001 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0003 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo send ${device.deviceNetworkId} 0x01 0x01", "delay $msDelay"
-    ]
-    cmd += zigbee.configureReporting(0x0400, 0x0000, 0x21, (secondsMinLux == null ? 10 : secondsMinLux).intValue(), 3600, variance, [:], msDelay)
-    cmd += zigbee.configureReporting(0x0001, 0x0020, 0x20, 3600, 3600, null, [:], msDelay)
-    
-	cmd += zigbeeReadAttribute(0x0400, 0x0000)
-    cmd += zigbeeReadAttribute(0x0001, 0x0020)
+void sendToFF22(String hex) {
+    Long parsedHex = Long.parseLong(hex, 16)
+    logging("FF22: hex = $hex, parsedHex = $parsedHex", 100)
+    sendZigbeeCommands(zigbeeWriteAttribute(0x0000, 0xFF22, DataType.UINT8, (Integer) parsedHex, [mfgCode: "0x115F"]))
+}
 
-    logging("configure cmd=${cmd}", 1)
-    return cmd
+void sendToFF23(String hex) {
+    Long parsedHex = Long.parseLong(hex, 16)
+    logging("FF23: hex = $hex, parsedHex = $parsedHex", 100)
+    sendZigbeeCommands(zigbeeWriteAttribute(0x0000, 0xFF23, DataType.UINT8, (Integer) parsedHex, [mfgCode: "0x115F"]))
+}
+
+void setAsDisconnected(BigDecimal button) {
+    logging("setAsDisconnected(button=$button)", 100)
+    button = button < 1 ? 1 : button > 3 ? 3 : button
+    Integer attribute = 0xFF21 + button
+    sendZigbeeCommands(zigbeeWriteAttribute(0x0000, attribute, DataType.UINT8, 0xFE, [mfgCode: "0x115F"]))
+    sendEvent(name:"button$button", value: "disconnected", isStateChange: false)
+}
+
+void setAsConnected(BigDecimal button) {
+    logging("setAsConnected(button=$button)", 100)
+    button = button < 1 ? 1 : button > 3 ? 3 : button
+    Integer attribute = 0xFF21 + button
+    Integer value = 0x12 + ((button - 1) * 0x10)
+    sendZigbeeCommands(zigbeeWriteAttribute(0x0000, attribute, DataType.UINT8, value, [mfgCode: "0x115F"]))
+    sendEvent(name:"button$button", value: "connected", isStateChange: false)
 }
 
 /**
@@ -307,7 +593,7 @@ ArrayList<String> configureAdditional() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with model GZCGQ01LM."
+    comment = "Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
     String version = "v0.7.1.0626b"
     logging("getDriverVersion() = ${version}", 100)
@@ -1232,4 +1518,84 @@ void resetRestoredCounter() {
     sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')
+
+// BEGIN:getHelperFunctions('sensor-data')
+private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
+    Integer res = 1
+    if(tempRes != null && tempRes != '') {
+        res = Integer.parseInt(tempRes)
+    }
+    if (tempUnitConversion == "2") {
+        value = celsiusToFahrenheit(value)
+    } else if (tempUnitConversion == "3") {
+        value = fahrenheitToCelsius(value)
+    }
+	if (tempOffset != null) {
+	   return (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
+	} else {
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
+    }
+}
+
+private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
+    Integer res = 1
+    BigDecimal rawValue = value
+    if(tempRes != null && tempRes != '') {
+        res = Integer.parseInt(tempRes)
+    }
+    String degree = String.valueOf((char)(176))
+    String tempUnit = "${degree}C"
+    if (tempUnitDisplayed == "2") {
+        value = celsiusToFahrenheit(value)
+        tempUnit = "${degree}F"
+    } else if (tempUnitDisplayed == "3") {
+        value = value + 273.15
+        tempUnit = "${degree}K"
+    }
+	if (tempOffset != null) {
+	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
+	} else {
+       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
+    }
+}
+
+private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
+    if (humidityOffset) {
+	   return (value + new BigDecimal(humidityOffset)).setScale(1, BigDecimal.ROUND_HALF_UP)
+	} else {
+       return value.setScale(1, BigDecimal.ROUND_HALF_UP)
+    }
+}
+
+private BigDecimal sensor_data_getAdjustedPressure(BigDecimal value, Integer decimals=2) {
+    if (pressureOffset) {
+	   return (value + new BigDecimal(pressureOffset)).setScale(decimals, BigDecimal.ROUND_HALF_UP)
+	} else {
+       return value.setScale(decimals, BigDecimal.ROUND_HALF_UP)
+    }   
+}
+
+private BigDecimal sensor_data_convertPressure(BigDecimal pressureInkPa) {
+    BigDecimal pressure = pressureInkPa
+    switch(pressureUnitConversion) {
+        case null:
+        case "kPa":
+			pressure = sensor_data_getAdjustedPressure(pressure / 10)
+			break
+		case "inHg":
+			pressure = sensor_data_getAdjustedPressure(pressure * 0.0295299)
+			break
+		case "mmHg":
+            pressure = sensor_data_getAdjustedPressure(pressure * 0.75006157)
+			break
+        case "atm":
+			pressure = sensor_data_getAdjustedPressure(pressure / 1013.25, 5)
+			break
+        default:
+            pressure = sensor_data_getAdjustedPressure(pressure, 1)
+            break
+    }
+    return pressure
+}
+// END:  getHelperFunctions('sensor-data')
 

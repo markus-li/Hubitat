@@ -249,6 +249,10 @@ class HubitatPackageManagerPackage:
         self.log.warn("CHANGE for '" + output + "'")
         with open(output, 'w') as f:
           f.write(json.dumps(self.manifestDict, indent=2))
+    else:
+      self.log.warn("Creating NEW manifest: '" + output + "'")
+      with open(output, 'w') as f:
+        f.write(json.dumps(self.manifestDict, indent=2))
 
   def clearDrivers(self):
     self.manifestDict['drivers'] = []

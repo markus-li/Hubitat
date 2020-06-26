@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0626b
+ *  Version: v0.5.0.0626b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy") {
+	definition (name: "Zigbee - Sonoff Motion Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-motion-sensor-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -36,7 +36,8 @@ metadata {
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
         capability "Battery"
-        capability "IlluminanceMeasurement"
+        capability "MotionSensor"
+		capability "IlluminanceMeasurement"
         
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
@@ -57,8 +58,12 @@ metadata {
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
+        command "resetToActive"
+        command "resetToInactive"
 
-        fingerprint deviceJoinName: "Xiaomi Mijia Smart Light Sensor (GZCGQ01LM)", model: "lumi.sen_ill.mgl01", profileId: "0104", inClusters: "0000,0400,0003,0001", outClusters: "0003", manufacturer: "LUMI", endpointId: "01", deviceId: "0104"	
+        command "parse", [[name:"Description*", type: "STRING", description: "description"]]
+
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0500,0001", outClusters:"0003", model:"MS01", manufacturer:"eWeLink", application:"03"
     }
 
     preferences {
@@ -71,18 +76,13 @@ metadata {
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
-        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
-        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
-        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "secondsMinLux", type: "number", title: styling_addTitleDiv("Minimum Update Time"), description: styling_addDescriptionDiv("Set the minimum number of seconds between Lux updates (5 to 3600, default: 10)"), defaultValue: "10", range: "5..3600")
 	}
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Sonoff Motion Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-motion-sensor-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -100,7 +100,7 @@ ArrayList<String> refresh() {
     setLogsOffTask(noLogWarning=true)
     
     setCleanModelName(newModelToSet=null, acceptedModels=[
-        "lumi.sen_ill.mgl01"
+        "MS01"
     ])
 
     ArrayList<String> cmd = []
@@ -112,16 +112,36 @@ ArrayList<String> refresh() {
 void initialize() {
     logging("initialize()", 100)
     refresh()
+    configureDevice()
 }
 
 void installed() {
     logging("installed()", 100)
     refresh()
+    configureDevice()
+}
+
+void configureDevice() {
+    /* Binding commands borrowed (but modified) from Guyeebas driver */
+    Integer endpointId = 1
+    ArrayList<String> cmd = []
+    cmd += zigbeeReadAttribute(0x0500, 0x0001)
+    cmd += zigbee.readAttribute(0x0000, [0x0001, 0x0004, 0x0005, 0x0006])
+    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0001 {${device.zigbeeId}} {}", "delay 200"]
+    cmd += zigbeeReadAttribute(0x0500, 0x0002)
+    cmd += zigbee.readAttribute(0x0001, [0x0020, 0x0021])
+    cmd += ["he cr 0x${device.deviceNetworkId} ${endpointId} 0x0001 0 0x10 0 0xE10 {}", "delay 200"]
+
+    sendZigbeeCommands(cmd)
 }
 
 void updated() {
     logging("updated()", 100)
     refresh()
+}
+
+Integer getMINUTES_BETWEEN_EVENTS() {
+    return 140
 }
 
 ArrayList<String> parse(String description) {
@@ -184,80 +204,66 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
-    if(msgMap["clusterId"] == "8021") {
-        //logging("CONFIGURE CONFIRMATION - description: ${description} | parseMap:${msgMap}", 0)
-        if(msgMap["data"] != []) {
-            logging("Received BIND Confirmation with sequence number 0x${msgMap["data"][0]} (a total minimum of FOUR unique numbers expected, same number may repeat).", 100)
-        }
-    } else if(msgMap["clusterId"] == "8034") {
-        //logging("CLUSTER LEAVE REQUEST - description: ${description} | parseMap:${msgMap}", 0)
-    } else if(msgMap["clusterId"] == "0013") {
-        logging("Pairing event - description: ${description} | parseMap:${msgMap}", 1)
-        sendZigbeeCommands(configureAdditional())
-        refresh()
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
-        logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if((msgMap["clusterId"] == "0000" || msgMap["clusterId"] == "0001" || msgMap["clusterId"] == "0003" || msgMap["clusterId"] == "0400") && msgMap["command"] == "07" && msgMap["data"] != [] && msgMap["data"][0] == "00") {
-        logging("CONFIGURE CONFIRMATION - description:${description} | parseMap:${msgMap}", 1)
-        if(msgMap["clusterId"] == "0400") {
-            logging("Device confirmed LUX Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0000") {
-            logging("Device confirmed BASIC Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0001") {
-            logging("Device confirmed BATTERY Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0003") {
-            logging("Device confirmed IDENTIFY Report configuration ACCEPTED by the device", 100)
-        }
+    //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
 
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
-        logging("Reset button pressed - description:${description} | parseMap:${msgMap}", 1)
-        setCleanModelName(newModelToSet=msgMap["value"])
-        sendZigbeeCommands(configureAdditional())
-        refresh()
-    } else if(msgMap["clusterId"] == "0006") {
-        logging("Match Descriptor Request - description:${description} | parseMap:${msgMap}", 1)
-
-    } else if(msgMap["clusterId"] == "0003" && msgMap["command"] == "01") {
-        logging("IDENTIFY QUERY - description:${description} | parseMap:${msgMap}", 1)
-        sendZigbeeCommands(["he raw ${device.deviceNetworkId} 1 1 0xFCC0 {04 6E 12 00 0B 03 83}"])
-    } else if(msgMap["cluster"] == "0400" && msgMap["attrId"] == "0000") {
-        Integer rawValue = Integer.parseInt(msgMap['value'], 16)
-        Integer variance = 190
-        
-        BigDecimal lux = rawValue > 0 ? Math.pow(10, rawValue / 10000.0) - 1.0 : 0
-        BigDecimal oldLux = device.currentValue('illuminance') == null ? null : device.currentValue('illuminance')
-        Integer oldRaw = oldLux == null ? null : oldLux == 0 ? 0 : Math.log10(oldLux + 1) * 10000
-        lux = lux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        if(oldLux != null) oldLux = oldLux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        BigDecimal luxChange = null
-        if(oldRaw == null) {
-            logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRawold lux: $oldLux)", 1)
-        } else {
-            luxChange = lux - oldLux
-            luxChange = luxChange.setScale(1, BigDecimal.ROUND_HALF_UP)
-            logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRaw, diff: ${rawValue - oldRaw}, lower: ${oldRaw - variance}, upper: ${oldRaw + variance}, old lux: $oldLux)", 1)
-        }
-        
-        if(oldLux == null || Math.abs(luxChange) >= 2 && (rawValue < oldRaw - variance || rawValue > oldRaw + variance)) {
-            logging("Sending lux event (lux: $lux, change: $luxChange)", 100)
-            sendEvent(name:"illuminance", value: lux, unit: "lux", isStateChange: true)
-        } else {
-            logging("SKIPPING lux event since the change wasn't large enough (lux: $lux, change: $luxChange)", 1)
-        }
-    } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02")) {
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data) - description:${description} | parseMap:${msgMap}", 1)
-    } else if(msgMap["cluster"] == "0001" && msgMap["attrId"] == "0020") {
-        logging("Battery voltage received - description:${description} | parseMap:${msgMap}", 100)
-        parseAndSendBatteryStatus(Integer.parseInt(msgMap['value'], 16) / 10.0)
-    } else if(msgMap["clusterId"] == "0013") {
-        //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
+    if(msgMap.containsKey("type") == true && msgMap["type"] == "zone") {
+        sendMotionEvent(msgMap["statusInt"] == 1)
 
     } else {
-		log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
-	}
+        switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
+            case "0000_0001":
+                //logging("Cluster 0000 - description:${description} | parseMap:${msgMap}", 0)
+
+                break
+            case "0000_0004":
+                logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
+                
+                break
+            case "0001_0020":
+            case "0001_0021":
+                logging("Battery data - description:${description} | parseMap:${msgMap}", 100)
+                zigbee_sonoff_parseBatteryData(msgMap)
+                
+                break
+            case "0000_0004":
+                logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
+                break
+            case "0500_0001":
+                logging("Cluster 0500 attribute 0001 - description:${description} | parseMap:${msgMap}", 100)
+                break
+            case "0500_0002":
+                logging("Cluster 0500 attribute 0002 - description:${description} | parseMap:${msgMap}", 100)
+
+                break
+            default:
+                switch(msgMap["clusterId"]) {
+                    case "0001":
+                        //logging("Broadcast catchall - description:${description} | parseMap:${msgMap}", 0)
+                        
+                        break
+                    case "0013":
+                        //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
+                        
+                        configureDevice()
+
+                        break
+                    case "0500":
+                    case "8021":
+                        //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
+                        break
+                    default:
+                        if(description.startsWith("enroll request") == true) {
+
+                        } else {
+                            log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                        }
+                        break
+                }
+                break
+        }
+    }
     
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=140) == false) {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     sendlastCheckinEvent(minimumMinutesToRepeat=30)
@@ -269,29 +275,33 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
+void sendMotionEvent(boolean active) {
+    logging("sendMotionEvent(active = $active)", 100)
+    if(active == true) {
+        sendEvent(name:"motion", value: "active", isStateChange: false, descriptionText: "Motion Active")
+    } else {
+        sendEvent(name:"motion", value: "inactive", isStateChange: false, descriptionText: "Motion Inactive")
+    }  
+}
+
+void resetMotionEvent() {
+    logging("resetMotionEvent()", 1)
+    sendEvent(name:"motion", value: "inactive", isStateChange: false, descriptionText: "Motion Inactive")
+}
+
+void resetToActive() {
+    logging("resetToActive()", 1)
+    sendEvent(name:"motion", value: "active", isStateChange: true, descriptionText: "Motion was Reset to Active")
+}
+
+void resetToInactive() {
+    logging("resetToInactive()", 1)
+    sendEvent(name:"motion", value: "inactive", isStateChange: true, descriptionText: "Motion was Reset to Inactive")
+}
+
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
-ArrayList<String> configureAdditional() {
-    logging("configureAdditional()", 100)
-    Integer msDelay = 50
-    Integer variance = 300
-    ArrayList<String> cmd = [
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0000 {${device.zigbeeId}} {}", "delay $msDelay",
-        "zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0001 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0003 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo send ${device.deviceNetworkId} 0x01 0x01", "delay $msDelay"
-    ]
-    cmd += zigbee.configureReporting(0x0400, 0x0000, 0x21, (secondsMinLux == null ? 10 : secondsMinLux).intValue(), 3600, variance, [:], msDelay)
-    cmd += zigbee.configureReporting(0x0001, 0x0020, 0x20, 3600, 3600, null, [:], msDelay)
-    
-	cmd += zigbeeReadAttribute(0x0400, 0x0000)
-    cmd += zigbeeReadAttribute(0x0001, 0x0020)
-
-    logging("configure cmd=${cmd}", 1)
-    return cmd
-}
 
 /**
  *   --------- READ ATTRIBUTE METHODS ---------
@@ -307,9 +317,9 @@ ArrayList<String> configureAdditional() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with model GZCGQ01LM."
+    comment = "Works with model SNZB-03."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0626b"
+    String version = "v0.5.0.0626b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1016,6 +1026,25 @@ void startCheckEventInterval() {
 }
 // END:  getHelperFunctions('zigbee-generic')
 
+// BEGIN:getHelperFunctions('zigbee-sonoff')
+void zigbee_sonoff_parseBatteryData(Map msgMap) {
+    BigDecimal bat = null
+    if(msgMap["attrId"] == "0021") {
+        bat = msgMap['valueParsed'] / 2.0
+    } else if(msgMap.containsKey("additionalAttrs") == true) {
+        msgMap["additionalAttrs"].each() {
+            if(it.containsKey("attrId") == true && it['attrId'] == "0021") {
+                bat = Integer.parseInt(it['value'], 16) / 2.0
+            }
+        }
+    }
+    if(bat != null) {
+        bat = bat.setScale(1, BigDecimal.ROUND_HALF_UP)
+        sendEvent(name:"battery", value: bat , unit: "%", isStateChange: false)
+    }
+}
+// END:  getHelperFunctions('zigbee-sonoff')
+
 // BEGIN:getHelperFunctions('styling')
 String styling_addTitleDiv(title) {
     return '<div class="preference-title">' + title + '</div>'
@@ -1232,4 +1261,3 @@ void resetRestoredCounter() {
     sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')
-

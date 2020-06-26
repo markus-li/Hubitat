@@ -28,38 +28,39 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy") {
+	definition (name: "Zigbee - Xiaomi/Aqara Plug/Outlet", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-plug-outlet-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
         capability "Initialize"
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
-        capability "Battery"
-        capability "IlluminanceMeasurement"
+        capability "Actuator"
+        capability "Switch"
+        capability "Outlet"
+        capability "PowerMeter"
         
+        attribute   "powerWithUnit", "string"
+
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
         // END:  getDefaultMetadataAttributes()
+
         // BEGIN:getMetadataAttributesForLastCheckin()
         attribute "lastCheckin", "Date"
         attribute "lastCheckinEpoch", "number"
         attribute "notPresentCounter", "number"
         attribute "restoredCounter", "number"
         // END:  getMetadataAttributesForLastCheckin()
-        // BEGIN:getZigbeeBatteryMetadataAttributes()
-        attribute "batteryLastReplaced", "String"
-        // END:  getZigbeeBatteryMetadataAttributes()
 
-        // BEGIN:getZigbeeBatteryCommands()
-        command "resetBatteryReplacedDate"
-        // END:  getZigbeeBatteryCommands()
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
 
-        fingerprint deviceJoinName: "Xiaomi Mijia Smart Light Sensor (GZCGQ01LM)", model: "lumi.sen_ill.mgl01", profileId: "0104", inClusters: "0000,0400,0003,0001", outClusters: "0003", manufacturer: "LUMI", endpointId: "01", deviceId: "0104"	
-    }
+        fingerprint model:"lumi.ctrl_86plug.aq1", profileId:"0104", endpointId:"01", inClusters:"0000,0004,0003,0006,0010,0005,000A,0001,0002,0400,0402,0405,0406", outClusters:"0019,000A", manufacturer:"LUMI"
+
+        fingerprint model:"lumi.plug", profileId:"0104", endpointId:"01", inClusters:"0000,0004,0003,0006,0010,0005,000A,0001,0002", outClusters:"0019,000A", manufacturer:"LUMI"
+        }
 
     preferences {
         // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
@@ -71,18 +72,15 @@ metadata {
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
-        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
-        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
-        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "secondsMinLux", type: "number", title: styling_addTitleDiv("Minimum Update Time"), description: styling_addDescriptionDiv("Set the minimum number of seconds between Lux updates (5 to 3600, default: 10)"), defaultValue: "10", range: "5..3600")
+        input(name: "powerOffset", type: "decimal", title: styling_addTitleDiv("Power Offset"), description: styling_addDescriptionDiv("Power Measurement Offset in Watt (-5000 to 5000, default: 0)"), defaultValue: "0", range: "-5000..5000")
+        input(name: "powerMinimum", type: "decimal", title: styling_addTitleDiv("Power Minimum"), description: styling_addDescriptionDiv("Power Measurement Minimum in Watt, less than this amount is considered 0 (applied AFTER offset), default: 0)"), defaultValue: "0", range: "0..5000")
 	}
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara Plug/Outlet', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-plug-outlet-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -96,20 +94,20 @@ ArrayList<String> refresh() {
     getDriverVersion()
     configurePresence()
     startCheckEventInterval()
-    resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
     
     setCleanModelName(newModelToSet=null, acceptedModels=[
-        "lumi.sen_ill.mgl01"
+        "lumi.ctrl_86plug.aq1",
+        "lumi.plug"
     ])
 
     ArrayList<String> cmd = []
-    
+    cmd += zigbee.readAttribute(0x000, 0x0005)
     logging("refresh cmd: $cmd", 1)
-    return cmd
+    sendZigbeeCommands(cmd)
 }
 
-void initialize() {
+def initialize() {
     logging("initialize()", 100)
     refresh()
 }
@@ -184,84 +182,73 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
-    if(msgMap["clusterId"] == "8021") {
-        //logging("CONFIGURE CONFIRMATION - description: ${description} | parseMap:${msgMap}", 0)
-        if(msgMap["data"] != []) {
-            logging("Received BIND Confirmation with sequence number 0x${msgMap["data"][0]} (a total minimum of FOUR unique numbers expected, same number may repeat).", 100)
-        }
-    } else if(msgMap["clusterId"] == "8034") {
-        //logging("CLUSTER LEAVE REQUEST - description: ${description} | parseMap:${msgMap}", 0)
-    } else if(msgMap["clusterId"] == "0013") {
-        logging("Pairing event - description: ${description} | parseMap:${msgMap}", 1)
-        sendZigbeeCommands(configureAdditional())
-        refresh()
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
-        logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if((msgMap["clusterId"] == "0000" || msgMap["clusterId"] == "0001" || msgMap["clusterId"] == "0003" || msgMap["clusterId"] == "0400") && msgMap["command"] == "07" && msgMap["data"] != [] && msgMap["data"][0] == "00") {
-        logging("CONFIGURE CONFIRMATION - description:${description} | parseMap:${msgMap}", 1)
-        if(msgMap["clusterId"] == "0400") {
-            logging("Device confirmed LUX Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0000") {
-            logging("Device confirmed BASIC Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0001") {
-            logging("Device confirmed BATTERY Report configuration ACCEPTED by the device", 100)
-        } else if(msgMap["clusterId"] == "0003") {
-            logging("Device confirmed IDENTIFY Report configuration ACCEPTED by the device", 100)
-        }
+    switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
+        case "0000_FF01":
+            if(msgMap["encoding"] == "42") {
+                msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
+                msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
+            }
+            if(sendlastCheckinEvent(minimumMinutesToRepeat=45) == true) {
+                logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 100)
+                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+            }
+            logging("KNOWN event (Xiaomi/Aqara specific data structure - 42) - description:${description} | parseMap:${msgMap}", 1)
+            if(msgMap["value"].containsKey("openClose")) {
+                sendOnOffEvent(msgMap["value"]["openClose"])
+            }
+            if(msgMap["value"].containsKey("power")) {
+                sendPowerEvent(msgMap["value"]["power"])
+            }
+            break
+        case "0000_0004":
+            //logging("Manufacturer Name Received - description:${description} | parseMap:${msgMap}", 0)
+            break
+        case "0000_0005":
+            logging("Model Name Received - description:${description} | parseMap:${msgMap}", 1)
+            setCleanModelName(newModelToSet=msgMap["value"])
+            break
+        case "0000_0006":
+            //logging("Manufacturer Date Received - description:${description} | parseMap:${msgMap}", 0)
+            break
+        case "0006_0000":
+            logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 1)
+            sendOnOffEvent(Integer.parseInt(msgMap['value'], 16) == 1)
+            break
+        case "000C_0055":
+            msgMap["value"] = parseSingleHexToFloat(msgMap["value"])
+            logging("WATT - description:${description} | parseMap:${msgMap}", 1)
+            sendPowerEvent(msgMap["value"])
+            break
+        default:
+            switch(msgMap["clusterId"]) {
+                case "0006":
+                    //logging("Ignore Cluster 0006 catchall - description:${description} | parseMap:${msgMap}", 0)
+                    break
+                case "000A":
+                    //logging("KNOWN QUERY TIME CLUSTER - heartbeat - description:${description} | parseMap:${msgMap}", 0)
+                    if(msgMap["command"] == "00" && sendlastCheckinEvent(minimumMinutesToRepeat=60) == true) {
+                        logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 1)
+                        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+                    }
+                    
+                    break
+                case "0013":
+                    //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
 
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
-        logging("Reset button pressed - description:${description} | parseMap:${msgMap}", 1)
-        setCleanModelName(newModelToSet=msgMap["value"])
-        sendZigbeeCommands(configureAdditional())
-        refresh()
-    } else if(msgMap["clusterId"] == "0006") {
-        logging("Match Descriptor Request - description:${description} | parseMap:${msgMap}", 1)
-
-    } else if(msgMap["clusterId"] == "0003" && msgMap["command"] == "01") {
-        logging("IDENTIFY QUERY - description:${description} | parseMap:${msgMap}", 1)
-        sendZigbeeCommands(["he raw ${device.deviceNetworkId} 1 1 0xFCC0 {04 6E 12 00 0B 03 83}"])
-    } else if(msgMap["cluster"] == "0400" && msgMap["attrId"] == "0000") {
-        Integer rawValue = Integer.parseInt(msgMap['value'], 16)
-        Integer variance = 190
-        
-        BigDecimal lux = rawValue > 0 ? Math.pow(10, rawValue / 10000.0) - 1.0 : 0
-        BigDecimal oldLux = device.currentValue('illuminance') == null ? null : device.currentValue('illuminance')
-        Integer oldRaw = oldLux == null ? null : oldLux == 0 ? 0 : Math.log10(oldLux + 1) * 10000
-        lux = lux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        if(oldLux != null) oldLux = oldLux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        BigDecimal luxChange = null
-        if(oldRaw == null) {
-            logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRawold lux: $oldLux)", 1)
-        } else {
-            luxChange = lux - oldLux
-            luxChange = luxChange.setScale(1, BigDecimal.ROUND_HALF_UP)
-            logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRaw, diff: ${rawValue - oldRaw}, lower: ${oldRaw - variance}, upper: ${oldRaw + variance}, old lux: $oldLux)", 1)
-        }
-        
-        if(oldLux == null || Math.abs(luxChange) >= 2 && (rawValue < oldRaw - variance || rawValue > oldRaw + variance)) {
-            logging("Sending lux event (lux: $lux, change: $luxChange)", 100)
-            sendEvent(name:"illuminance", value: lux, unit: "lux", isStateChange: true)
-        } else {
-            logging("SKIPPING lux event since the change wasn't large enough (lux: $lux, change: $luxChange)", 1)
-        }
-    } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02")) {
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data) - description:${description} | parseMap:${msgMap}", 1)
-    } else if(msgMap["cluster"] == "0001" && msgMap["attrId"] == "0020") {
-        logging("Battery voltage received - description:${description} | parseMap:${msgMap}", 100)
-        parseAndSendBatteryStatus(Integer.parseInt(msgMap['value'], 16) / 10.0)
-    } else if(msgMap["clusterId"] == "0013") {
-        //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
-
-    } else {
-		log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
-	}
-    
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+                    break
+                case "8004":
+                    //logging("BROADCAST EVENT 8004 - description:${description} | parseMap:${msgMap}", 0)
+                    break
+                case "8034":
+                    //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
+                    break
+                default:
+                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    break
+            }
+            break
     }
-    sendlastCheckinEvent(minimumMinutesToRepeat=30)
-
+    
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
     msgMap = null
@@ -269,28 +256,50 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
+void sendOnOffEvent(boolean onOff) {
+    logging("sendOnOffEvent(onOff=$onOff)", 1)
+    if(onOff == false) {
+        sendEvent(name:"switch", value: "off", isStateChange: false, descriptionText: "Switch was turned off")
+    } else {
+        sendEvent(name:"switch", value: "on", isStateChange: false, descriptionText: "Switch was turned on")
+    }
+}
+
+void sendPowerEvent(Float power) {
+    Float variancePercent = 0.10
+    
+    if(powerOffset != null) power = power + powerOffset
+    if(power < 0 ) power = 0
+    if(powerMinimum != null && power < powerMinimum) power = 0
+
+    Float oldPower = device.currentValue('power') == null ? null : device.currentValue('power')
+    
+    if(oldPower == null) {
+        logging("Power: $power (oldPower: $oldPower)", 1)
+    } else {
+        logging("Power: $power (oldPower: $oldPower, lower: ${oldPower * (1-variancePercent)}, upper: ${oldPower * (1+variancePercent)})", 1)
+    }
+    
+    if(oldPower == null || power < oldPower * (1-variancePercent) || power > oldPower * (1+variancePercent)) {
+        logging("Sending Power event: ${power}W (old Power: ${oldPower}W)", 1)
+        sendEvent(name:"power", value: power, unit: "W", isStateChange: true)
+        sendEvent(name:"powerWithUnit", value: "${power}W", isStateChange: true)
+    } else {
+        logging("SKIPPING Power event: ${power}W (old Power: ${oldPower}W)", 1)
+    }
+}
+
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
-ArrayList<String> configureAdditional() {
-    logging("configureAdditional()", 100)
-    Integer msDelay = 50
-    Integer variance = 300
-    ArrayList<String> cmd = [
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0000 {${device.zigbeeId}} {}", "delay $msDelay",
-        "zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0001 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0003 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo send ${device.deviceNetworkId} 0x01 0x01", "delay $msDelay"
-    ]
-    cmd += zigbee.configureReporting(0x0400, 0x0000, 0x21, (secondsMinLux == null ? 10 : secondsMinLux).intValue(), 3600, variance, [:], msDelay)
-    cmd += zigbee.configureReporting(0x0001, 0x0020, 0x20, 3600, 3600, null, [:], msDelay)
-    
-	cmd += zigbeeReadAttribute(0x0400, 0x0000)
-    cmd += zigbeeReadAttribute(0x0001, 0x0020)
+ArrayList<String> on() {
+    logging("on()", 1)
+	return zigbeeCommand(0x006, 0x01)
+}
 
-    logging("configure cmd=${cmd}", 1)
-    return cmd
+ArrayList<String> off() {
+    logging("off()", 1)
+	return zigbeeCommand(0x006, 0x00)
 }
 
 /**
@@ -307,7 +316,7 @@ ArrayList<String> configureAdditional() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with model GZCGQ01LM."
+    comment = "Works with models ZNCZ02LM, ZNCZ12LM(needs testing) & QBCZ11LM."
     if(comment != "") state.comment = comment
     String version = "v0.7.1.0626b"
     logging("getDriverVersion() = ${version}", 100)
@@ -1232,4 +1241,3 @@ void resetRestoredCounter() {
     sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')
-

@@ -280,6 +280,13 @@ if(getDeviceDataByName('hasPressure') == "True") {
 }
 """
 
+def getDefaultMetadataPreferencesForDeviceTemperature():
+    return """
+// Default Preferences for Device Temperature Monitor
+input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]], displayDuringSetup: false)
+input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
+"""
+
 def getDefaultMetadataPreferencesForParentDevices(numSwitches=1):
     return '''
 // Default Preferences for Parent Devices

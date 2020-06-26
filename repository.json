@@ -10,6 +10,13 @@
       "description": "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
     },
     {
+      "name": "Aqara Wall Switch",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-wall-switch.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-aqara-wall-switch-beta.json",
+      "description": "Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
+    },
+    {
       "name": "Aqara Water Leak Sensor",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-water-leak-sensor.json",
@@ -17,11 +24,32 @@
       "description": "Works with model SJCGQ11LM."
     },
     {
-      "name": "IKEA Tradfri On/Off Switch",
+      "name": "Sonoff Button",
       "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-ikea-tradfri-on-off-switch.json",
-      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-ikea-tradfri-on-off-switch-beta.json",
-      "description": "Works with model E1743."
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-button.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-button-beta.json",
+      "description": "Works with model SNZB-01."
+    },
+    {
+      "name": "Sonoff Contact Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-contact-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-contact-sensor-beta.json",
+      "description": "Works with model SNZB-04."
+    },
+    {
+      "name": "Sonoff Motion Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-motion-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-motion-sensor-beta.json",
+      "description": "Works with model SNZB-03."
+    },
+    {
+      "name": "Sonoff Temperature & Humidity Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-temperature-humidity-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-temperature-humidity-sensor-beta.json",
+      "description": "Works with model SNZB-02."
     },
     {
       "name": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
@@ -35,21 +63,28 @@
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-contact-sensor.json",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-contact-sensor-beta.json",
-      "description": "Works with model MCCGQ01LM & MCCGQ11LM."
+      "description": "Works with models MCCGQ01LM & MCCGQ11LM."
     },
     {
       "name": "Xiaomi/Aqara Motion Sensor",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-motion-sensor.json",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-motion-sensor-beta.json",
-      "description": "Works with model RTCGQ01LM & RTCGQ11LM."
+      "description": "Works with models RTCGQ01LM & RTCGQ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Plug/Outlet",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-plug-outlet.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-plug-outlet-beta.json",
+      "description": "Works with models ZNCZ02LM, ZNCZ12LM(needs testing) & QBCZ11LM."
     },
     {
       "name": "Xiaomi/Aqara Temperature & Humidity Sensor",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-temperature-humidity.json",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-temperature-humidity-beta.json",
-      "description": "Works with model WSDCGQ01LM & WSDCGQ11LM."
+      "description": "Works with models WSDCGQ01LM & WSDCGQ11LM."
     },
     {
       "name": "Xiaomi/Aqara/Opple Button/Switch/Remote",

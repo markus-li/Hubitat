@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0513Tb
+ *  Version: v1.0.2.0625Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ void setLevel(BigDecimal level, BigDecimal duration) {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0513Tb"
+    String version = "v1.0.2.0625Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -230,7 +230,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      

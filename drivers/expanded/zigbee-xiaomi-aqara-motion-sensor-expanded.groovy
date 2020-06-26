@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0613b
+ *  Version: v0.7.1.0626b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Xiaomi/Aqara Motion Sensor", namespace: "markusl", author: "Markus Liljergren", vid: "generic-shade", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy") {
+	definition (name: "Zigbee - Xiaomi/Aqara Motion Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -65,6 +65,7 @@ metadata {
 
         fingerprint deviceJoinName: "Aqara Motion Sensor (RTCGQ11LM) v1", model: "lumi.sensor_motion.aq2", endpointId: "01", profileId: "0104", deviceId: "0107", inClusters: "0000,FFFF,0406,0400", outClusters: "0000,0019", manufacturer: "LUMI"
 		fingerprint deviceJoinName: "Aqara Motion Sensor (RTCGQ11LM) v2", model: "lumi.sensor_motion.aq2", endpointId: "01", profileId: "0104", deviceId: "0107", inClusters: "0000,FFFF,0406,0400,0500,0001,0003", outClusters: "0000,0019", manufacturer: "LUMI"
+
     }
 
     preferences {
@@ -88,7 +89,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara Motion Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'vid': 'generic-shade', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara Motion Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -107,6 +108,7 @@ ArrayList<String> refresh() {
     
     setCleanModelName(newModelToSet=null, acceptedModels=[
         "lumi.sensor_motion.aq2",
+        "lumi.sensor_motion.agl01",
         "lumi.sensor_motion"
     ])
 
@@ -191,65 +193,84 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
     
-    if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02") && msgMap["encoding"] == "4C") {
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C - hourly checkin) - description:${description} | parseMap:${msgMap}", 100)
+    switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
+        case "0000_FF01":
+        case "0000_FF02":
+            if(msgMap["encoding"] == "4C") {
+                logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C - hourly checkin) - description:${description} | parseMap:${msgMap}", 100)
 
-        parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
-        if(getDeviceDataByName('model') == "lumi.sensor_motion.aq2") {
-            logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
-            sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
-        } else {
-            logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
-            sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+                parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
+                if(getDeviceDataByName('model') == "lumi.sensor_motion.aq2") {
+                    logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
+                    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+                } else {
+                    logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
+                    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
 
-        }
-        
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
-        logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
-        if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"][0]["encoding"] == "42") {
-            logging("Redoing the parsing for additionalAttrs", 1)
-            msgMap = zigbee.parseDescriptionAsMap(description.replace('01FF42', '01FF41'))
-            msgMap["additionalAttrs"][0]["encoding"] = "42"
-            msgMap["additionalAttrs"][0]["value"] = parseXiaomiStruct(msgMap["additionalAttrs"][0]["value"], isFCC0=msgMap["additionalAttrs"][0]["attrId"]=="FCC0")
-        }
-        logging("Reset button pressed/message requested by hourly checkin - description:${description} | parseMap:${msgMap} 1", 100)
-        setCleanModelName(newModelToSet=msgMap["value"])
+                }
+                
+            } else if(msgMap["encoding"] == "41" || msgMap["encoding"] == "42") {
+                if(msgMap["encoding"] == "42") {
+                    msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
+                    msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
+                }
+                logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42) - description:${description} | parseMap:${msgMap}", 1)
+                if(msgMap["value"].containsKey("battery")) {
+                    parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
+                }
+                logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 2", 100)
+                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+            } else {
+                log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+            }
+            break
+        case "0000_0004":
+            logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
+            break
+        case "0000_0005":
+            if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"][0]["encoding"] == "42") {
+                logging("Redoing the parsing for additionalAttrs", 1)
+                msgMap = zigbee.parseDescriptionAsMap(description.replace('01FF42', '01FF41'))
+                msgMap["additionalAttrs"][0]["encoding"] = "42"
+                msgMap["additionalAttrs"][0]["value"] = parseXiaomiStruct(msgMap["additionalAttrs"][0]["value"], isFCC0=msgMap["additionalAttrs"][0]["attrId"]=="FCC0")
+            }
+            logging("Reset button pressed/message requested by hourly checkin - description:${description} | parseMap:${msgMap} 1", 100)
+            setCleanModelName(newModelToSet=msgMap["value"])
 
-    } else if(msgMap["cluster"] == "0400" && msgMap["attrId"] == "0000") {
-        logging("AQARA ILLUMINATION EVENT - description:${description} | parseMap:${msgMap}", 1)
-        Integer lux = Integer.parseInt(msgMap['value'], 16)
-        logging("Lux: $lux", 1)
-        sendEvent(name:"illuminance", value: lux, unit: "lux", isStateChange: false)
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0001") {
-        logging("APPLICATION VERSION EVENT - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if(msgMap["clusterId"] == "8004") {
-        //logging("BROADCAST EVENT 0x8004- description:${description} | parseMap:${msgMap}", 0)
-        
-    } else if(msgMap["cluster"] == "0406" && msgMap["attrId"] == "0000") {
-        logging("XIAOMI/AQARA MOTION EVENT - description:${description} | parseMap:${msgMap}", 100)
-        sendMotionEvent()
+            break
+        case "0000_0001":
+            logging("APPLICATION VERSION EVENT - description:${description} | parseMap:${msgMap}", 1)
+            
+            break
+        case "0400_0000":
+            logging("AQARA ILLUMINATION EVENT - description:${description} | parseMap:${msgMap}", 1)
+            Integer lux = Integer.parseInt(msgMap['value'], 16)
+            logging("Lux: $lux", 1)
+            sendEvent(name:"illuminance", value: lux, unit: "lux", isStateChange: false)
+            break
+        case "0406_0000":
+            logging("XIAOMI/AQARA MOTION EVENT - description:${description} | parseMap:${msgMap}", 100)
+            sendMotionEvent()
 
-    } else if(msgMap["clusterId"] == "0013") {
-        //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
+            break
+        default:
+            switch(msgMap["clusterId"]) {
+                case "0013":
+                    //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
 
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "FF01" && 
-                (msgMap["encoding"] == "41" || msgMap["encoding"] == "42")) {
-        if(msgMap["encoding"] == "42") {
-            msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
-            msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
-        }
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42) - description:${description} | parseMap:${msgMap}", 1)
-        if(msgMap["value"].containsKey("battery")) {
-            parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
-        }
-        logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 2", 100)
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
-    } else {
-		log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
-	}
+                    break
+                case "8004":
+                    //logging("BROADCAST EVENT 8004 - description:${description} | parseMap:${msgMap}", 0)
+                    break
+                case "8032":
+                    //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
+                    break
+                default:
+                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    break
+            }
+            break
+    }
     
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
@@ -303,9 +324,9 @@ void resetToInactive() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with model RTCGQ01LM & RTCGQ11LM."
+    comment = "Works with models RTCGQ01LM & RTCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0613b"
+    String version = "v0.7.1.0626b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -360,7 +381,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      
@@ -502,6 +523,24 @@ ArrayList<String> zigbeeCommand(Integer cluster, Integer command, int delay = 20
     return cmd
 }
 
+ArrayList<String> zigbeeCommand(Integer endpoint, Integer cluster, Integer command, int delay = 200, String... payload) {
+    zigbeeCommand(endpoint, cluster, command, [:], delay, payload)
+}
+
+ArrayList<String> zigbeeCommand(Integer endpoint, Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String finalPayload = payload != null && payload != [] ? payload[0] : ""
+    String cmdArgs = "0x${device.deviceNetworkId} 0x${HexUtils.integerToHexString(endpoint, 1)} 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(command, 1)} " + 
+                       "{$finalPayload}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he cmd $cmdArgs", "delay $delay"]
+    return cmd
+}
+
 ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
@@ -512,6 +551,12 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
 ArrayList<String> zigbeeReadAttribute(Integer cluster, Integer attributeId, Map additionalParams = [:], int delay = 200) {
     ArrayList<String> cmd = zigbee.readAttribute(cluster, attributeId, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
+     
+    return cmd
+}
+
+ArrayList<String> zigbeeReadAttribute(Integer endpoint, Integer cluster, Integer attributeId, int delay = 200) {
+    ArrayList<String> cmd = ["he rattr 0x${device.deviceNetworkId} ${endpoint} 0x${HexUtils.integerToHexString(cluster, 2)} 0x${HexUtils.integerToHexString(attributeId, 2)} {}", "delay 200"]
      
     return cmd
 }
@@ -824,6 +869,16 @@ List zigbee_generic_convertStructValue(Map r, List values, Integer cType, String
             r[cKey] = (Integer) Long.parseLong(r["raw"][cKey], 16)
             values = values.drop(4)
             break
+        case 0x30:
+            r["raw"][cKey] = values.take(1)[0]
+            r[cKey] = Integer.parseInt(r["raw"][cKey], 16)
+            values = values.drop(1)
+            break
+        case 0x31:
+            r["raw"][cKey] = values.take(2).reverse().join()
+            r[cKey] = Integer.parseInt(r["raw"][cKey], 16)
+            values = values.drop(2)
+            break
         case 0x39:
             r["raw"][cKey] = values.take(4).reverse().join()
             r[cKey] = parseSingleHexToFloat(r["raw"][cKey])
@@ -952,7 +1007,8 @@ void reconnectEvent() {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     checkPresence(displayWarnings=false)
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90, displayWarnings=false) == true) {
+    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
         log.warn("Event interval normal, reconnect mode DEACTIVATED!")
         unschedule('reconnectEvent')
     }
@@ -960,7 +1016,8 @@ void reconnectEvent() {
 
 void checkEventInterval(boolean displayWarnings=true) {
     prepareCounters()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
         if(displayWarnings == true) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
         Random rnd = new Random()
         schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
@@ -1034,7 +1091,7 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
-void refresh(cmd) {
+void refresh(String cmd) {
     deviceCommand(cmd)
 }
 def installedDefault() {

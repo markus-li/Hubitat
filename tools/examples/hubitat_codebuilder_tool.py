@@ -138,6 +138,7 @@ def main():
 
     default_version = "v1.0.2.MMDDTb"
     default_zigbee_version = "v0.7.1.MMDDb"
+    default_zigbee_version_sonoff = "v0.5.0.MMDDb"
     version_suffix = "b"
     checksum_file_suffix = None
     remove_comments = True
@@ -145,6 +146,7 @@ def main():
     if(branch_name == 'release'):
         default_version = "v1.0.2.MMDDT"
         default_zigbee_version = "v0.7.1.MMDD"
+        default_zigbee_version_sonoff = "v0.5.0.MMDD"
         version_suffix = ""
         checksum_file_suffix = "release"
         is_beta = False
@@ -384,23 +386,36 @@ def main():
         # Zigbee
         {'id': 579, 'file': 'zigbee-generic-wifi-switch-plug.groovy' },
         {'id': 801, 'id_2': 368, 'id_3': 335, 'file': 'zigbee-aqara-smart-curtain-motor.groovy', 'version': 'v1.0.2.MMDD' + version_suffix,
-         'comment': 'Works with models ZNCLDJ11LM & ZNCLDJ12LM.' },        
+         'comment': 'Works with models ZNCLDJ11LM & ZNCLDJ12LM.' },
+             
         {'id': 1122, 'id_2': 367, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model GZCGQ01LM.' },
         {'id': 1121, 'id_2': 363, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': default_zigbee_version,
          'comment': 'Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM.' },
         {'id': 1153, 'id_2': 322, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model MCCGQ01LM & MCCGQ11LM.' },
+         'comment': 'Works with models MCCGQ01LM & MCCGQ11LM.' },
         {'id': 1154, 'id_2': 324, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-motion-sensor.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model RTCGQ01LM & RTCGQ11LM.' },
+         'comment': 'Works with models RTCGQ01LM & RTCGQ11LM.' },
+        {'id': 1185, 'id_2': 325, 'file': 'zigbee-xiaomi-aqara-plug-outlet.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with models ZNCZ02LM, ZNCZ12LM(needs testing) & QBCZ11LM.' },
         {'id': 1345, 'id_2': 326, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-temperature-humidity.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model WSDCGQ01LM & WSDCGQ11LM.' },
+         'comment': 'Works with models WSDCGQ01LM & WSDCGQ11LM.' },
         {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model SJCGQ11LM.' },
-        {'id': 1441, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-tradfri-on-off-switch.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model E1743.' },
         
+        {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)' },
         
+        # Zigbee - Sonoff
+        {'id': 1601, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-button.groovy', 'version': default_zigbee_version_sonoff,
+         'comment': 'Works with model SNZB-01.' },
+        {'id': 1602, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-contact-sensor.groovy', 'version': default_zigbee_version_sonoff,
+         'comment': 'Works with model SNZB-04.' },
+        {'id': 1603, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-motion-sensor.groovy', 'version': default_zigbee_version_sonoff,
+         'comment': 'Works with model SNZB-03.' },
+        {'id': 1604, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-temperature-humidity-sensor.groovy', 'version': default_zigbee_version_sonoff,
+         'comment': 'Works with model SNZB-02.' },
+
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
 
@@ -416,8 +431,7 @@ def main():
         
         {'id': 1155, 'id_2': 362, 'id_3': 0, 'file': 'zigbee-ihorn-motion-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model LH-992ZB.' },
-        {'id': 1185, 'id_2': 325, 'file': 'zigbee-xiaomi-aqara-plug-outlet.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model ZNCZ02LM & QBCZ11LM.' },
+        
         {'id': 1186, 'id_2': 334, 'id_3': 0, 'file': 'zigbee-aqara-bulb.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model ZNLDP12LM.' },
         {'id': 1256, 'id_2': 361, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-oppo-6-button.groovy', 'version': default_zigbee_version,
@@ -427,7 +441,13 @@ def main():
         
         {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model DJT11LM.' },
-         
+
+        #{'id': 1441, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-tradfri-on-off-switch.groovy', 'version': default_zigbee_version,
+        # 'comment': 'Works with model E1743.' },
+        
+        
+        {'id': 1605, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-terncy-button.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with model TERNCY-SD01.' },
     ]
 
     # Future devices to implement support for:
@@ -482,16 +502,27 @@ def main():
         #{'id': 865}
         {'id': 1057}, # Testing - Get Driver Runtime Data
         # Zigbee drivers :
+        {'id': 1538}, # Xiaomi/Aqara Wall Switch
         {'id': 1122}, # Xiaomi Mijia Smart Light Sensor
         {'id': 801}, # Aqara Smart Curtain
         {'id': 1121}, # Xiaomi/Aqara Button/Switch
+        {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
         {'id': 1377}, # Aqara Water Leak Sensor
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
         {'id': 1409, 'id_3': 0, 'file': 'dashboard-background-image.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
 
-        {'id': 1441},
+        
+
+        
+        
+        # Zigbee - Sonoff
+        {'id': 1601},
+        {'id': 1602},
+        {'id': 1603},
+        {'id': 1604},
+        
 
         # RF/IR Drivers
         #{'id': 648},
@@ -511,9 +542,13 @@ def main():
         # Zigbee
         {'id': 1378}, # Aqara Vibration Sensor
         {'id': 1186}, # Aqara Bulb
-        {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
+        
         {'id': 1155}, # iHorn Motion Sensor
         
+        {'id': 1441}, # IKEA Tradfri Bulb
+        {'id': 1605}, # Terncy Button
+        
+
         #{'id': 1256}, # Aqara Oppo 6 Buttons
         #{'id': 1313}, # IKEA 5 Button Remote
         
@@ -649,14 +684,14 @@ def main():
                 base_raw_repo_url + newD['file'], True, newD['id'], id=None)
 
             pm.addPackage(zigbee_pkg)
-
+            print("Zigbee package: " + newD['nameFull'])
             if(branch_name == 'release'):
                 zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + ".json", extraInput="packages/" + newD['filestem'] + ".json")
             else:
                 zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + "-beta.json", extraInput="packages/" + newD['filestem'] + ".json")
 
             zigbee_pkgs.append(zigbee_pkg)
-        #print(zigbee_pkgs)
+    #print(zigbee_pkgs)
 
 
   

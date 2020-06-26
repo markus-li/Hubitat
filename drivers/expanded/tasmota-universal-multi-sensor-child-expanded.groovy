@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0601Tb
+ *  Version: v1.0.2.0625Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ void refresh() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0601Tb"
+    String version = "v1.0.2.0625Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -177,7 +177,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      
@@ -702,7 +702,7 @@ private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
     } else if (tempUnitConversion == "3") {
         value = fahrenheitToCelsius(value)
     }
-	if (tempOffset) {
+	if (tempOffset != null) {
 	   return (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
        return value.setScale(res, BigDecimal.ROUND_HALF_UP)
@@ -715,7 +715,7 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     if(tempRes != null && tempRes != '') {
         res = Integer.parseInt(tempRes)
     }
-    String degree = String.valueOf((char)(Integer.parseInt("00B0", 16)))
+    String degree = String.valueOf((char)(176))
     String tempUnit = "${degree}C"
     if (tempUnitDisplayed == "2") {
         value = celsiusToFahrenheit(value)
@@ -724,7 +724,7 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
         value = value + 273.15
         tempUnit = "${degree}K"
     }
-	if (tempOffset) {
+	if (tempOffset != null) {
 	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
 	} else {
        return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]

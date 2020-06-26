@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0613b
+ *  Version: v0.7.1.0626b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Xiaomi/Aqara/Opple Button/Switch/Remote", namespace: "markusl", author: "Markus Liljergren", vid: "generic-shade", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy") {
+	definition (name: "Zigbee - Xiaomi/Aqara/Opple Button/Switch/Remote", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -139,7 +139,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara/Opple Button/Switch/Remote', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'vid': 'generic-shade', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara/Opple Button/Switch/Remote', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -380,130 +380,157 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
     String cModel = getDeviceDataByName('model')
+    
+    switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
+        case "0000_FFF0":
+            //logging("Unparsed event FFF0 - description:${description}", 0)
 
-    if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0005") {
-        if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"] != [] && msgMap["additionalAttrs"][0]["encoding"] == "42") {
-            //logging("Redoing the parsing for additionalAttrs", 0)
-            msgMap = zigbee.parseDescriptionAsMap(description.replace('01FF42', '01FF41'))
-            msgMap["additionalAttrs"][0]["encoding"] = "42"
-            msgMap["additionalAttrs"][0]["value"] = parseXiaomiStruct(msgMap["additionalAttrs"][0]["value"], isFCC0=msgMap["additionalAttrs"][0]["attrId"]=="FCC0")
-        }
-        logging("Model name received - description:${description} | parseMap:${msgMap}", 1)
-        logging("New model to set: ${msgMap["value"]}", 1)
-        String model = setCleanModelNameWithAcceptedModels(newModelToSet=msgMap["value"])
-        if(isNonSwitchModel(model=model) == true) {
-            sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0xFF02, [mfgCode: "0x115F"]))
-        } else if(isSwitchModel() == true) {
-            sendZigbeeCommands(zigbee.configureReporting(0x0000, 0xFF01, 0xff, 30, 600, 0x1, [mfgCode: "0x115F"], 800))
-        } else if(isOppleModel(model) == true) {
-            logging("Got Cluster 0000 attribute 0005 for $model", 1)
-            generalInitialize()
-        }
-        
-        if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"] != [] && msgMap["additionalAttrs"][0]["encoding"] == "42") {
-            Map value = msgMap["additionalAttrs"][0]["value"]
-            if(value.containsKey("battery")) {
-                parseAndSendBatteryStatus(value["battery"] / 1000.0)
+            break
+        case "0000_FF01":
+        case "0000_FF02":
+            if(msgMap["encoding"] == "4C") {
+                logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C) - description:${description} | parseMap:${msgMap}", 100)
+                parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
+                
+                sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
+
+            } else if(msgMap["encoding"] == "41" || msgMap["encoding"] == "42") {
+                if(msgMap["encoding"] == "42") {
+                    msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
+                    msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
+                }
+                logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42) - description:${description} | parseMap:${msgMap}", 100)
+                if(msgMap["value"].containsKey("battery")) {
+                    parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
+                }
+                sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
+
+            } else {
+                log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
             }
-        }
-        
-        refreshActual(model)
+            break
+        case "FCC0_00F7":
+            msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=true)
+            
+            logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - FCC0-00F7) - description:${description} | parseMap:${msgMap}", 1)
+            if(msgMap["value"].containsKey("battery")) {
+                parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
+            }
+            sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
+            break
+        case "FCC0_00FC":
+            logging("KNOWN IGNORED event (Oppo Remote Event - FCC0) - description:${description} | parseMap:${msgMap}", 1)
+            
+            break
+        case "0000_0001":
+            logging("Application version (also requested when receiving hourly checkin) - description:${description} | parseMap:${msgMap}", 1)
+            
+            break
+        case "0000_0004":
+            logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
+            break
+        case "0000_0005":
+            if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"] != [] && msgMap["additionalAttrs"][0]["encoding"] == "42") {
+                //logging("Redoing the parsing for additionalAttrs", 0)
+                msgMap = zigbee.parseDescriptionAsMap(description.replace('01FF42', '01FF41'))
+                msgMap["additionalAttrs"][0]["encoding"] = "42"
+                msgMap["additionalAttrs"][0]["value"] = parseXiaomiStruct(msgMap["additionalAttrs"][0]["value"], isFCC0=msgMap["additionalAttrs"][0]["attrId"]=="FCC0")
+            }
+            logging("Model name received - description:${description} | parseMap:${msgMap}", 1)
+            logging("New model to set: ${msgMap["value"]}", 1)
+            String model = setCleanModelNameWithAcceptedModels(newModelToSet=msgMap["value"])
+            if(isNonSwitchModel(model=model) == true) {
+                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0xFF02, [mfgCode: "0x115F"]))
+            } else if(isSwitchModel() == true) {
+                sendZigbeeCommands(zigbee.configureReporting(0x0000, 0xFF01, 0xff, 30, 600, 0x1, [mfgCode: "0x115F"], 800))
+            } else if(isOppleModel(model) == true) {
+                logging("Got Cluster 0000 attribute 0005 for $model", 1)
+                generalInitialize()
+            }
+            
+            if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"] != [] && msgMap["additionalAttrs"][0]["encoding"] == "42") {
+                Map value = msgMap["additionalAttrs"][0]["value"]
+                if(value.containsKey("battery")) {
+                    parseAndSendBatteryStatus(value["battery"] / 1000.0)
+                }
+            }
+            
+            refreshActual(model)
+            break
+        case "0006_0000":
+        case "0006_8000":
+            logging("Description: ${description}", 1)
+            parseButtonEvent(msgMap)
+            
+            break
+        case "0012_0055":
+            if(isOppleModel() == true) {
+                logging("Button was pressed (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]}) | description:${description} | parseMap:${msgMap}", 1)
+                parseOppoButtonEvent(msgMap)
+            } else {
+                logging("Description: ${description}", 1)
+                parseButtonEvent(msgMap)
+                
+            }
+            break
+        default:
+            switch(msgMap["clusterId"]) {
+                case "0000":
+                case "0001":
+                case "0400":
+                    //logging("Broadcast catchall - description:${description} | parseMap:${msgMap}", 0)
+                    
+                    break
+                case "0006":
+                    logging("On/OFF Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
+                    log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
+                    oppleInit()
+                    break
+                case "0008":
+                    logging("Level Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
+                    log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
+                    oppleInit()
+                    break
+                case "FCC0":
+                    //logging("Aqara catchall - description:${description} | parseMap:${msgMap}", 0)
+                    if(msgMap["data"] == ["00"]) {
+                        logging("Button settings MIGHT be set correctly for your Opple Remote! Try them by pushing a button!", 100)
+                    }
+                    break
+                case "0300":
+                    logging("Color Control Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
+                    log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
+                    oppleInit()
+                    break
+                case "0013":
+                    //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
+                    
+                    oppleInit()
 
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0001") {
-        logging("Application version (also requested when receiving hourly checkin) - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
-        logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "FFF0") {
-        logging("Unparsed event FFF0 - description:${description}", 1)
-
-    } else if(msgMap["clusterId"] == "000A" || msgMap["clusterId"] == "8004") {
-        //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
-
-    } else if(msgMap["clusterId"] == "8021") {
-        //logging("Result for Reporting configuration - description:${description} | parseMap:${msgMap}", 0)
-        if(msgMap["data"][1] == "00") {
-            logging("Setting of reporting configuration SUCCESSFUL!", 100)
-        } else {
-            log.warn("Setting of reporting configuration FAILED! Try pairing again...")
-        }
-        
-    } else if(msgMap["clusterId"] == "0013") {
-        //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
-        
-        oppleInit()
-
-    } else if(msgMap["clusterId"] == "0000" && msgMap["manufacturerId"] == "115F") {
-        //logging("Aqara catchall - description:${description} | parseMap:${msgMap}", 0)
-        
-    } else if(msgMap["clusterId"] == "FCC0" && msgMap["manufacturerId"] == "115F") {
-        //logging("Aqara catchall - description:${description} | parseMap:${msgMap}", 0)
-        if(msgMap["data"] == ["00"]) {
-            logging("Button settings MIGHT be set correctly for your Opple Remote! Try them by pushing a button!", 100)
-        }
-    } else if((msgMap["clusterId"] == "0000") && msgMap["command"] == "0B") {
-        //logging("GET ATTRIBUTE CONFIRMATION - description:${description} | parseMap:${msgMap}", 0)
-        
-    } else if(msgMap["clusterId"] == "0300") {
-        logging("Color Control Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
-        log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
-        oppleInit()
-    } else if(msgMap["clusterId"] == "0008") {
-        logging("Level Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
-        log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
-        oppleInit()
-    } else if(msgMap["clusterId"] == "0006") {
-        logging("On/OFF Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
-        log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
-        oppleInit()
-    } else if(msgMap["clusterId"] == "8005") {
-        //logging("Confirmation Cluster (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 0)
-    } else if(msgMap["cluster"] == "0006") {
-        logging("Description: ${description}", 1)
-        parseButtonEvent(msgMap)
-        
-    } else if(msgMap["cluster"] == "0012" && isOppleModel() == true) {
-        logging("Button was pressed (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
-        parseOppoButtonEvent(msgMap)
-        
-    } else if(msgMap["cluster"] == "0012") {
-        logging("Description: ${description}", 1)
-        parseButtonEvent(msgMap)
-        
-    } else if(msgMap["cluster"] == "0000" && (msgMap["attrId"] == "FF01" || msgMap["attrId"] == "FF02") && msgMap["encoding"] == "4C") {
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C) - description:${description} | parseMap:${msgMap}", 100)
-        parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
-        
-        sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
-
-    } else if(msgMap["cluster"] == "FCC0" && msgMap["attrId"] == "00F7") {
-        msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=true)
-        
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - FCC0-00F7) - description:${description} | parseMap:${msgMap}", 1)
-        if(msgMap["value"].containsKey("battery")) {
-            parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
-        }
-        sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
-
-    } else if(msgMap["cluster"] == "FCC0") {
-        logging("KNOWN IGNORED event (Oppo Remote Event - FCC0) - description:${description} | parseMap:${msgMap}", 1)
-        
-    } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "FF01" && 
-                (msgMap["encoding"] == "41" || msgMap["encoding"] == "42")) {
-        if(msgMap["encoding"] == "42") {
-            msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
-            msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
-        }
-        logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42) - description:${description} | parseMap:${msgMap}", 100)
-        if(msgMap["value"].containsKey("battery")) {
-            parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
-        }
-        sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
-
-    } else {
-		log.warn "Unhandled Event PLEASE REPORT TO THE DEV - description:${description} | msgMap:${msgMap}"
-	}
+                    break
+                case "8005":
+                    //logging("Confirmation Cluster (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 0)
+                    break
+                case "8021":
+                    //logging("Result for Reporting configuration - description:${description} | parseMap:${msgMap}", 0)
+                    if(msgMap["data"][1] == "00") {
+                        logging("Setting of reporting configuration SUCCESSFUL!", 100)
+                    } else {
+                        log.warn("Setting of reporting configuration FAILED! Try pairing again...")
+                    }
+                    
+                    break
+                case "8004":
+                case "8032":
+                case "000A":
+                    //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
+                    break
+                default:
+                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    break
+            }
+            break
+    }
 
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
@@ -667,7 +694,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0613b"
+    String version = "v0.7.1.0626b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -722,7 +749,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      
@@ -864,6 +891,24 @@ ArrayList<String> zigbeeCommand(Integer cluster, Integer command, int delay = 20
     return cmd
 }
 
+ArrayList<String> zigbeeCommand(Integer endpoint, Integer cluster, Integer command, int delay = 200, String... payload) {
+    zigbeeCommand(endpoint, cluster, command, [:], delay, payload)
+}
+
+ArrayList<String> zigbeeCommand(Integer endpoint, Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String finalPayload = payload != null && payload != [] ? payload[0] : ""
+    String cmdArgs = "0x${device.deviceNetworkId} 0x${HexUtils.integerToHexString(endpoint, 1)} 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(command, 1)} " + 
+                       "{$finalPayload}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he cmd $cmdArgs", "delay $delay"]
+    return cmd
+}
+
 ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
@@ -874,6 +919,12 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
 ArrayList<String> zigbeeReadAttribute(Integer cluster, Integer attributeId, Map additionalParams = [:], int delay = 200) {
     ArrayList<String> cmd = zigbee.readAttribute(cluster, attributeId, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
+     
+    return cmd
+}
+
+ArrayList<String> zigbeeReadAttribute(Integer endpoint, Integer cluster, Integer attributeId, int delay = 200) {
+    ArrayList<String> cmd = ["he rattr 0x${device.deviceNetworkId} ${endpoint} 0x${HexUtils.integerToHexString(cluster, 2)} 0x${HexUtils.integerToHexString(attributeId, 2)} {}", "delay 200"]
      
     return cmd
 }
@@ -1186,6 +1237,16 @@ List zigbee_generic_convertStructValue(Map r, List values, Integer cType, String
             r[cKey] = (Integer) Long.parseLong(r["raw"][cKey], 16)
             values = values.drop(4)
             break
+        case 0x30:
+            r["raw"][cKey] = values.take(1)[0]
+            r[cKey] = Integer.parseInt(r["raw"][cKey], 16)
+            values = values.drop(1)
+            break
+        case 0x31:
+            r["raw"][cKey] = values.take(2).reverse().join()
+            r[cKey] = Integer.parseInt(r["raw"][cKey], 16)
+            values = values.drop(2)
+            break
         case 0x39:
             r["raw"][cKey] = values.take(4).reverse().join()
             r[cKey] = parseSingleHexToFloat(r["raw"][cKey])
@@ -1314,7 +1375,8 @@ void reconnectEvent() {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     checkPresence(displayWarnings=false)
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90, displayWarnings=false) == true) {
+    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
         log.warn("Event interval normal, reconnect mode DEACTIVATED!")
         unschedule('reconnectEvent')
     }
@@ -1322,7 +1384,8 @@ void reconnectEvent() {
 
 void checkEventInterval(boolean displayWarnings=true) {
     prepareCounters()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
         if(displayWarnings == true) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
         Random rnd = new Random()
         schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
@@ -1396,7 +1459,7 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
-void refresh(cmd) {
+void refresh(String cmd) {
     deviceCommand(cmd)
 }
 def installedDefault() {
