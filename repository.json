@@ -10,13 +10,6 @@
       "description": "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
     },
     {
-      "name": "Aqara Wall Switch",
-      "category": "Integrations",
-      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-wall-switch.json",
-      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-aqara-wall-switch-beta.json",
-      "description": "Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
-    },
-    {
       "name": "Aqara Water Leak Sensor",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-water-leak-sensor.json",

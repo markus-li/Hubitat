@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0613
+ *  Version: v0.7.1.0701
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Aqara Water Leak Sensor", namespace: "markusl", author: "Markus Liljergren", vid: "generic-shade", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-aqara-water-leak-sensor-expanded.groovy") {
+	definition (name: "Zigbee - Aqara Water Leak Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-aqara-water-leak-sensor-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -85,7 +85,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Aqara Water Leak Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'vid': 'generic-shade', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-aqara-water-leak-sensor-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Aqara Water Leak Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-aqara-water-leak-sensor-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -130,7 +130,8 @@ String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
     return setCleanModelName(newModelToSet=newModelToSet, acceptedModels=[
         "lumi.sensor_motion.aq2",
         "lumi.sensor_wleak.aq1",
-        "lumi.sensor_motion"
+        "lumi.sensor_motion",
+        "lumi.flood.agl02"
     ])
 }
 
@@ -267,7 +268,7 @@ void setAsWet() {
 private String getDriverVersion() {
     comment = "Works with model SJCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0613"
+    String version = "v0.7.1.0701"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -322,7 +323,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      
@@ -464,6 +465,24 @@ ArrayList<String> zigbeeCommand(Integer cluster, Integer command, int delay = 20
     return cmd
 }
 
+ArrayList<String> zigbeeCommand(Integer endpoint, Integer cluster, Integer command, int delay = 200, String... payload) {
+    zigbeeCommand(endpoint, cluster, command, [:], delay, payload)
+}
+
+ArrayList<String> zigbeeCommand(Integer endpoint, Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String finalPayload = payload != null && payload != [] ? payload[0] : ""
+    String cmdArgs = "0x${device.deviceNetworkId} 0x${HexUtils.integerToHexString(endpoint, 1)} 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(command, 1)} " + 
+                       "{$finalPayload}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he cmd $cmdArgs", "delay $delay"]
+    return cmd
+}
+
 ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
@@ -474,6 +493,12 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
 ArrayList<String> zigbeeReadAttribute(Integer cluster, Integer attributeId, Map additionalParams = [:], int delay = 200) {
     ArrayList<String> cmd = zigbee.readAttribute(cluster, attributeId, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
+     
+    return cmd
+}
+
+ArrayList<String> zigbeeReadAttribute(Integer endpoint, Integer cluster, Integer attributeId, int delay = 200) {
+    ArrayList<String> cmd = ["he rattr 0x${device.deviceNetworkId} ${endpoint} 0x${HexUtils.integerToHexString(cluster, 2)} 0x${HexUtils.integerToHexString(attributeId, 2)} {}", "delay 200"]
      
     return cmd
 }
@@ -786,6 +811,16 @@ List zigbee_generic_convertStructValue(Map r, List values, Integer cType, String
             r[cKey] = (Integer) Long.parseLong(r["raw"][cKey], 16)
             values = values.drop(4)
             break
+        case 0x30:
+            r["raw"][cKey] = values.take(1)[0]
+            r[cKey] = Integer.parseInt(r["raw"][cKey], 16)
+            values = values.drop(1)
+            break
+        case 0x31:
+            r["raw"][cKey] = values.take(2).reverse().join()
+            r[cKey] = Integer.parseInt(r["raw"][cKey], 16)
+            values = values.drop(2)
+            break
         case 0x39:
             r["raw"][cKey] = values.take(4).reverse().join()
             r[cKey] = parseSingleHexToFloat(r["raw"][cKey])
@@ -914,7 +949,8 @@ void reconnectEvent() {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     checkPresence(displayWarnings=false)
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90, displayWarnings=false) == true) {
+    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
         log.warn("Event interval normal, reconnect mode DEACTIVATED!")
         unschedule('reconnectEvent')
     }
@@ -922,7 +958,8 @@ void reconnectEvent() {
 
 void checkEventInterval(boolean displayWarnings=true) {
     prepareCounters()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
         if(displayWarnings == true) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
         Random rnd = new Random()
         schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
@@ -996,7 +1033,7 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
-void refresh(cmd) {
+void refresh(String cmd) {
     deviceCommand(cmd)
 }
 def installedDefault() {

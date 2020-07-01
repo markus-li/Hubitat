@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0701
+ *  Version: v0.5.0.0701
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Xiaomi/Aqara Temperature & Humidity Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-xiaomi-aqara-temperature-humidity-expanded.groovy") {
+	definition (name: "Zigbee - Sonoff Temperature & Humidity Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-sonoff-temperature-humidity-sensor-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -60,12 +60,9 @@ metadata {
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
 
-        fingerprint deviceJoinName: "Xiaomi Temperature & Humidity Sensor (WSDCGQ01LM)", model: "lumi.sens", profileId: "0104", endpointId: 01, inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI"
-        fingerprint deviceJoinName: "Xiaomi Temperature & Humidity Sensor (WSDCGQ01LM)", model: "lumi.sensor_ht", profileId: "0104", endpointId: 01, inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI"
+        command "parse", [[name:"Description*", type: "STRING", description: "description"]]
 
-        fingerprint deviceJoinName: "Aqara Temperature, Humidity & Pressure Sensor (WSDCGQ11LM)", model: "lumi.weather", modelType: "Aqara WSDCGQ11LM", profileId: "0104", endpointId: 01, application: 03, inClusters: "0000,0003,FFFF,0402,0403,0405", outClusters: "0000,0004,FFFF", manufacturer: "LUMI"
-
-        fingerprint deviceJoinName: "Keen Temperature, Humidity & Pressure Sensor (RS-THP-MP-1.0)", model: "RS-THP-MP-1.0", modelType: "Keen RS-THP-MP-1.0", endpointId: 01, application: 0x0A, inClusters: "0000,0003,0001,0020", outClusters: "0000,0004,0003,0005,0019,0402,0405,0403,0020", manufacturer: "LUMI"
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0402,0405,0001", outClusters:"0003", model:"TH01", manufacturer:"eWeLink", application:"04"
 
     }
 
@@ -99,7 +96,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara Temperature & Humidity Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-xiaomi-aqara-temperature-humidity-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Sonoff Temperature & Humidity Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-sonoff-temperature-humidity-sensor-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -117,7 +114,6 @@ ArrayList<String> refresh() {
     setLogsOffTask(noLogWarning=true)
     
     String model = setCleanModelName(newModelToSet=null, acceptedModels=[
-        "lumi.sensor_ht.agl02",
         "lumi.sensor_ht",
         "lumi.weather",
         "RS-THP-MP-1.0"
@@ -136,16 +132,40 @@ ArrayList<String> refresh() {
 void initialize() {
     logging("initialize()", 100)
     refresh()
+    configureDevice()
 }
 
 void installed() {
     logging("installed()", 100)
     refresh()
+    configureDevice()
+}
+
+void configureDevice() {
+    Integer endpointId = 1
+    ArrayList<String> cmd = []
+    cmd += zigbee.readAttribute(0x0000, [0x0001, 0x0004, 0x0005, 0x0006])
+    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0402 {${device.zigbeeId}} {}", "delay 50"]
+    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0405 {${device.zigbeeId}} {}", "delay 50"]
+    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0001 {${device.zigbeeId}} {}", "delay 50"]
+    cmd += ["he cr 0x${device.deviceNetworkId} ${endpointId} 0x0001 0 0x10 0 0xE10 {}", "delay 50"]
+    cmd += zigbee.configureReporting(0x0402, 0x0000, 0x29, 60, 3600, 20, [:], 50)
+    cmd += zigbee.configureReporting(0x0405, 0x0000, 0x29, 60, 3600, 200, [:], 50)
+
+    cmd += zigbee.readAttribute(0x0001, [0x0020, 0x0021])
+    cmd += zigbeeReadAttribute(0x0402, 0x0000)
+    cmd += zigbeeReadAttribute(0x0405, 0x0000)
+    
+    sendZigbeeCommands(cmd)
 }
 
 void updated() {
     logging("updated()", 100)
     refresh()
+}
+
+Integer getMINUTES_BETWEEN_EVENTS() {
+    return 140
 }
 
 ArrayList<String> parse(String description) {
@@ -207,61 +227,52 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
+    
+    //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
 
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
-        case "0000_0005":
-            /*if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"][0]["encoding"] == "42") {
-            logging("Redoing the parsing for additionalAttrs", 1)
-            msgMap = zigbee.parseDescriptionAsMap(description.replace('01FF42', '01FF41'))
-            msgMap["additionalAttrs"][0]["encoding"] = "42"
-            msgMap["additionalAttrs"][0]["value"] = parseXiaomiStruct(msgMap["additionalAttrs"][0]["value"], isFCC0=msgMap["additionalAttrs"][0]["attrId"]=="FCC0")
-            }*/
-            logging("Reset button pressed/message requested by hourly checkin - description:${description} | parseMap:${msgMap}", 1)
-            if(msgMap["value"] == "lumi.sens") msgMap["value"] = "lumi.sensor_ht"
-            setCleanModelName(newModelToSet=msgMap["value"])
+        case "0000_0001":
+            //logging("Cluster 0000 - description:${description} | parseMap:${msgMap}", 0)
 
             break
         case "0000_0004":
             logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-            sendZigbeeCommands(zigbee.readAttribute(0x0402, 0x0000))
+            
             break
         case "0001_0020":
-            logging("Battery Voltage Received - description:${description} | parseMap:${msgMap}", 1)
-            parseAndSendBatteryStatus(msgMap["valueParsed"] / 10.0)
+        case "0001_0021":
+            logging("Battery data - description:${description} | parseMap:${msgMap}", 100)
+            zigbee_sonoff_parseBatteryData(msgMap)
             break
         case "0402_0000":
-            logging("XIAOMI/AQARA TEMPERATURE EVENT - description:${description} | parseMap:${msgMap}", 1)
+            logging("SONOFF TEMPERATURE EVENT - description:${description} | parseMap:${msgMap}", 100)
             zigbee_sensor_parseSendTemperatureEvent(msgMap['valueParsed'])
 
             break
-        case "0403_0000":
-        case "0403_0020":
-            logging("AQARA PRESSURE EVENT - description:${description} | parseMap:${msgMap}", 1)
-            zigbee_sensor_parseSendPressureEvent(msgMap)
-            
-            break
         case "0405_0000":
-            logging("XIAOMI/AQARA HUMIDITY EVENT - description:${description} | parseMap:${msgMap}", 1)
+            logging("SONOFF HUMIDITY EVENT - description:${description} | parseMap:${msgMap}", 100)
             zigbee_sensor_parseSendHumidityEvent(msgMap['valueParsed'])
-
-            break
-        case "0000_FF01":
-            logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42 - hourly checkin) - description:${description} | parseMap:${msgMap}", 100)
-
-            if(msgMap["value"].containsKey("battery")) {
-                parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
-            }
-            logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
-            sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))        
 
             break
         default:
             switch(msgMap["clusterId"]) {
+                case "0001":
+                    //logging("Broadcast catchall - description:${description} | parseMap:${msgMap}", 0)
+                    
+                    break
                 case "0013":
-                    //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
+                    //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
+                    
+                    configureDevice()
 
                     break
-                case "8032":
+                case "0402":
+                    logging("Configuration Accepted for cluster 0x0402", 100)
+                    break
+                case "0405":
+                    logging("Configuration Accepted for cluster 0x0405", 100)
+                    break
+                case "8021":
                     //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
                     break
                 default:
@@ -270,8 +281,8 @@ ArrayList<String> parse(String description) {
             break
     }
 
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=140) == false) {
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
@@ -305,9 +316,9 @@ void reconnectEventDeviceSpecific() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with models WSDCGQ01LM & WSDCGQ11LM."
+    comment = "Works with model SNZB-02."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0701"
+    String version = "v0.5.0.0701"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1013,6 +1024,25 @@ void startCheckEventInterval() {
     checkEventInterval(displayWarnings=true)
 }
 // END:  getHelperFunctions('zigbee-generic')
+
+// BEGIN:getHelperFunctions('zigbee-sonoff')
+void zigbee_sonoff_parseBatteryData(Map msgMap) {
+    BigDecimal bat = null
+    if(msgMap["attrId"] == "0021") {
+        bat = msgMap['valueParsed'] / 2.0
+    } else if(msgMap.containsKey("additionalAttrs") == true) {
+        msgMap["additionalAttrs"].each() {
+            if(it.containsKey("attrId") == true && it['attrId'] == "0021") {
+                bat = Integer.parseInt(it['value'], 16) / 2.0
+            }
+        }
+    }
+    if(bat != null) {
+        bat = bat.setScale(1, BigDecimal.ROUND_HALF_UP)
+        sendEvent(name:"battery", value: bat , unit: "%", isStateChange: false)
+    }
+}
+// END:  getHelperFunctions('zigbee-sonoff')
 
 // BEGIN:getHelperFunctions('zigbee-sensor')
 void zigbee_sensor_parseSendTemperatureEvent(Integer rawValue, BigDecimal variance = 0.2, Integer minAllowed=-50, Integer maxAllowed=100) {

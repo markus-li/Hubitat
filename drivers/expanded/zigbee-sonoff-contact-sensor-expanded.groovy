@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0701
+ *  Version: v0.5.0.0701
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Xiaomi/Aqara/Opple Button/Switch/Remote", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy") {
+	definition (name: "Zigbee - Sonoff Contact Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-sonoff-contact-sensor-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -36,10 +36,7 @@ metadata {
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
         capability "Battery"
-        capability "PushableButton"
-		capability "HoldableButton"
-        capability "DoubleTapableButton"
-        capability "ReleasableButton"
+        capability "ContactSensor"
         
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
@@ -53,44 +50,23 @@ metadata {
         // BEGIN:getZigbeeBatteryMetadataAttributes()
         attribute "batteryLastReplaced", "String"
         // END:  getZigbeeBatteryMetadataAttributes()
-
         attribute "lastHoldEpoch", "String"
-        
+        attribute "lastOpened", "String"
+        attribute "lastClosed", "String"
+
         // BEGIN:getZigbeeBatteryCommands()
         command "resetBatteryReplacedDate"
         // END:  getZigbeeBatteryCommands()
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
+        command "resetToOpen"
+        command "resetToClosed"
 
-        fingerprint deviceJoinName: "Xiaomi Button (WXKG01LM)",                      model: "lumi.sensor_switch",     inClusters: "0000,0003,FFFF,0019", outClusters: "0000,0004,0003,0006,0008,0005,0019", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
+        command "parse", [[name:"Description*", type: "STRING", description: "description"]]
 
-		fingerprint deviceJoinName: "Aqara Button (WXKG11LM) - 2015",                model: "lumi.sensor_switch.aq2", inClusters: "0000,FFFF,0006",      outClusters: "0000,0004,FFFF", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-
-		fingerprint deviceJoinName: "Aqara Button (WXKG11LM) - 2018",                model: "lumi.remote.b1acn01",    inClusters: "0000,0012,0003",      outClusters: "0000", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-        
-		fingerprint deviceJoinName: "Aqara Button (WXKG12LM)",                       model: "lumi.sensor_switch.aq3", inClusters: "0000,0012,0006,0001", outClusters: "0000", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-
-		fingerprint deviceJoinName: "Aqara 1-button Light Switch (WXKG03LM) - 2016", model: "lumi.sensor_86sw1lu",    inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-		fingerprint deviceJoinName: "Aqara 1-button Light Switch (WXKG03LM) - 2016", model: "lumi.sensor_86sw1",      inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-		
-		fingerprint deviceJoinName: "Aqara 2-button Light Switch (WXKG02LM) - 2016", model: "lumi.sensor_86sw2Un",    inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-		fingerprint deviceJoinName: "Aqara 2-button Light Switch (WXKG02LM) - 2016", model: "lumi.sensor_86sw2",      inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-		
-		fingerprint deviceJoinName: "Aqara 1-button Light Switch (WXKG03LM) - 2018", model: "lumi.remote.b186acn01",  inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-		
-		fingerprint deviceJoinName: "Aqara 2-button Light Switch (WXKG02LM) - 2018", model: "lumi.remote.b286acn01",  inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
-
-        fingerprint deviceJoinName: "Aqara Opple 2 Button Remote (WXCJKG11LM)",      model: "lumi.remote.b286opcn01",     profileId:"0104", inClusters:"0012,0003", outClusters:"0006", manufacturer:"LUMI", application: "11", endpointId: "01"
-        fingerprint profileId: "0104", inClusters: "0000,0003,0001", outClusters: "003,0006,0008,0300", model: "lumi.remote.b286opcn01", deviceJoinName: "Aqara Opple 2 Button Remote (WXCJKG11LM)"
-
-        fingerprint deviceJoinName: "Aqara Opple 4 Button Remote (WXCJKG12LM)",      model: "lumi.remote.b486opcn01",     profileId:"0104", inClusters:"0012,0003", outClusters:"0006", manufacturer:"LUMI", application: "11", endpointId: "01"
-        fingerprint profileId: "0104", inClusters: "0000,0003,0001", outClusters: "003,0006,0008,0300", model: "lumi.remote.b486opcn01", deviceJoinName: "Aqara Opple 4 Button Remote (WXCJKG12LM)"
-
-        fingerprint deviceJoinName: "Aqara Opple 6 Button Remote (WXCJKG13LM)",      model: "lumi.remote.b686opcn01",     profileId:"0104", inClusters:"0012,0003", outClusters:"0006", manufacturer:"LUMI", application: "11", endpointId: "01"
-        fingerprint profileId: "0104", inClusters: "0000,0003,0001", outClusters: "003,0006,0008,0300", model: "lumi.remote.b686opcn01", deviceJoinName: "Aqara Opple 6 Button Remote (WXCJKG13LM)"
-
-	}
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0500,0001", outClusters:"0003", model:"DS01", manufacturer:"eWeLink", application:"03"
+        }
 
     preferences {
         // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
@@ -102,44 +78,19 @@ metadata {
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
-        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
-        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
-        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
-        if(isNonSwitchModel() == true) {
-            input(name: "millisForHold", type: "number", title: styling_addTitleDiv("Millis for Hold"), description: styling_addDescriptionDiv("Set the minimum number of milliseconds to count as held (500 to 60000, default: 1000)<br >This setting is NOT used with model WXKG02LM and WXKG03LM or OPPLE models."), defaultValue: "1000", range: "500..60000")
-        }
-        input(name: "enableReleaseEvents", type: "bool", title: styling_addTitleDiv("Enable Release Events"), description: styling_addDescriptionDiv("Records button Release events (default: enabled)"), defaultValue: true)
-        Integer physicalButtons = getDeviceDataByName('physicalButtons') != null ? getDeviceDataByName('physicalButtons').toInteger() :  0
-        List btnDeviceInputs = []
-        switch(physicalButtons) {
-            case 6:
-                btnDeviceInputs += [name: "btnDevice5and6", type: "enum", title: styling_addTitleDiv("Child Device(s) for button 5 & 6"), 
-                    description: styling_addDescriptionDiv("Create child devices for button 5 & 6."),
-                    options: ["None", "2 virtual switches", "2 virtual momentary switches", "1 virtual dimmer"], defaultValue: "None"]
-            case 4:
-                btnDeviceInputs += [name: "btnDevice3and4", type: "enum", title: styling_addTitleDiv("Child Device(s) for button 3 & 4"), 
-                    description: styling_addDescriptionDiv("Create child devices for button 3 & 4."),
-                    options: ["None", "2 virtual switches", "2 virtual momentary switches", "1 virtual dimmer"], defaultValue: "None"]
-            case 2:
-                btnDeviceInputs += [name: "btnDevice1and2", type: "enum", title: styling_addTitleDiv("Child Device(s) for button 1 & 2"), 
-                    description: styling_addDescriptionDiv("Create child devices for button 1 & 2."),
-                    options: ["None", "2 virtual switches", "2 virtual momentary switches", "1 virtual dimmer"], defaultValue: "None"]
-                break
-            case 1:
-                btnDeviceInputs += [name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for button 1"), 
-                    description: styling_addDescriptionDiv("Create a child device for button 1."),
-                    options: ["None", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None"]
-                break
-        }
-        btnDeviceInputs.reverse().each { input(it) }
+        input(name: "invertContact", type: "bool", title: styling_addTitleDiv("Invert open/close"), description: styling_addDescriptionDiv("When open show as closed and vice versa (default: false)"), defaultValue: false)
+        input(name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for the contact sensor"), 
+                    description: styling_addDescriptionDiv("Create a child device for the contact sensor. If changing from Button to Switch or vice versa you need to delete the child device manually for the change to work."),
+                    options: ["None", "1 virtual button", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None")
+        input(name: "logOpenCloseDatetime", type: "bool", title: styling_addTitleDiv("Log Open/Close Time"), description: styling_addDescriptionDiv("Logs the date and time of when the last Open/Closed event occured (default: false)"), defaultValue: false)
 	}
+
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Xiaomi/Aqara/Opple Button/Switch/Remote', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Sonoff Contact Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-sonoff-contact-sensor-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -147,124 +98,59 @@ String getDeviceInfoByName(infoName) {
 
 /* These functions are unique to each driver */
 
-ArrayList<String> refresh() {
-    return refreshActual(null)
-}
-
-ArrayList<String> refreshActual(String newModelToSet) {
-    logging("refreshActual() model=$newModelToSet", 1)
-
-    sendEvent(name:"pushed", value: 0, isStateChange: false, descriptionText: "Refresh of pushed state")
-    sendEvent(name:"held", value: 0, isStateChange: false, descriptionText: "Refresh of held state")
-    sendEvent(name:"lastHoldEpoch", value: 0, isStateChange: false, descriptionText: "Refresh of lastHoldEpoch")
-    sendEvent(name:"doubleTapped", value: 0, isStateChange: false, descriptionText: "Refresh of double-tapped state")
-
+void refresh() {
+    logging("refresh() model='${getDeviceDataByName('model')}'", 10)
+    
     getDriverVersion()
-    resetBatteryReplacedDate(forced=false)
-    setLogsOffTask(noLogWarning=true)
-
-    String model = setCleanModelNameWithAcceptedModels(newModelToSet=newModelToSet)
-    switch(model) {
-        case "lumi.sensor_switch":
-            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Xiaomi Button (WXKG01LM) detected: set to 5 buttons")
-            updateDataValue("physicalButtons", "1")
-            break
-        case "lumi.sensor_switch.aq2":
-            sendEvent(name:"numberOfButtons", value: 4, isStateChange: false, descriptionText: "Aqara Button (WXKG11LM) 2015 detected: set to 4 buttons")
-            updateDataValue("physicalButtons", "1")
-            break
-        case "lumi.remote.b1acn01":
-            sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara Button (WXKG11LM) 2018 detected: set to 3 buttons")
-            updateDataValue("physicalButtons", "1")
-            break
-        case "lumi.sensor_switch.aq3":
-            sendEvent(name:"numberOfButtons", value: 4, isStateChange: false, descriptionText: "Aqara Button (WXKG12LM) detected: set to 4 buttons")
-            updateDataValue("physicalButtons", "1")
-            break
-        case "lumi.sensor_86sw1lu":
-        case "lumi.sensor_86sw1":
-            sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara 1-button Light Switch (WXKG03LM - 2016) detected: set to 3 buttons")
-            updateDataValue("physicalButtons", "1")
-            break
-        case "lumi.sensor_86sw2Un":
-        case "lumi.sensor_86sw2":
-            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2016) detected: set to 9 buttons")
-            updateDataValue("physicalButtons", "3")
-            break
-        case "lumi.remote.b186acn01":
-            sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara 1-button Light Switch (WXKG03LM - 2018) detected: set to 3 buttons")
-            updateDataValue("physicalButtons", "1")
-            break
-        case "lumi.remote.b286acn01":
-            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2018) detected: set to 9 buttons")
-            updateDataValue("physicalButtons", "3")
-            break
-        case "lumi.remote.b286opcn01":
-            sendEvent(name:"numberOfButtons", value: 10, isStateChange: false, descriptionText: "Aqara Oppo 2 Button Remote (WXCJKG11LM) detected: set to 10 buttons")
-            updateDataValue("physicalButtons", "2")
-            break
-        case "lumi.remote.b486opcn01":
-            sendEvent(name:"numberOfButtons", value: 20, isStateChange: false, descriptionText: "Aqara Oppo 4 Button Remote (WXCJKG12LM) detected: set to 20 buttons")
-            updateDataValue("physicalButtons", "4")
-            break
-        case "lumi.remote.b686opcn01":
-            sendEvent(name:"numberOfButtons", value: 30, isStateChange: false, descriptionText: "Aqara Oppo 6 Button Remote (WXCJKG13LM) detected: set to 30 buttons")
-            updateDataValue("physicalButtons", "6")
-            break
-        default:
-            sendEvent(name:"numberOfButtons", value: 0, isStateChange: false, descriptionText: "UNKNOWN Button detected: set to 1 button")
-    }
     configurePresence()
     startCheckEventInterval()
+    resetBatteryReplacedDate(forced=false)
+    setLogsOffTask(noLogWarning=true)
+    
+    setCleanModelName(newModelToSet=null, acceptedModels=[
+        "lumi.sensor_magnet.aq2",
+        "lumi.sensor_magnet.agl01",
+        "lumi.sensor_magnet"
+    ])
 
-    ArrayList<String> cmd = []
-    logging("refresh cmd: $cmd", 1)
-    return cmd
+    //logging("refresh cmd: $cmd", 0)
 }
 
 void initialize() {
     logging("initialize()", 100)
-    refreshActual(null)
+    refresh()
+    configureDevice()
 }
 
 void installed() {
     logging("installed()", 100)
-    refreshActual(null)
+    refresh()
+    configureDevice()
+}
+
+void configureDevice() {
+    Integer endpointId = 1
+    ArrayList<String> cmd = []
+    cmd += zigbeeReadAttribute(0x0500, 0x0001)
+    cmd += zigbee.readAttribute(0x0000, [0x0001, 0x0004, 0x0005, 0x0006])
+    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0001 {${device.zigbeeId}} {}", "delay 200"]
+    cmd += zigbeeReadAttribute(0x0500, 0x0002)
+    cmd += zigbee.readAttribute(0x0001, [0x0020, 0x0021])
+    cmd += ["he cr 0x${device.deviceNetworkId} ${endpointId} 0x0001 0 0x10 0 0xE10 {}", "delay 200"]
+
+    sendZigbeeCommands(cmd)
 }
 
 void updated() {
     logging("updated()", 100)
     createAllButtonChildren()
-    refreshActual(null)
+    refresh()
 }
 
-String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
-    return setCleanModelName(newModelToSet=newModelToSet, acceptedModels=[
-        "lumi.sensor_switch.aq3",
-        "lumi.sensor_switch.aq2",
-        "lumi.sensor_switch",
-        "lumi.remote.b1acn01",
-        "lumi.sensor_86sw1lu",
-        "lumi.sensor_86sw1",
-        "lumi.sensor_86sw2Un",
-        "lumi.sensor_86sw2",
-        "lumi.remote.b186acn01",
-        "lumi.remote.b286acn01",
-        "lumi.remote.b286opcn01", 
-        "lumi.remote.b486opcn01",
-        "lumi.remote.b686opcn01"
-    ])
-}
-
-boolean isSwitchModel(String model=null) {
-    model = model != null ? model : getDeviceDataByName('model')
-    switch(model) {
-        case "lumi.sensor_86sw1lu":
-        case "lumi.sensor_86sw1":
-        case "lumi.sensor_86sw2Un":
-        case "lumi.sensor_86sw2":
-        case "lumi.remote.b186acn01":
-        case "lumi.remote.b286acn01":
+boolean isKnownModel() {
+    switch(getDeviceDataByName('model')) {
+        case "lumi.sensor_magnet":
+        case "lumi.sensor_magnet.aq2":
             return true
             break
         default:
@@ -272,57 +158,14 @@ boolean isSwitchModel(String model=null) {
     }
 }
 
-boolean isNonOppleModel(String model=null) {
-    model = model != null ? model : getDeviceDataByName('model')
-    switch(model) {
-        case "lumi.sensor_switch":
-        case "lumi.sensor_switch.aq2":
-        case "lumi.remote.b1acn01":
-        case "lumi.sensor_switch.aq3":
-        case "lumi.sensor_86sw1lu":
-        case "lumi.sensor_86sw1":
-        case "lumi.sensor_86sw2Un":
-        case "lumi.sensor_86sw2":
-        case "lumi.remote.b186acn01":
-        case "lumi.remote.b286acn01":
-            return true
-            break
-        default:
-            return false
-    }
-}
-
-boolean isOppleModel(String model=null) {
-    model = model != null ? model : getDeviceDataByName('model')
-    switch(model) {
-        case "lumi.remote.b286opcn01":
-        case "lumi.remote.b486opcn01":
-        case "lumi.remote.b686opcn01":
-            return true
-            break
-        default:
-            return false
-    }
-}
-
-boolean isNonSwitchModel(String model=null) {
-    model = model != null ? model : getDeviceDataByName('model')
-    switch(model) {
-        case "lumi.sensor_switch":
-        case "lumi.sensor_switch.aq2":
-        case "lumi.remote.b1acn01":
-        case "lumi.sensor_switch.aq3":
-            return true
-            break
-        default:
-            return false
-    }
+Integer getMINUTES_BETWEEN_EVENTS() {
+    return 140
 }
 
 ArrayList<String> parse(String description) {
-    // BEGIN:getGenericZigbeeParseHeader(loglevel=0)
-    //logging("PARSE START---------------------", 0)
-    //logging("Parsing: '${description}'", 0)
+    // BEGIN:getGenericZigbeeParseHeader(loglevel=1)
+    logging("PARSE START---------------------", 1)
+    logging("Parsing: '${description}'", 1)
     ArrayList<String> cmd = []
     Map msgMap = null
     if(description.indexOf('encoding: 4C') >= 0) {
@@ -376,163 +219,62 @@ ArrayList<String> parse(String description) {
         }
       }
     }
-    //logging("msgMap: ${msgMap}", 0)
-    // END:  getGenericZigbeeParseHeader(loglevel=0)
+    logging("msgMap: ${msgMap}", 1)
+    // END:  getGenericZigbeeParseHeader(loglevel=1)
 
-    String cModel = getDeviceDataByName('model')
-    
-    switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
-        case "0000_FFF0":
-            //logging("Unparsed event FFF0 - description:${description}", 0)
+    //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
 
-            break
-        case "0000_FF01":
-        case "0000_FF02":
-            if(msgMap["encoding"] == "4C") {
-                logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C) - description:${description} | parseMap:${msgMap}", 100)
-                parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
+    if(msgMap.containsKey("type") == true && msgMap["type"] == "zone") {
+        sendOpenCloseEvent(msgMap["statusInt"] == 1)
+    } else {
+        switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
+            case "0000_0001":
+                //logging("Cluster 0000 - description:${description} | parseMap:${msgMap}", 0)
+
+                break
+            case "0000_0004":
+                logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
                 
-                sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
-
-            } else if(msgMap["encoding"] == "41" || msgMap["encoding"] == "42") {
-                if(msgMap["encoding"] == "42") {
-                    msgMap = zigbee.parseDescriptionAsMap(description.replace('encoding: 42', 'encoding: 41'))
-                    msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=false)
-                }
-                logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42) - description:${description} | parseMap:${msgMap}", 100)
-                if(msgMap["value"].containsKey("battery")) {
-                    parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
-                }
-                sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
-
-            } else {
-                log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
-            }
-            break
-        case "FCC0_00F7":
-            msgMap["value"] = parseXiaomiStruct(msgMap["value"], isFCC0=true)
-            
-            logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - FCC0-00F7) - description:${description} | parseMap:${msgMap}", 1)
-            if(msgMap["value"].containsKey("battery")) {
-                parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
-            }
-            sendZigbeeCommands(zigbee.readAttribute(0x0000, 0x0001))
-            break
-        case "FCC0_00FC":
-            logging("KNOWN IGNORED event (Oppo Remote Event - FCC0) - description:${description} | parseMap:${msgMap}", 1)
-            
-            break
-        case "0000_0001":
-            logging("Application version (also requested when receiving hourly checkin) - description:${description} | parseMap:${msgMap}", 1)
-            
-            break
-        case "0000_0004":
-            logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-            break
-        case "0000_0005":
-            if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"] != [] && msgMap["additionalAttrs"][0]["encoding"] == "42") {
-                //logging("Redoing the parsing for additionalAttrs", 0)
-                msgMap = zigbee.parseDescriptionAsMap(description.replace('01FF42', '01FF41'))
-                msgMap["additionalAttrs"][0]["encoding"] = "42"
-                msgMap["additionalAttrs"][0]["value"] = parseXiaomiStruct(msgMap["additionalAttrs"][0]["value"], isFCC0=msgMap["additionalAttrs"][0]["attrId"]=="FCC0")
-            }
-            logging("Model name received - description:${description} | parseMap:${msgMap}", 1)
-            logging("New model to set: ${msgMap["value"]}", 1)
-            String model = setCleanModelNameWithAcceptedModels(newModelToSet=msgMap["value"])
-            if(isNonSwitchModel(model=model) == true) {
-                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0xFF02, [mfgCode: "0x115F"]))
-            } else if(isSwitchModel() == true) {
-                sendZigbeeCommands(zigbee.configureReporting(0x0000, 0xFF01, 0xff, 30, 600, 0x1, [mfgCode: "0x115F"], 800))
-            } else if(isOppleModel(model) == true) {
-                logging("Got Cluster 0000 attribute 0005 for $model", 1)
-                generalInitialize()
-            }
-            
-            if(msgMap.containsKey("additionalAttrs") && msgMap["additionalAttrs"] != [] && msgMap["additionalAttrs"][0]["encoding"] == "42") {
-                Map value = msgMap["additionalAttrs"][0]["value"]
-                if(value.containsKey("battery")) {
-                    parseAndSendBatteryStatus(value["battery"] / 1000.0)
-                }
-            }
-            
-            refreshActual(model)
-            break
-        case "0006_0000":
-        case "0006_8000":
-            logging("Description: ${description}", 1)
-            parseButtonEvent(msgMap)
-            
-            break
-        case "0012_0055":
-            if(isOppleModel() == true) {
-                logging("Button was pressed (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]}) | description:${description} | parseMap:${msgMap}", 1)
-                parseOppoButtonEvent(msgMap)
-            } else {
-                logging("Description: ${description}", 1)
-                parseButtonEvent(msgMap)
+                break
+            case "0001_0020":
+            case "0001_0021":
+                logging("Battery data - description:${description} | parseMap:${msgMap}", 100)
+                zigbee_sonoff_parseBatteryData(msgMap)
                 
-            }
-            break
-        default:
-            switch(msgMap["clusterId"]) {
-                case "0000":
-                case "0001":
-                case "0400":
-                    //logging("Broadcast catchall - description:${description} | parseMap:${msgMap}", 0)
-                    
-                    break
-                case "0006":
-                    logging("On/OFF Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
-                    log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
-                    oppleInit()
-                    break
-                case "0008":
-                    logging("Level Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
-                    log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
-                    oppleInit()
-                    break
-                case "FCC0":
-                    //logging("Aqara catchall - description:${description} | parseMap:${msgMap}", 0)
-                    if(msgMap["data"] == ["00"]) {
-                        logging("Button settings MIGHT be set correctly for your Opple Remote! Try them by pushing a button!", 100)
-                    }
-                    break
-                case "0300":
-                    logging("Color Control Cluster Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
-                    log.warn("Configuration not yet done, if the buttons don't work yet, first try pushing ONE button and wait for a bit. If that doesn't work re-pairing might be needed. Wait a little bit and don't click to fast!")
-                    oppleInit()
-                    break
-                case "0013":
-                    //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
-                    
-                    oppleInit()
+                break
+            case "0500_0001":
+                //logging("Cluster 0500 attribute 0001 - description:${description} | parseMap:${msgMap}", 0)
+                break
+            case "0500_0002":
+                logging("Cluster 0500 attribute 0002 - description:${description} | parseMap:${msgMap}", 1)
+                break
+            default:
+                switch(msgMap["clusterId"]) {
+                    case "0001":
+                        //logging("Broadcast catchall - description:${description} | parseMap:${msgMap}", 0)
+                        
+                        break
+                    case "0013":
+                        //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
+                        
+                        configureDevice()
 
-                    break
-                case "8005":
-                    //logging("Confirmation Cluster (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 0)
-                    break
-                case "8021":
-                    //logging("Result for Reporting configuration - description:${description} | parseMap:${msgMap}", 0)
-                    if(msgMap["data"][1] == "00") {
-                        logging("Setting of reporting configuration SUCCESSFUL!", 100)
-                    } else {
-                        log.warn("Setting of reporting configuration FAILED! Try pairing again...")
-                    }
-                    
-                    break
-                case "8004":
-                case "8032":
-                case "000A":
-                    //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
-                    break
-                default:
-                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
-                    break
-            }
-            break
+                        break
+                    case "8021":
+                        //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
+                        break
+                    default:
+                        if(description.startsWith("enroll request") == true) {
+                        } else {
+                            log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                        }
+                        break
+                }
+                break
+        }
     }
 
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=140) == false) {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     sendlastCheckinEvent(minimumMinutesToRepeat=30)
@@ -544,133 +286,57 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
-void oppleInit() {
-    if(isNonOppleModel() == false) {
-        logging("Sending init command for Opple Remote...", 100)
-        sendZigbeeCommands([
-            zigbeeReadAttribute(0x0000, 0x0001)[0],
-            zigbeeReadAttribute(0x0000, 0x0005)[0], "delay 200", 
-            zigbeeWriteAttribute(0xFCC0, 0x0009, 0x20, 0x01, [mfgCode: "0x115F"])[0], 
-            "delay 3000", 
-            zigbeeWriteAttribute(0xFCC0, 0x0009, 0x20, 0x01, [mfgCode: "0x115F"])[0],
-            "delay 3000", 
-            zigbeeWriteAttribute(0xFCC0, 0x0009, 0x20, 0x01, [mfgCode: "0x115F"])[0]
-        ])
-    }
+void reconnectEventDeviceSpecific() {
+    logging("reconnectEventDeviceSpecific() Contact", 1)
+    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
-boolean sendReleaseEvent(Integer btn, String logText=null, String descriptionText=null) {
-    if(enableReleaseEvents == null || enableReleaseEvents == true) {
-        logText = logText == null ? "Button $btn was released (same push event as held)" : logText
-        descriptionText = descriptionText == null ? "Button $btn was released" : descriptionText
-        logging(logText, 100)
-        sendEvent(name:"released", value: btn, isStateChange: true, descriptionText: descriptionText)
-        return true
-    } else {
-        return false
-    }
-}
-
-void parseButtonEvent(Map msgMap) {
-    Integer btn = Integer.parseInt(msgMap['value'], 16)
-    Integer endpoint = Integer.parseInt(msgMap['endpoint'], 16)
-    //logging("parseButtonEvent() (btn: ${btn}, attrId: ${msgMap["attrId"]}, endpoint: $endpoint, msgMap: $msgMap)", 0)
-    btn = btn == 18 ? 4 : btn
-
-    Integer totalButtons = device.currentValue('numberOfButtons')
-    Integer physicalButtons = getDeviceDataByName("physicalButtons") != null ? getDeviceDataByName("physicalButtons").toInteger() : 1
-    Integer btnModified = endpoint + ((btn-1) * physicalButtons)
-    logging("parseButtonEvent() (btn: $btn, btnModified: $btnModified, endpoint: $endpoint, physicalButtons: $physicalButtons, attrId: ${msgMap["attrId"]}, msgMap: $msgMap)", 1)
-    if((btn <= 4 && btn != 0 && ((isSwitchModel() && msgMap['attrId'] == '0000') || msgMap['attrId'] == '0055')) || (msgMap['attrId'] == '8000')) {
-        btnModified = btn <= 8 ? btnModified : 5
-        logging("Button $btnModified was pushed (t1)", 100)
-        if(btnModified <= physicalButtons) buttonPushed(btnModified)
-        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button was clicked $btn times")
-        if(btn == 2) {
-            logging("Button $endpoint was double tapped", 100)
-            buttonDoubleTapped(endpoint)
-            sendEvent(name:"doubleTapped", value: endpoint, isStateChange: true, descriptionText: "Button $endpoint was double tapped")
+void sendOpenCloseEvent(boolean openClose, sendAsStateChange=true) {
+    if(invertContact == null) invertContact = false
+    logging("sendOpenCloseEvent(openClose=$openClose) invertContact=$invertContact", 100)
+    if(openClose == invertContact) {
+        sendEvent(name:"contact", value: "closed", isStateChange: false, descriptionText: "Contact was Closed")
+        if(buttonDown(1, useEvent=true) == true) {
+            sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: sendAsStateChange)
         }
-    } else if(isSwitchModel() && btn == 0) {
-        btnModified = endpoint + (2 * physicalButtons)
-        logging("Button $endpoint was held (push event: $btnModified)", 100)
-        buttonHeld(endpoint)
-        sendEvent(name:"held", value: endpoint, isStateChange: true, descriptionText: "Button $endpoint was held")
-        sendReleaseEvent(endpoint)
-        logging("Button $btnModified was pushed (t2)", 100)
-        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $endpoint was held")
+        if(logOpenCloseDatetime == true) {
+            sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+        }
     } else {
-        if(btn == 0 || btn == 16) {
-            if(getDeviceDataByName('model') == "lumi.sensor_switch.aq2") {
-                logging("Button 1 was pushed (t4)", 100)
-                buttonPushed(1)
-                sendEvent(name:"pushed", value: 1, isStateChange: true, descriptionText: "Button 1 was pushed")     
-            } else {
-                buttonDown(1)
-                sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: true)
-            }
-        } else {
+        sendEvent(name:"contact", value: "open", isStateChange: false, descriptionText: "Contact was Opened")
+        if(buttonPushed(1, momentaryRelease=true) == true) {
             Long lastHold = 0
             String lastHoldEpoch = device.currentValue('lastHoldEpoch', true) 
             if(lastHoldEpoch != null) lastHold = lastHoldEpoch.toLong()
-            sendEvent(name: "lastHoldEpoch", value: 0, isStateChange: true)
+            sendEvent(name: "lastHoldEpoch", value: 0, isStateChange: sendAsStateChange)
             Long millisHeld = now() - lastHold
             Long millisForHoldLong = millisForHold == null ? 1000 : millisForHold.toLong()
             if(lastHold == 0) millisHeld = 0
             logging("millisHeld = $millisHeld, millisForHold = $millisForHoldLong", 1)
             if(millisHeld > millisForHoldLong) {
-                if(useTimerForHeld != true) {
-                    logging("Button 1 was held", 100)
-                    buttonHeld(1)
-                    sendEvent(name:"held", value: 1, isStateChange: true, descriptionText: "Button 1 was held")
-                    String model = model != null ? model : getDeviceDataByName('model')
-                    Integer heldButton = 3
-                    if(model == "lumi.sensor_switch") {
-                        heldButton = 6
-                    }
-                    sendReleaseEvent(1)
-                    logging("Button $heldButton was pushed (from hold event)", 100)
-                    sendEvent(name:"pushed", value: heldButton, isStateChange: true, descriptionText: "Button $heldButton was pushed (from hold event)")
-                }
-            } else {
-                logging("Button 1 was pushed (t3)", 100)
-                buttonPushed(1)
-                sendEvent(name:"pushed", value: 1, isStateChange: true, descriptionText: "Button 1 was pushed")                
+                logging("Button 1 was held", 100)
+                buttonHeld(1)
             }
         }
-    }
-}
-
-void setButtonAsHeld(Map data) {
-
-}
-
-void parseOppoButtonEvent(Map msgMap) {
-    Integer btn = Integer.parseInt(msgMap['endpoint'], 16)
-    Integer type = Integer.parseInt(msgMap['value'], 16)
-    type = type == 0 ? 4 : type == 255 ? 5 : type
-    Integer physicalButtons = getDeviceDataByName("physicalButtons") != null ? getDeviceDataByName("physicalButtons").toInteger() : 1
-    Integer btnModified = btn + ((type - 1) * physicalButtons)
-    logging("parseOppoButtonEvent() (btn: $btn, btnModified: $btnModified, type: $type, physicalButtons: $physicalButtons)", 1)
-    
-    if(type == 2) {
-        logging("Button $btn was double tapped", 100)
-        buttonDoubleTapped(btn)
-        sendEvent(name:"doubleTapped", value: btn, isStateChange: true, descriptionText: "Button $btn was double tapped")
-    }
-    if(type >= 1 && type <= 3) {
-        logging("Button $btn was pushed $type time(s) (push event: $btnModified)", 100)
-        if(type == 1) buttonPushed(btn)
-        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $btn was pushed $type time(s)")
-    } else if(type == 4) {
-        logging("Button $btn was held (push event: $btnModified)", 100)
-        buttonHeld(btn)
-        sendEvent(name:"held", value: btn, isStateChange: true, descriptionText: "Button $btn was held")
-        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $btn was held")
-    } else if(type == 5) {
-        if(sendReleaseEvent(btn, "Button $btn was released (push event: $btnModified)")) {
-            sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $btn was released")
+        if(logOpenCloseDatetime == true) {
+            sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
         }
+    }
+}
+
+void resetToOpen() {
+    logging("resetToOpen()", 1)
+    sendEvent(name:"contact", value: "open", isStateChange: true, descriptionText: "Contact was Reset to Open")
+    if(logOpenCloseDatetime == true) {
+        sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+    }
+}
+
+void resetToClosed() {
+    logging("resetToClosed()", 1)
+    sendEvent(name:"contact", value: "closed", isStateChange: true, descriptionText: "Contact was Reset to Closed")
+    if(logOpenCloseDatetime == true) {
+        sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
     }
 }
 
@@ -692,9 +358,9 @@ void parseOppoButtonEvent(Map msgMap) {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
+    comment = "Works with model SNZB-04."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0701"
+    String version = "v0.5.0.0701"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1401,6 +1067,25 @@ void startCheckEventInterval() {
 }
 // END:  getHelperFunctions('zigbee-generic')
 
+// BEGIN:getHelperFunctions('zigbee-sonoff')
+void zigbee_sonoff_parseBatteryData(Map msgMap) {
+    BigDecimal bat = null
+    if(msgMap["attrId"] == "0021") {
+        bat = msgMap['valueParsed'] / 2.0
+    } else if(msgMap.containsKey("additionalAttrs") == true) {
+        msgMap["additionalAttrs"].each() {
+            if(it.containsKey("attrId") == true && it['attrId'] == "0021") {
+                bat = Integer.parseInt(it['value'], 16) / 2.0
+            }
+        }
+    }
+    if(bat != null) {
+        bat = bat.setScale(1, BigDecimal.ROUND_HALF_UP)
+        sendEvent(name:"battery", value: bat , unit: "%", isStateChange: false)
+    }
+}
+// END:  getHelperFunctions('zigbee-sonoff')
+
 // BEGIN:getHelperFunctions('styling')
 String styling_addTitleDiv(title) {
     return '<div class="preference-title">' + title + '</div>'
@@ -2038,3 +1723,4 @@ void runLevelChange(String deviceID, String methodName, BigDecimal level, Intege
     }
 }
 // END:  getHelperFunctions('virtual-child-device-for-button')
+

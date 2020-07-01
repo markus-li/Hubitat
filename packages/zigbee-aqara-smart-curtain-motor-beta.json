@@ -2,14 +2,14 @@
   "packageName": "Aqara Smart Curtain Motor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-06-12",
+  "dateReleased": "2020-07-01",
   "apps": [],
   "drivers": [
     {
       "id": "02033750-0a67-58f2-80cc-d92760d3b593",
       "internalId": 801,
       "name": "Zigbee - Aqara Smart Curtain Motor",
-      "betaVersion": "v1.0.2.0613b",
+      "betaVersion": "v1.0.2.0701b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-smart-curtain-motor-expanded.groovy",
       "required": true
