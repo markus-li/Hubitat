@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.5.0.0626b
+ *  Version: v0.5.0.0629b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -153,7 +153,6 @@ void updated() {
 }
 
 void configureDevice() {
-    /* Binding commands borrowed (but modified) from Guyeebas driver */
     Integer endpointId = 1
     ArrayList<String> cmd = []
     cmd += zigbee.readAttribute(0x0000, [0x0001, 0x0004, 0x0005, 0x0006])
@@ -460,7 +459,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with model SNZB-01."
     if(comment != "") state.comment = comment
-    String version = "v0.5.0.0626b"
+    String version = "v0.5.0.0629b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

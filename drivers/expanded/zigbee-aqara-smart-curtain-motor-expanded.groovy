@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0626b
+ *  Version: v1.0.2.0701b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 /* 
     Inspired by a driver from shin4299 which can be found here:
-    https:
+    github.com/shin4299/XiaomiSJ/blob/master/devicetypes/shinjjang/xiaomi-curtain-b1.src/xiaomi-curtain-b1.groovy
 */
 
 // BEGIN:getDefaultImports()
@@ -233,7 +233,7 @@ ArrayList<String> parse(String description) {
             if(msgMap["value"] == "00" && getDeviceDataByName('model') == "lumi.curtain") {
                 logging("HANDLED KNOWN 0A command event with Value 00 - description:${description} | parseMap:${msgMap}", 1)
                 logging("Sending request for the actual position...", 1)
-                cmd += zigbee.readAttribute(CLUSTER_WINDOW_POSITION, 0x0055)
+                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_WINDOW_POSITION, 0x0055))
             } else {
                 //logging("Unhandled KNOWN 0A command event - description:${description} | parseMap:${msgMap}", 0)
             }
@@ -274,23 +274,23 @@ ArrayList<String> parse(String description) {
         //logging("KNOWN event (Xiaomi/Aqara specific data structure) - description:${description} | parseMap:${msgMap}", 0)
         
     } else if(msgMap["cluster"] == "000D" && msgMap["attrId"] == "0055") {
-        logging("cluster 000D", 1)
+        logging("Cluster 000D position event - description:${description} | parseMap:${msgMap}", 100)
 		if(msgMap["size"] == "16" || msgMap["size"] == "1C" || msgMap["size"] == "10") {
 			Long theValue = Long.parseLong(msgMap["value"], 16)
 			BigDecimal floatValue = Float.intBitsToFloat(theValue.intValue());
-			logging("GOT POSITION DATA: long => ${theValue}, BigDecimal => ${floatValue}", 1)
+			logging("GOT POSITION DATA: long => ${theValue}, BigDecimal => ${floatValue}", 100)
 			curtainPosition = floatValue.intValue()
             if(getDeviceDataByName('model') != "lumi.curtain" && msgMap["command"] == "0A" && curtainPosition == 0) {
-                logging("Sending a request for the actual position...", 1)
-                cmd += zigbee.readAttribute(CLUSTER_WINDOW_POSITION, 0x0055)
+                logging("Sending a request for the actual position...", 100)
+                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_WINDOW_POSITION, 0x0055))
 
             } else {
-                logging("SETTING POSITION: long => ${theValue}, BigDecimal => ${floatValue}", 1)
+                logging("SETTING POSITION: long => ${theValue}, BigDecimal => ${floatValue}", 100)
                 positionEvent(curtainPosition)
             }
 		} else if(msgMap["size"] == "28" && msgMap["value"] == "00000000") {
-			logging("Requesting Position", 1)
-			cmd += zigbee.readAttribute(CLUSTER_WINDOW_POSITION, POSITION_ATTR_VALUE)
+			logging("Requesting Position", 100)
+			sendZigbeeCommands(zigbee.readAttribute(CLUSTER_WINDOW_POSITION, POSITION_ATTR_VALUE))
 		}
 	} else if(msgMap["cluster"] == "0001" && msgMap["attrId"] == "0021") {
         if(getDeviceDataByName('model') != "lumi.curtain") {
@@ -299,7 +299,6 @@ ArrayList<String> parse(String description) {
             logging("Battery: ${value}%, ${bat}", 100)
             sendEvent(name:"battery", value: value)
         }
-
 	} else {
 		log.warn "Unhandled Event - description:${description} | msgMap:${msgMap}"
 	}
@@ -537,7 +536,7 @@ ArrayList<String> getBattery() {
  *  -----------------------------------------------------------------------------
  *  Everything below here are LIBRARY includes and should NOT be edited manually!
  *  -----------------------------------------------------------------------------
- *  --- Nothings to edit here, move along! --------------------------------------
+ *  --- Nothing to edit here, move along! ---------------------------------------
  *  -----------------------------------------------------------------------------
  */
 
@@ -545,7 +544,7 @@ ArrayList<String> getBattery() {
 private String getDriverVersion() {
     comment = "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0626b"
+    String version = "v1.0.2.0701b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

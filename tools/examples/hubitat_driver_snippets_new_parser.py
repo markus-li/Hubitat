@@ -248,6 +248,15 @@ if (result.containsKey("FanSpeed")) {
 }
 """
 
+def getTasmotaNewParserForShutter():
+    return """
+// Shutter parsing
+if (result.containsKey("Shutter1")) {
+    logging("parser: Shutter1: $result.Shutter1", 1)
+    missingChild = callChildParseByTypeId("SHUTTER", [[name:"shutter", value:result.Shutter1.clone()]], missingChild)
+}
+"""
+
 def getTasmotaNewParserForEnergyMonitor():
     return """
 // Standard Energy Monitor Data parsing

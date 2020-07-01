@@ -403,8 +403,9 @@ def main():
         {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model SJCGQ11LM.' },
         
+        # Zigbee - Not ready for release
         {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)' },
+         'comment': 'Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)', 'publish': False },
         
         # Zigbee - Sonoff
         {'id': 1601, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-button.groovy', 'version': default_zigbee_version_sonoff,
@@ -415,6 +416,10 @@ def main():
          'comment': 'Works with model SNZB-03.' },
         {'id': 1604, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-temperature-humidity-sensor.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-02.' },
+
+        # Zigbee - Tuya
+        {'id': 1633, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-tuya-valve.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with Tuya Valves.', 'publish': False },
 
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
@@ -511,10 +516,10 @@ def main():
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
-        {'id': 1409, 'id_3': 0, 'file': 'dashboard-background-image.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
-
         
-
+        
+        # Zigbee - Tuya
+        {'id': 1633}, # Tuya Valve
         
         
         # Zigbee - Sonoff
@@ -522,7 +527,8 @@ def main():
         {'id': 1602},
         {'id': 1603},
         {'id': 1604},
-        
+
+        {'id': 1409, 'id_3': 0, 'file': 'dashboard-background-image.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
 
         # RF/IR Drivers
         #{'id': 648},
@@ -670,27 +676,31 @@ def main():
             newD['name'] = newD['name'][9:]
             if(not 'documentationLink' in newD):
                 newD['documentationLink'] = None
+            if(not 'publish' in newD):
+                newD['publish'] = True
             if(not 'communityLink' in newD):
                 newD['communityLink'] = 'https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus'
+            print("Zigbee package: " + str(newD))
+            
+            if(newD['publish'] == True):
+                zigbee_pkg = HubitatPackageManagerPackage(newD['name'], "Integrations", 
+                    "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/" + newD['filestem'] + ".json",
+                    newD['comment'], isBeta=is_beta,
+                    documentationLink=newD['documentationLink'], 
+                    communityLink=newD['documentationLink'],
+                    betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/" + newD['filestem'] + "-beta.json")
 
-            zigbee_pkg = HubitatPackageManagerPackage(newD['name'], "Integrations", 
-                "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/" + newD['filestem'] + ".json",
-                newD['comment'], isBeta=is_beta,
-                documentationLink=newD['documentationLink'], 
-                communityLink=newD['documentationLink'],
-                betaLocation="https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/" + newD['filestem'] + "-beta.json")
+                zigbee_pkg.addDriver(newD['nameFull'], newD['version'], newD['namespace'], 
+                    base_raw_repo_url + newD['file'], True, newD['id'], id=None)
 
-            zigbee_pkg.addDriver(newD['nameFull'], newD['version'], newD['namespace'], 
-                base_raw_repo_url + newD['file'], True, newD['id'], id=None)
+                pm.addPackage(zigbee_pkg)
+                print("Zigbee package: " + newD['nameFull'])
+                if(branch_name == 'release'):
+                    zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + ".json", extraInput="packages/" + newD['filestem'] + ".json")
+                else:
+                    zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + "-beta.json", extraInput="packages/" + newD['filestem'] + ".json")
 
-            pm.addPackage(zigbee_pkg)
-            print("Zigbee package: " + newD['nameFull'])
-            if(branch_name == 'release'):
-                zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + ".json", extraInput="packages/" + newD['filestem'] + ".json")
-            else:
-                zigbee_pkg.buildManifest(output="packages/" + newD['filestem'] + "-beta.json", extraInput="packages/" + newD['filestem'] + ".json")
-
-            zigbee_pkgs.append(zigbee_pkg)
+                zigbee_pkgs.append(zigbee_pkg)
     #print(zigbee_pkgs)
 
 

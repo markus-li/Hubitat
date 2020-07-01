@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0626b
+ *  Version: v0.7.1.0701b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ metadata {
         capability "Actuator"
         capability "PowerMeter"
         capability "PushableButton"
+        capability "ReleasableButton"
         capability "DoubleTapableButton"
         capability "TemperatureMeasurement"
         
@@ -85,6 +86,12 @@ metadata {
 
         fingerprint profileId: "0104", inClusters: "0000,0004,0003,0006,0010,0005,000A,0001,0002", outClusters: "0019,000A", manufacturer: "LUMI", model: "lumi.switch.b3nacn02", application: "3D", deviceJoinName: "Aqara D1 Double Relay"
 
+        fingerprint profileId:"0104", endpointId:"02", inClusters:"0000,0003,0004,0005,0006,0012,FCC0", model:"lumi.switch.b1lacn02", manufacturer:"LUMI"
+
+        fingerprint profileId:"0104", endpointId:"02", inClusters:"0000,0003,0004,0005,0006,0012,FCC0", model:"lumi.switch.b2lacn02", manufacturer:"LUMI"
+
+        fingerprint profileId:"0104", endpointId:"02", inClusters:"0000,0003,0004,0005,0006,0012,FCC0", model:"lumi.switch.l3acn3", manufacturer:"LUMI"
+        
         }
 
     preferences {
@@ -129,6 +136,7 @@ Integer refresh(boolean connectButtons=false) {
 
     String model = setCleanModelNameWithAcceptedModels(newModelToSet=null)
     Integer physicalButtons = 0
+    Integer buttonCombos = 0
     switch(model) {
         case "lumi.ctrl_ln1.aq1":
             sendEvent(name:"numberOfButtons", value: 2, isStateChange: false, descriptionText: "Aqara Switch (QBKG11LM) detected: set to 2 buttons (physical 1)")
@@ -137,10 +145,21 @@ Integer refresh(boolean connectButtons=false) {
         case "lumi.ctrl_ln2.aq1":
             sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (QBKG12LM) detected: set to 5 buttons (physical 2)")
             physicalButtons = 2
+            buttonCombos = 1
+            break
+        case "lumi.ctrl_neutral1":
+            sendEvent(name:"numberOfButtons", value: 2, isStateChange: false, descriptionText: "Aqara Switch (QBKG04LM) detected: set to 2 buttons (physical 1)")
+            physicalButtons = 1
+            break
+        case "lumi.ctrl_neutral2":
+            sendEvent(name:"numberOfButtons", value: 6, isStateChange: false, descriptionText: "Aqara Switch (QBKG03LM) detected: set to 6 buttons (physical 2)")
+            physicalButtons = 2
+            buttonCombos = 1
             break
         case "lumi.relay.c2acn01":
             sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (LLZKMK11LM) detected: set to 5 buttons (physical 2)")
             physicalButtons = 2
+            buttonCombos = 1
             break
         case "lumi.switch.b1nacn02":
             sendEvent(name:"numberOfButtons", value: 2, isStateChange: false, descriptionText: "Aqara Switch (???) detected: set to 2 buttons (physical 1)")
@@ -149,16 +168,33 @@ Integer refresh(boolean connectButtons=false) {
         case "lumi.switch.b2nacn02":
             sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (QBKG24LM) detected: set to 5 buttons (physical 2)")
             physicalButtons = 2
+            buttonCombos = 1
             break
         case "lumi.switch.b3nacn02":
-            sendEvent(name:"numberOfButtons", value: 7, isStateChange: false, descriptionText: "Aqara Switch (???) detected: set to 7 buttons (physical 3)")
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara Switch (???) detected: set to 9 buttons (physical 3)")
             physicalButtons = 3
+            buttonCombos = 3
+            break
+        case "lumi.switch.b1lacn02":
+            sendEvent(name:"numberOfButtons", value: 2, isStateChange: false, descriptionText: "Aqara Switch (QBKG21LM) detected: set to 2 buttons (physical 1)")
+            physicalButtons = 1
+            break
+        case "lumi.switch.b2lacn02":
+            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (QBKG22LM) detected: set to 5 buttons (physical 2)")
+            physicalButtons = 2
+            buttonCombos = 1
+            break
+        case "lumi.switch.l3acn3":
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara Switch (QBKG25LM) detected: set to 9 buttons (physical 3)")
+            physicalButtons = 3
+            buttonCombos = 3
             break
         default:
             sendEvent(name:"numberOfButtons", value: 0, isStateChange: false, descriptionText: "UNKNOWN Button detected: set to 1 button")
             updateDataValue("physicalButtons", "0")
     }
     updateDataValue("physicalButtons", "$physicalButtons")
+    updateDataValue("buttonCombos", "$buttonCombos")
 
     switch(physicalButtons) {
         case 3:
@@ -221,6 +257,9 @@ String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
         "lumi.ctrl_ln2.aq1",
         "lumi.switch.b1nacn02",
         "lumi.switch.b2nacn02",
+        "lumi.switch.b3nacn02",
+        "lumi.switch.b1nacn02",
+        "lumi.switch.b2nacn02",
         "lumi.switch.b3nacn02"
     ])
 }
@@ -262,6 +301,23 @@ boolean isD1NeutralSwitch(String model=null) {
     }
 }
 
+boolean isD1NonNeutralSwitch(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "lumi.switch.b1lacn02":
+        case "lumi.switch.b2lacn02":
+        case "lumi.switch.l3acn3":
+            return true
+            break
+        default:
+            return false
+    }
+}
+
+boolean isD1Switch(String model=null) {
+    return (isD1NeutralSwitch(model) || isD1NonNeutralSwitch(model))
+}
+
 boolean isKnownModel(String model=null) {
     model = model != null ? model : getDeviceDataByName('model')
     switch(model) {
@@ -272,6 +328,9 @@ boolean isKnownModel(String model=null) {
         case "lumi.switch.b1nacn02":
         case "lumi.switch.b2nacn02":
         case "lumi.switch.b3nacn02":
+        case "lumi.switch.b1lacn02":
+        case "lumi.switch.b2lacn02":
+        case "lumi.switch.l3acn3":
             return true
             break
         default:
@@ -341,6 +400,7 @@ ArrayList<String> parse(String description) {
     
     //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
 
+    String model = getDeviceDataByName('model')
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_FF01":
             if(msgMap["encoding"] == "42") {
@@ -351,7 +411,7 @@ ArrayList<String> parse(String description) {
                 logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 100)
                 sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
             }
-            if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+            if(isKnownModel() == true && isD1Switch() == false) {
                 log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
             }
 
@@ -382,8 +442,39 @@ ArrayList<String> parse(String description) {
             break
         case "0006_0000":
             logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 100)
-            if(isD1NeutralSwitch() == true) {
-                sendOnOffEvent(Integer.parseInt(msgMap['endpoint'], 16), msgMap['valueParsed'])
+            Integer endpoint = Integer.parseInt(msgMap["endpoint"], 16)
+            Integer button = null
+            Integer physicalButtons = Integer.parseInt(getDeviceDataByName('physicalButtons'))
+            Integer usableButtons = physicalButtons == 1 ? 1 : physicalButtons + 1
+            if(isD1Switch() == true) {
+                sendOnOffEvent(endpoint, msgMap['valueParsed'])
+            } else if(isOldNoNeutralSwitch() == true) {
+                if(endpoint == 2 || endpoint == 3) {
+                    if(msgMap['valueParsed'] == true) {
+                        logging("Turning ON relay ${endpoint-1} (endpoint: $endpoint)", 100)
+                    } else {
+                        logging("Turning OFF relay ${endpoint-1} (endpoint: $endpoint)", 100)
+                    }
+                    sendOnOffEvent(endpoint-1, msgMap['valueParsed'])
+
+                } else {
+                    button = endpoint - 3
+                    if(msgMap.containsKey("additionalAttrs") == true && msgMap["additionalAttrs"][0]["value"] == "01") {
+                        logging("Pushed button $button (endpoint: $endpoint)", 100)
+                        sendEvent(name:"pushed", value: button, isStateChange: true, descriptionText: "Button $button was tapped 1 time")
+
+                    } else {
+                        if(msgMap["value"] == "01") {
+                            logging("Released button $button (endpoint: $endpoint)", 100)
+                            sendEvent(name:"released", value: button, isStateChange: true, descriptionText: "Button $button was released")
+
+                        } else {
+                            logging("Held button $button (endpoint: $endpoint, usableButtons: $usableButtons)", 100)
+                            sendEvent(name:"held", value: button, isStateChange: true, descriptionText: "Button $button was held")
+                            sendEvent(name:"pushed", value: usableButtons + button, isStateChange: true, descriptionText: "Button $button was held")
+                        }
+                    }
+                }
             } else {
                 log.warn("Cluster 0x0006 NOT YET IMPLEMENTED for this model ($model) - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
             }
@@ -399,7 +490,7 @@ ArrayList<String> parse(String description) {
                 logging("SKIP WATT - description:${description} | parseMap:${msgMap}", 1)
             }
 
-            if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+            if(isKnownModel() == true && isD1Switch() == false) {
                 log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
             }
             
@@ -409,8 +500,19 @@ ArrayList<String> parse(String description) {
             Integer taps = msgMap["valueParsed"]
             Integer endpoint = Long.parseLong(msgMap["endpoint"], 16)
             Integer physicalButtons = getDeviceDataByName('physicalButtons') != null ? getDeviceDataByName('physicalButtons').toInteger() :  0
-            Integer physicalButton = endpoint - 4
-            Integer button = physicalButton + ((taps - 1) * (physicalButtons + 1))
+            Integer physicalButton = endpoint
+            Integer buttonCombos = getDeviceDataByName('buttonCombos') != null ? getDeviceDataByName('buttonCombos').toInteger() :  0
+            if(isD1NeutralSwitch() == true) {
+                physicalButton -= 4
+            } else if(isD1NonNeutralSwitch() == true) {
+                physicalButton -= 40
+                if(physicalButton > 10) {
+                    physicalButton -= 10
+                    physicalButton += physicalButtons
+                }
+            }
+
+            Integer button = physicalButton + ((taps - 1) * (physicalButtons + buttonCombos))
             logging("Multistate - endpoint: $endpoint, taps: $taps, physicalButton: $physicalButton, physicalButtons: $physicalButtons, button: $button", 100)
             logging("Button $button was pushed", 100)
             sendEvent(name:"pushed", value: button, isStateChange: true, descriptionText: "Button $physicalButton was tapped $taps time(s)")
@@ -418,7 +520,7 @@ ArrayList<String> parse(String description) {
                 logging("Button $physicalButton was double tapped", 100)
                 sendEvent(name:"doubleTapped", value: physicalButton, isStateChange: true, descriptionText: "Button $physicalButton was double tapped")
             }
-            if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+            if(isKnownModel() == true && isD1Switch() == false) {
                 log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
             }
             
@@ -430,7 +532,7 @@ ArrayList<String> parse(String description) {
                 case "0006":
                     logging("Power Cluster 0006 catchall - description:${description} | parseMap:${msgMap}", 100)
                     sendOnOffEvent(Integer.parseInt(msgMap['sourceEndpoint'], 16), msgMap['data'][0] == '01')
-                    if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+                    if(isKnownModel() == true && isD1Switch() == false) {
                         log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
                     }
 
@@ -441,7 +543,7 @@ ArrayList<String> parse(String description) {
                         logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 1)
                         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
                     }
-                    if(isKnownModel() == true && isD1NeutralSwitch() == false) {
+                    if(isKnownModel() == true && isD1Switch() == false) {
                         log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
                     }
                     
@@ -449,6 +551,9 @@ ArrayList<String> parse(String description) {
                 case "0013":
                     //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
 
+                    break
+                case "8021":
+                    //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
                     break
                 default:
                     log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
@@ -507,7 +612,9 @@ String buildChildDeviceId(Integer relayId) {
 }
 
 Integer getRelayIdFromChildId(String childId) {
-    return childId.split('-')[1].toInteger()
+    Integer relayId = childId.split('-')[1].toInteger()
+    if(isOldNoNeutralSwitch() == true) relayId += 1
+    return relayId
 }
 
 void createChildDevice(String id) {
@@ -595,7 +702,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0626b"
+    String version = "v0.7.1.0701b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
