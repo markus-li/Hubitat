@@ -408,13 +408,13 @@ def main():
          'comment': 'Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)', 'publish': False },
         
         # Zigbee - Sonoff
-        {'id': 1601, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-button.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1601, 'id_2': 424, 'id_3': 0, 'file': 'zigbee-sonoff-button.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-01.' },
-        {'id': 1602, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-contact-sensor.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1602, 'id_2': 425, 'id_3': 0, 'file': 'zigbee-sonoff-contact-sensor.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-04.' },
-        {'id': 1603, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-motion-sensor.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1603, 'id_2': 426, 'id_3': 0, 'file': 'zigbee-sonoff-motion-sensor.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-03.' },
-        {'id': 1604, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-sonoff-temperature-humidity-sensor.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1604, 'id_2': 427, 'id_3': 0, 'file': 'zigbee-sonoff-temperature-humidity-sensor.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-02.' },
 
         # Zigbee - Tuya
@@ -523,10 +523,10 @@ def main():
         
         
         # Zigbee - Sonoff
-        {'id': 1601},
-        {'id': 1602},
-        {'id': 1603},
-        {'id': 1604},
+        {'id': 1601}, # Sonoff Button
+        {'id': 1602}, # Sonoff Contact
+        {'id': 1603}, # Sonoff Motion
+        {'id': 1604}, # Sonoff T&H
 
         {'id': 1409, 'id_3': 0, 'file': 'dashboard-background-image.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
 
@@ -574,6 +574,12 @@ def main():
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1121}, # Xiaomi/Aqara Button/Switch
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
+
+        # Zigbee - Sonoff
+        {'id': 1601}, # Sonoff Button
+        {'id': 1602}, # Sonoff Contact
+        {'id': 1603}, # Sonoff Motion
+        {'id': 1604}, # Sonoff T&H
     ]
     #driver_files_active_2 = []
     driver_files_private_active_2 = [

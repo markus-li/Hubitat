@@ -287,6 +287,17 @@ input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displ
 input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
 """
 
+def getDefaultMetadataPreferencesForContactSensor():
+    return """
+// Default Preferences for Contact Sensor
+input(name: "invertContact", type: "bool", title: styling_addTitleDiv("Invert open/close"), description: styling_addDescriptionDiv("When open show as closed and vice versa (default: false)"), defaultValue: false)
+input(name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for the contact sensor"), 
+            description: styling_addDescriptionDiv("Create a child device for the contact sensor. If changing from Button to Switch or vice versa you need to delete the child device manually for the change to work."),
+            options: ["None", "1 virtual button", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None")
+input(name: "switchMirror", type: "bool", title: styling_addTitleDiv("Switch Mirrors open/close"), description: styling_addDescriptionDiv("Switch mirrors the Open(On) / Closed(Off) state (default: false)"), defaultValue: false)
+input(name: "logOpenCloseDatetime", type: "bool", title: styling_addTitleDiv("Log Open/Close Time"), description: styling_addDescriptionDiv("Logs the date and time of when the last Open/Closed event occured (default: false)"), defaultValue: false)
+"""
+
 def getDefaultMetadataPreferencesForParentDevices(numSwitches=1):
     return '''
 // Default Preferences for Parent Devices

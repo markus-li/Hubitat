@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0625Tb
+ *  Version: v1.0.2.0630Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ metadata {
         input(name: "hideDangerousCommands", type: "bool", title: styling_addTitleDiv("Hide Dangerous Commands"), description: styling_addDescriptionDiv("Hides Dangerous Commands, such as 'Delete Children'."), defaultValue: true, displayDuringSetup: false, required: false)
         input(name: "disableCSS", type: "bool", title: styling_addTitleDiv("Disable CSS"), description: styling_addDescriptionDiv("CSS makes the driver more user friendly. Disable the use of CSS in the driver by enabling this. Does NOT affect HE resource usage either way."), defaultValue: false, displayDuringSetup: false, required: false)
         // END:  getDefaultMetadataPreferencesLast()
+        
 	}
 
     // BEGIN:getMetadataCustomizationMethods()
@@ -515,29 +516,37 @@ TreeMap getDeviceConfigurations() {
         [typeId: 'tuyamcu-znsn-wifi-curtain-wall-panel',
         comment: 'NOT GENERIC - read the instructions',
         name: 'TuyaMCU ZNSN Wifi Curtain Wall Panel',
-        module: 54,
+        template: '{"NAME":"ZNSN Curtain","GPIO":[0,107,0,108,21,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}',
         installCommands: [["WebLog", "2"],
                         ['SetOption66', "1"],
-                        ['Mem1', '100'],
-                        ['Mem2', '11'],
-                        ['Mem3', '1'],
-                        ['Mem4', '9'],
-                        ['Mem5', '1'],
-                        ['Delay', '15'],
-                        ['Rule1', 'ON Dimmer#State DO Mem1 %value%; ENDON'],
-                        ['Rule1', '+ ON TuyaReceived#Data=55AA00070005650400010277 DO Backlog Var1 %mem1%; Var2 Go; Var5 C; Add1 %mem2%; Sub1 %mem4%; Var4 %mem2%; Event Go; ENDON'],
-                        ['Rule1', '+ ON Event#Go DO Backlog Dimmer %var1%; Event %var5%%var1%; Event %var2%2; ENDON'],
-                        ['Rule1', '+ ON Event#Go2 DO Backlog Add1 %var4%; Delay %mem3%; Event %var1%; Event %var2%;  ENDON'],
-                        ['Rule1', '+ ON Event#O-7 DO Var2 sC; ENDON ON Event#O-8 DO Var2 sC; ENDON ON Event#O-9 DO Var2 sC; ENDON ON Event#O-10 DO Var2 sC; ENDON ON Event#O-11 DO Var2 sC; ENDON'],
-                        ['Rule1', '1'],
-                        ['Rule2', 'ON TuyaReceived#Data=55AA00070005650400010176 DO Backlog Var1 %mem1%; Var2 Go; Var5 O; Sub1 %mem2%; Add1 %mem4%; Var4 %mem2%; Add4 %mem5%; Mult4 -1; Event Go; ENDON'],
-                        ['Rule2', '+ ON Event#sC DO Backlog Var2 sC2; Event sC2; ENDON'],
-                        ['Rule2', '+ ON Event#sC2 DO Backlog Var2 sC2; TuyaSend4 101,1; ENDON'],
-                        ['Rule2', '+ ON TuyaReceived#Data=55AA00070005650400010075 DO Var2 sC3; ENDON'],
-                        ['Rule2', '+ ON Event#C107 DO Var2 sC; ENDON ON Event#C108 DO Var2 sC; ENDON ON Event#C109 DO Var2 sC; ENDON ON Event#C110 DO Var2 sC; END ON ON Event#C111 DO Var2 sC; ENDON'],
-                        ['Rule2', '1'],
-                        ['Rule3', 'ON Event#C100 DO Var2 sC; ENDON ON Event#C101 DO Var2 sC; ENDON ON Event#C102 DO Var2 sC; ENDON ON Event#C103 DO Var2 sC; ENDON ON Event#C104 DO Var2 sC; ENDON ON Event#C105 DO Var2 sC; ENDON ON Event#C106 DO Var2 sC; ENDON ON Event#O0 DO Var2 sC; ENDON ON Event#O-1 DO Var2 sC; ENDON ON Event#O-2 DO Var2 sC; ENDON ON Event#O-3 DO Var2 sC; ENDON ON Event#O-4 DO Var2 sC; ENDON ON Event#O-5 DO Var2 sC; ENDON ON Event#O-6 DO Var2 sC; ENDON ON Event#O-12 DO Var2 sC; ENDON'],
-                        ['Rule3', '1']],
+                        ['SetOption80', "1"],
+                        ["PulseTime1", "0"],
+                        ["PulseTime2", "0"],
+                        ["Interlock", "1,2"],
+                        ["Interlock", "ON"],
+                        ["ShutterMotorDelay", "4.5"],
+                        ["ShutterOpenDuration", "10"],
+                        ["ShutterCloseDuration", "11.2"],
+                        ["Var1", "ShutterClose1"],
+                        ["Var2", "ShutterStop1"],
+                        ["Var3", "ShutterOpen1"],
+                        ["setoption34", "50"],
+                        ["Rule1", "ON Power1#state=1 DO Backlog var3 var3; var2 ShutterStop1; TuyaSend4 101,0 ENDON "],
+                        ["Rule1", "+ ON Power1#state=0 DO Backlog var2 var2; TuyaSend4 101,1; var1 ShutterClose1; var3 ShutterOpen1; ENDON "],
+                        ["Rule1", "+ ON Power2#state=0 DO Backlog var2 var2; TuyaSend4 101,1; var1 ShutterClose1; var3 ShutterOpen1; ENDON "],
+                        ["Rule1", "+ ON Power2#state=1 DO Backlog var1 var1; var2 ShutterStop1; TuyaSend4 101,2 ENDON "],
+                        ["Rule1", "+ ON ShutterStop#Data DO Backlog var2 var2; TuyaSend4 101,1; var1 ShutterClose1; var3 ShutterOpen1; ENDON "],
+                        ["Rule1", "+ ON Shutter1#Position DO var4 %value% ENDON ON Event#Close0 DO Backlog var2 var2; TuyaSend4 101,1; ENDON "],
+                        ["Rule1", "1"],
+                        ["Rule2", "ON TuyaReceived#Data=55AA00070005650400010277 DO backlog var1 ShutterClose1; %var1%;  ENDON "],
+                        ["Rule2", "+ ON System#Init DO Backlog setoption34 50; var1 ShutterClose1; var2 ShutterStop1; var3 ShutterOpen1; ENDON "],
+                        ["Rule2", "+ ON TuyaReceived#Data=55AA00070005020400010214 DO backlog var2 ShutterStop1; %var2%; ENDON "],
+                        ["Rule2", "+ ON TuyaReceived#Data=55AA00070005650400010176 DO backlog var3 ShutterOpen1; %var3%; ENDON "],
+                        ["Rule2", "+ ON Event#Open100 DO Backlog var2 var2; TuyaSend4 101,1; ENDON "],
+                        ["Rule2", "+ ON ShutterOpen#Data=100 DO Event Open%var4% ENDON ON ShutterClose#Data=0 DO Event Close%var4% ENDON "],
+                        ["Rule2", "1"],
+                        ],
+
         deviceLink: '',
         open: ["TuyaSend4", "101,0"],
         stop: ["TuyaSend4", "101,1"],
@@ -863,6 +872,7 @@ void parseJSON(String jsonData) {
 
 boolean parseResult(Map result, boolean missingChild) {
     boolean log99 = logging("parseResult: $result", 99)
+    logging("parseResult: $result", 100)
     // BEGIN:getTasmotaNewParserForStatusSTS()
     if (result.containsKey("StatusSTS")) {
         logging("StatusSTS: $result.StatusSTS",99)
@@ -1182,6 +1192,12 @@ boolean parseResult(Map result, boolean missingChild) {
         }
     }
     // END:  getTasmotaNewParserForWifi()
+    // BEGIN:getTasmotaNewParserForShutter()
+    if (result.containsKey("Shutter1")) {
+        logging("parser: Shutter1: $result.Shutter1", 1)
+        missingChild = callChildParseByTypeId("SHUTTER", [[name:"shutter", value:result.Shutter1.clone()]], missingChild)
+    }
+    // END:  getTasmotaNewParserForShutter()
     tasmota_updatePresence("present")
     return missingChild
 }
@@ -1340,10 +1356,13 @@ boolean callChildParseByTypeId(String deviceTypeId, List<Map> event, boolean mis
         it["isStateChange"] = false
     }
     com.hubitat.app.ChildDeviceWrapper cd = getChildDevice("$device.id-$deviceTypeId")
+    if(cd == null && (deviceTypeId == "POWER1" || deviceTypeId == "POWER2")) {
+        cd = getChildDevice("$device.id-SHUTTER")
+    }
     if(cd != null) {
         cd.parse(event)
     } else {
-        log.warn("childParse() can't FIND the device ${cd?.displayName}! (childId: ${"$device.id-$deviceTypeId"}) Did you delete something?")
+        log.warn("callChildParseByTypeId() can't FIND the device type ${deviceTypeId}! (childId: ${"$device.id-$deviceTypeId"}) Did you delete something?")
         missingChild = true
     }
     return missingChild
@@ -1488,18 +1507,20 @@ void componentSetSpeed(com.hubitat.app.DeviceWrapper cd, String fanspeed) {
 }
 
 void componentOpen(com.hubitat.app.DeviceWrapper cd) {
-    tasmota_getAction(tasmota_getCommandString("TuyaSend4", "101,0"))
+    tasmota_getAction(tasmota_getCommandString("ShutterOpen1", null))
 }
 
 void componentClose(com.hubitat.app.DeviceWrapper cd) {
-    tasmota_getAction(tasmota_getCommandString("TuyaSend4", "101,2"))
+    tasmota_getAction(tasmota_getCommandString("ShutterClose1", null))
 }
 
 void componentStop(com.hubitat.app.DeviceWrapper cd) {
-    tasmota_getAction(tasmota_getCommandString("TuyaSend4", "101,1"))
+    tasmota_getAction(tasmota_getCommandString("ShutterStop1", null))
 }
 
 void componentSetPosition(com.hubitat.app.DeviceWrapper cd, BigDecimal position) {
+    position = position.setScale(0, BigDecimal.ROUND_HALF_UP)
+    tasmota_getAction(tasmota_getCommandString("ShutterPosition", position.toString()))
 }
 
 void componentSetColorByRGBString(com.hubitat.app.DeviceWrapper cd, String colorRGB) {
@@ -1534,7 +1555,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0625Tb"
+    String version = "v1.0.2.0630Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2405,16 +2426,18 @@ void reboot() {
     tasmota_getAction(tasmota_getCommandString("Restart", "1"))
 }
 
-void sendCommand(String command) {
+void sendCommand(String command, callback="tasmota_sendCommandParse") {
     logging("tasmota: sendCommand(command=$command)", 1)
     sendCommand(command, null)
 }
 
-void sendCommand(String command, String argument) {
+void sendCommand(String command, String argument, callback="tasmota_sendCommandParse") {
     String descriptionText = "${command}${argument != null ? " " + argument : ""}"
     logging("tasmota: sendCommand($descriptionText)", 1)
-    sendEvent(name: "commandSent", value: command, descriptionText: descriptionText, isStateChange: true)
-    tasmota_getAction(tasmota_getCommandString(command, argument), callback="tasmota_sendCommandParse")
+    if(callback == "tasmota_sendCommandParse") {
+        sendEvent(name: "commandSent", value: command, descriptionText: descriptionText, isStateChange: true)
+    }
+    tasmota_getAction(tasmota_getCommandString(command, argument), callback=callback)
 }
 
 void updatePresence(String presence) {
@@ -2565,8 +2588,13 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
     if(statusMap.containsKey("StatusSNS")) {
         sns = statusMap["StatusSNS"]
         deviceInfo["hasEnergy"] = sns.containsKey("ENERGY")
+        deviceInfo["isShutter"] = sns.containsKey("Shutter1")
         deviceInfo["sensorMap"] = map_getKeysWithMapAndId(sns)
         deviceInfo["sensorMap"].remove("ENERGY")
+        deviceInfo["sensorMap"].remove("Shutter1")
+        deviceInfo["sensorMap"].remove("Shutter2")
+        deviceInfo["sensorMap"].remove("Shutter3")
+        deviceInfo["sensorMap"].remove("Shutter4")
         deviceInfo["numSensorGroups"] = deviceInfo["sensorMap"].size()
         deviceInfo["numTemperature"] = map_numOfKeyInSubMap(sns, "Temperature")
         deviceInfo["numHumidity"] = map_numOfKeyInSubMap(sns, "Humidity")
@@ -2596,6 +2624,9 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
                 i += 1
             }
             deviceInfo["numSwitch"] = i - 1
+        }
+        if(deviceInfo["isShutter"] == true && deviceInfo["numSwitch"] >= 2) {
+            deviceInfo["numSwitch"] -= 2
         }
     }
     logging("Device info found: $deviceInfo", 100)
@@ -2647,6 +2678,16 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Fan Control (Child)"]
         String childId = "FAN"
+        String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
+    }
+
+    if(deviceInfo["isShutter"] == true) {
+        logging("isShutter", 100)
+        namespace = "tasmota"
+        driverName = ["Tasmota - Universal Curtain (Child)"]
+        String childId = "SHUTTER"
         String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
         String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
         tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)

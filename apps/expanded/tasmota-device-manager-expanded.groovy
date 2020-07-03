@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0625Tb
+ *  Version: v1.0.2.0630Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -449,29 +449,37 @@ TreeMap getDeviceConfigurations() {
         [typeId: 'tuyamcu-znsn-wifi-curtain-wall-panel',
         comment: 'NOT GENERIC - read the instructions',
         name: 'TuyaMCU ZNSN Wifi Curtain Wall Panel',
-        module: 54,
+        template: '{"NAME":"ZNSN Curtain","GPIO":[0,107,0,108,21,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}',
         installCommands: [["WebLog", "2"],
                         ['SetOption66', "1"],
-                        ['Mem1', '100'],
-                        ['Mem2', '11'],
-                        ['Mem3', '1'],
-                        ['Mem4', '9'],
-                        ['Mem5', '1'],
-                        ['Delay', '15'],
-                        ['Rule1', 'ON Dimmer#State DO Mem1 %value%; ENDON'],
-                        ['Rule1', '+ ON TuyaReceived#Data=55AA00070005650400010277 DO Backlog Var1 %mem1%; Var2 Go; Var5 C; Add1 %mem2%; Sub1 %mem4%; Var4 %mem2%; Event Go; ENDON'],
-                        ['Rule1', '+ ON Event#Go DO Backlog Dimmer %var1%; Event %var5%%var1%; Event %var2%2; ENDON'],
-                        ['Rule1', '+ ON Event#Go2 DO Backlog Add1 %var4%; Delay %mem3%; Event %var1%; Event %var2%;  ENDON'],
-                        ['Rule1', '+ ON Event#O-7 DO Var2 sC; ENDON ON Event#O-8 DO Var2 sC; ENDON ON Event#O-9 DO Var2 sC; ENDON ON Event#O-10 DO Var2 sC; ENDON ON Event#O-11 DO Var2 sC; ENDON'],
-                        ['Rule1', '1'],
-                        ['Rule2', 'ON TuyaReceived#Data=55AA00070005650400010176 DO Backlog Var1 %mem1%; Var2 Go; Var5 O; Sub1 %mem2%; Add1 %mem4%; Var4 %mem2%; Add4 %mem5%; Mult4 -1; Event Go; ENDON'],
-                        ['Rule2', '+ ON Event#sC DO Backlog Var2 sC2; Event sC2; ENDON'],
-                        ['Rule2', '+ ON Event#sC2 DO Backlog Var2 sC2; TuyaSend4 101,1; ENDON'],
-                        ['Rule2', '+ ON TuyaReceived#Data=55AA00070005650400010075 DO Var2 sC3; ENDON'],
-                        ['Rule2', '+ ON Event#C107 DO Var2 sC; ENDON ON Event#C108 DO Var2 sC; ENDON ON Event#C109 DO Var2 sC; ENDON ON Event#C110 DO Var2 sC; END ON ON Event#C111 DO Var2 sC; ENDON'],
-                        ['Rule2', '1'],
-                        ['Rule3', 'ON Event#C100 DO Var2 sC; ENDON ON Event#C101 DO Var2 sC; ENDON ON Event#C102 DO Var2 sC; ENDON ON Event#C103 DO Var2 sC; ENDON ON Event#C104 DO Var2 sC; ENDON ON Event#C105 DO Var2 sC; ENDON ON Event#C106 DO Var2 sC; ENDON ON Event#O0 DO Var2 sC; ENDON ON Event#O-1 DO Var2 sC; ENDON ON Event#O-2 DO Var2 sC; ENDON ON Event#O-3 DO Var2 sC; ENDON ON Event#O-4 DO Var2 sC; ENDON ON Event#O-5 DO Var2 sC; ENDON ON Event#O-6 DO Var2 sC; ENDON ON Event#O-12 DO Var2 sC; ENDON'],
-                        ['Rule3', '1']],
+                        ['SetOption80', "1"],
+                        ["PulseTime1", "0"],
+                        ["PulseTime2", "0"],
+                        ["Interlock", "1,2"],
+                        ["Interlock", "ON"],
+                        ["ShutterMotorDelay", "4.5"],
+                        ["ShutterOpenDuration", "10"],
+                        ["ShutterCloseDuration", "11.2"],
+                        ["Var1", "ShutterClose1"],
+                        ["Var2", "ShutterStop1"],
+                        ["Var3", "ShutterOpen1"],
+                        ["setoption34", "50"],
+                        ["Rule1", "ON Power1#state=1 DO Backlog var3 var3; var2 ShutterStop1; TuyaSend4 101,0 ENDON "],
+                        ["Rule1", "+ ON Power1#state=0 DO Backlog var2 var2; TuyaSend4 101,1; var1 ShutterClose1; var3 ShutterOpen1; ENDON "],
+                        ["Rule1", "+ ON Power2#state=0 DO Backlog var2 var2; TuyaSend4 101,1; var1 ShutterClose1; var3 ShutterOpen1; ENDON "],
+                        ["Rule1", "+ ON Power2#state=1 DO Backlog var1 var1; var2 ShutterStop1; TuyaSend4 101,2 ENDON "],
+                        ["Rule1", "+ ON ShutterStop#Data DO Backlog var2 var2; TuyaSend4 101,1; var1 ShutterClose1; var3 ShutterOpen1; ENDON "],
+                        ["Rule1", "+ ON Shutter1#Position DO var4 %value% ENDON ON Event#Close0 DO Backlog var2 var2; TuyaSend4 101,1; ENDON "],
+                        ["Rule1", "1"],
+                        ["Rule2", "ON TuyaReceived#Data=55AA00070005650400010277 DO backlog var1 ShutterClose1; %var1%;  ENDON "],
+                        ["Rule2", "+ ON System#Init DO Backlog setoption34 50; var1 ShutterClose1; var2 ShutterStop1; var3 ShutterOpen1; ENDON "],
+                        ["Rule2", "+ ON TuyaReceived#Data=55AA00070005020400010214 DO backlog var2 ShutterStop1; %var2%; ENDON "],
+                        ["Rule2", "+ ON TuyaReceived#Data=55AA00070005650400010176 DO backlog var3 ShutterOpen1; %var3%; ENDON "],
+                        ["Rule2", "+ ON Event#Open100 DO Backlog var2 var2; TuyaSend4 101,1; ENDON "],
+                        ["Rule2", "+ ON ShutterOpen#Data=100 DO Event Open%var4% ENDON ON ShutterClose#Data=0 DO Event Close%var4% ENDON "],
+                        ["Rule2", "1"],
+                        ],
+
         deviceLink: '',
         open: ["TuyaSend4", "101,0"],
         stop: ["TuyaSend4", "101,1"],
@@ -624,7 +632,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.2.0625Tb"
+    String version = "v1.0.2.0630Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -1920,16 +1928,18 @@ void reboot() {
     tasmota_getAction(tasmota_getCommandString("Restart", "1"))
 }
 
-void sendCommand(String command) {
+void sendCommand(String command, callback="tasmota_sendCommandParse") {
     logging("tasmota: sendCommand(command=$command)", 1)
     sendCommand(command, null)
 }
 
-void sendCommand(String command, String argument) {
+void sendCommand(String command, String argument, callback="tasmota_sendCommandParse") {
     String descriptionText = "${command}${argument != null ? " " + argument : ""}"
     logging("tasmota: sendCommand($descriptionText)", 1)
-    sendEvent(name: "commandSent", value: command, descriptionText: descriptionText, isStateChange: true)
-    tasmota_getAction(tasmota_getCommandString(command, argument), callback="tasmota_sendCommandParse")
+    if(callback == "tasmota_sendCommandParse") {
+        sendEvent(name: "commandSent", value: command, descriptionText: descriptionText, isStateChange: true)
+    }
+    tasmota_getAction(tasmota_getCommandString(command, argument), callback=callback)
 }
 
 void updatePresence(String presence) {
@@ -2080,8 +2090,13 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
     if(statusMap.containsKey("StatusSNS")) {
         sns = statusMap["StatusSNS"]
         deviceInfo["hasEnergy"] = sns.containsKey("ENERGY")
+        deviceInfo["isShutter"] = sns.containsKey("Shutter1")
         deviceInfo["sensorMap"] = map_getKeysWithMapAndId(sns)
         deviceInfo["sensorMap"].remove("ENERGY")
+        deviceInfo["sensorMap"].remove("Shutter1")
+        deviceInfo["sensorMap"].remove("Shutter2")
+        deviceInfo["sensorMap"].remove("Shutter3")
+        deviceInfo["sensorMap"].remove("Shutter4")
         deviceInfo["numSensorGroups"] = deviceInfo["sensorMap"].size()
         deviceInfo["numTemperature"] = map_numOfKeyInSubMap(sns, "Temperature")
         deviceInfo["numHumidity"] = map_numOfKeyInSubMap(sns, "Humidity")
@@ -2111,6 +2126,9 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
                 i += 1
             }
             deviceInfo["numSwitch"] = i - 1
+        }
+        if(deviceInfo["isShutter"] == true && deviceInfo["numSwitch"] >= 2) {
+            deviceInfo["numSwitch"] -= 2
         }
     }
     logging("Device info found: $deviceInfo", 100)
@@ -2162,6 +2180,16 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
         namespace = "tasmota"
         driverName = ["Tasmota - Universal Fan Control (Child)"]
         String childId = "FAN"
+        String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
+        String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
+        tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)
+    }
+
+    if(deviceInfo["isShutter"] == true) {
+        logging("isShutter", 100)
+        namespace = "tasmota"
+        driverName = ["Tasmota - Universal Curtain (Child)"]
+        String childId = "SHUTTER"
         String childName = tasmota_getChildDeviceNameRoot(keepType=true) + " ${tasmota_getMinimizedDriverName(driverName[0])} ($childId)"
         String childLabel = "${tasmota_getMinimizedDriverName(device.getLabel())} ($childId)"
         tasmota_createChildDevice(namespace, driverName, childId, childName, childLabel)

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.5.0.0629b
+ *  Version: v0.5.0.0703b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -78,11 +78,14 @@ metadata {
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
+        // BEGIN:getDefaultMetadataPreferencesForContactSensor()
         input(name: "invertContact", type: "bool", title: styling_addTitleDiv("Invert open/close"), description: styling_addDescriptionDiv("When open show as closed and vice versa (default: false)"), defaultValue: false)
-        input(name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for the contact sensor"), 
+        input(name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for the contact sensor"),
                     description: styling_addDescriptionDiv("Create a child device for the contact sensor. If changing from Button to Switch or vice versa you need to delete the child device manually for the change to work."),
                     options: ["None", "1 virtual button", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None")
+        input(name: "switchMirror", type: "bool", title: styling_addTitleDiv("Switch Mirrors open/close"), description: styling_addDescriptionDiv("Switch mirrors the Open(On) / Closed(Off) state (default: false)"), defaultValue: false)
         input(name: "logOpenCloseDatetime", type: "bool", title: styling_addTitleDiv("Log Open/Close Time"), description: styling_addDescriptionDiv("Logs the date and time of when the last Open/Closed event occured (default: false)"), defaultValue: false)
+        // END:  getDefaultMetadataPreferencesForContactSensor()
 	}
 
 }
@@ -225,7 +228,7 @@ ArrayList<String> parse(String description) {
     //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
 
     if(msgMap.containsKey("type") == true && msgMap["type"] == "zone") {
-        sendOpenCloseEvent(msgMap["statusInt"] == 1)
+        sendOpenCloseEvent(msgMap["statusInt"] == 1, sendAsStateChange=true, sendDatetimeEvent=true)
     } else {
         switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
             case "0000_0001":
@@ -291,55 +294,6 @@ void reconnectEventDeviceSpecific() {
     sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
-void sendOpenCloseEvent(boolean openClose, sendAsStateChange=true) {
-    if(invertContact == null) invertContact = false
-    logging("sendOpenCloseEvent(openClose=$openClose) invertContact=$invertContact", 100)
-    if(openClose == invertContact) {
-        sendEvent(name:"contact", value: "closed", isStateChange: false, descriptionText: "Contact was Closed")
-        if(buttonDown(1, useEvent=true) == true) {
-            sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: sendAsStateChange)
-        }
-        if(logOpenCloseDatetime == true) {
-            sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
-        }
-    } else {
-        sendEvent(name:"contact", value: "open", isStateChange: false, descriptionText: "Contact was Opened")
-        if(buttonPushed(1, momentaryRelease=true) == true) {
-            Long lastHold = 0
-            String lastHoldEpoch = device.currentValue('lastHoldEpoch', true) 
-            if(lastHoldEpoch != null) lastHold = lastHoldEpoch.toLong()
-            sendEvent(name: "lastHoldEpoch", value: 0, isStateChange: sendAsStateChange)
-            Long millisHeld = now() - lastHold
-            Long millisForHoldLong = millisForHold == null ? 1000 : millisForHold.toLong()
-            if(lastHold == 0) millisHeld = 0
-            logging("millisHeld = $millisHeld, millisForHold = $millisForHoldLong", 1)
-            if(millisHeld > millisForHoldLong) {
-                logging("Button 1 was held", 100)
-                buttonHeld(1)
-            }
-        }
-        if(logOpenCloseDatetime == true) {
-            sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
-        }
-    }
-}
-
-void resetToOpen() {
-    logging("resetToOpen()", 1)
-    sendEvent(name:"contact", value: "open", isStateChange: true, descriptionText: "Contact was Reset to Open")
-    if(logOpenCloseDatetime == true) {
-        sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
-    }
-}
-
-void resetToClosed() {
-    logging("resetToClosed()", 1)
-    sendEvent(name:"contact", value: "closed", isStateChange: true, descriptionText: "Contact was Reset to Closed")
-    if(logOpenCloseDatetime == true) {
-        sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
-    }
-}
-
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
@@ -360,7 +314,7 @@ void resetToClosed() {
 private String getDriverVersion() {
     comment = "Works with model SNZB-04."
     if(comment != "") state.comment = comment
-    String version = "v0.5.0.0629b"
+    String version = "v0.5.0.0703b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1724,3 +1678,80 @@ void runLevelChange(String deviceID, String methodName, BigDecimal level, Intege
 }
 // END:  getHelperFunctions('virtual-child-device-for-button')
 
+// BEGIN:getHelperFunctions('sensor-contact')
+boolean useAsButton(Integer button) {
+    return useAsMirrorSwitch(button) == false
+}
+
+boolean useAsMirrorSwitch(Integer button) {
+    Map childDeviceConfig = getChildDeviceConfig()
+    return childDeviceConfig[button]['switch'] == true && switchMirror == true
+}
+
+void mirrorContactToSwitch(boolean openClose, Integer button) {
+    if(openClose == true) {
+        setChildSwitch(buildChildDeviceId("$button"), "on", levelChange=false)
+    } else {
+        setChildSwitch(buildChildDeviceId("$button"), "off", levelChange=false)
+    }
+}
+
+void sendOpenCloseEvent(boolean openClose, sendAsStateChange=true, sendDatetimeEvent=false) {
+    if(invertContact == null) invertContact = false
+    logging("sendOpenCloseEvent(openClose=$openClose) invertContact=$invertContact", 100)
+    if(openClose == invertContact) {
+        sendEvent(name:"contact", value: "closed", isStateChange: false, descriptionText: "Contact was Closed")
+        if(useAsButton(1) == true && buttonDown(1, useEvent=true) == true) {
+            sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: sendAsStateChange)
+        } else if(useAsMirrorSwitch(1) == true) {
+            mirrorContactToSwitch(false, 1)
+        }
+        if(logOpenCloseDatetime == true && sendDatetimeEvent == true) {
+            sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+        }
+    } else {
+        sendEvent(name:"contact", value: "open", isStateChange: false, descriptionText: "Contact was Opened")
+        if(useAsButton(1) == true && buttonPushed(1, momentaryRelease=true) == true) {
+            Long lastHold = 0
+            String lastHoldEpoch = device.currentValue('lastHoldEpoch', true) 
+            if(lastHoldEpoch != null) lastHold = lastHoldEpoch.toLong()
+            sendEvent(name: "lastHoldEpoch", value: 0, isStateChange: sendAsStateChange)
+            Long millisHeld = now() - lastHold
+            Long millisForHoldLong = millisForHold == null ? 1000 : millisForHold.toLong()
+            if(lastHold == 0) millisHeld = 0
+            logging("millisHeld = $millisHeld, millisForHold = $millisForHoldLong", 1)
+            if(millisHeld > millisForHoldLong) {
+                logging("Button 1 was held", 100)
+                buttonHeld(1)
+            }
+        } else if(useAsMirrorSwitch(1) == true) {
+            mirrorContactToSwitch(true, 1)
+        }
+        if(logOpenCloseDatetime == true && sendDatetimeEvent == true) {
+            sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+        }
+    }
+}
+
+void resetToOpen() {
+    logging("resetToOpen()", 1)
+    sendEvent(name:"contact", value: "open", isStateChange: true, descriptionText: "Contact was Reset to Open")
+    if(logOpenCloseDatetime == true) {
+        sendEvent(name: "lastOpened", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+    }
+    if(useAsMirrorSwitch(1) == true) {
+        mirrorContactToSwitch(true, 1)
+    }
+}
+
+void resetToClosed() {
+    logging("resetToClosed()", 1)
+    sendEvent(name:"contact", value: "closed", isStateChange: true, descriptionText: "Contact was Reset to Closed")
+    if(logOpenCloseDatetime == true) {
+        sendEvent(name: "lastClosed", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+    }
+    if(useAsMirrorSwitch(1) == true) {
+        mirrorContactToSwitch(false, 1)
+    }
+}
+// END:  getHelperFunctions('sensor-contact')
