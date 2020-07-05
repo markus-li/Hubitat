@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0703b
+ *  Version: v0.7.1.0705b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -222,7 +222,7 @@ ArrayList<String> parse(String description) {
                 logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C - hourly checkin) - description:${description} | parseMap:${msgMap}", 100)
 
                 parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
-                sendOpenCloseEvent(value["openClose"], sendAsStateChange=false, sendDatetimeEvent=false)
+                sendOpenCloseEvent(msgMap['value'][0], sendAsStateChange=false, sendDatetimeEvent=false)
 
                 if(getDeviceDataByName('model') == "lumi.sensor_magnet.aq2") {
                     logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
@@ -350,7 +350,7 @@ void reconnectEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models MCCGQ01LM & MCCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0703b"
+    String version = "v0.7.1.0705b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
