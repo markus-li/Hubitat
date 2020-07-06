@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0703b
+ *  Version: v0.7.1.0705b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -262,6 +262,9 @@ ArrayList<String> parse(String description) {
                     //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
 
                     break
+                case "0402":
+                case "0403":
+                case "0405":
                 case "8032":
                     //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
                     break
@@ -308,7 +311,7 @@ void reconnectEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0703b"
+    String version = "v0.7.1.0705b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

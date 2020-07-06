@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0705b
+ *  Version: v0.7.1.0706b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -243,7 +243,7 @@ ArrayList<String> parse(String description) {
                     parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
                 }
                 if(msgMap["value"].containsKey("openClose")) {
-                    sendOpenCloseEvent(value["openClose"], sendAsStateChange=false, sendDatetimeEvent=false)
+                    sendOpenCloseEvent(msgMap["value"]["openClose"], sendAsStateChange=false, sendDatetimeEvent=false)
                 }
 
                 if(getDeviceDataByName('model') == "lumi.sensor_magnet.aq2") {
@@ -350,7 +350,7 @@ void reconnectEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models MCCGQ01LM & MCCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0705b"
+    String version = "v0.7.1.0706b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
