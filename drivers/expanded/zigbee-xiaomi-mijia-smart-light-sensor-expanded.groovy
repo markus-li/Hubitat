@@ -657,17 +657,20 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         '07': 'unknown2',
         '08': 'unknown3',
         '09': 'unknown4',
-        '0A': 'unknown5',
-        '0B': 'unknown6',
+        '0A': 'routerid',
+        '0B': 'unknown5',
         '0C': 'unknown6',
         '6429': 'temperature',
         '6410': 'openClose',
         '6420': 'curtainPosition',
-        '65': 'humidity',
+        '6521': 'humidity',
+        '6510': 'switch2',
         '66': 'pressure',
         '6E': 'unknown10',
+        '6F': 'unknown11',
         '95': 'consumption',
         '96': 'voltage',
+        '98': 'power',
         '9721': 'gestureCounter1',
         '9739': 'consumption',
         '9821': 'gestureCounter2',
@@ -705,7 +708,8 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         } else if(tags.containsKey(cTag)) {
             cKey = tags[cTag]
         } else {
-            throw new Exception("The Xiaomi Struct used an unrecognized tag: 0x$cTag (type: 0x$cTypeStr)")
+            cKey = "unknown${cTag}${cTypeStr}"
+            log.warn("PLEASE REPORT TO DEV - The Xiaomi Struct used an unrecognized tag: 0x$cTag (type: 0x$cTypeStr) (struct: $xiaomiStruct)")
         }
         ret = zigbee_generic_convertStructValue(r, values, cType, cKey, cTag)
         r = ret[0]

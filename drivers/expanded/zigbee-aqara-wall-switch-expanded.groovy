@@ -414,10 +414,10 @@ ArrayList<String> parse(String description) {
             }
             if(isKnownModel() == true && isD1Switch() == false) {
                 log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+            } else {
+                logging("KNOWN event (Xiaomi/Aqara specific data structure) - description:${description} | parseMap:${msgMap}", 1)
             }
 
-            logging("KNOWN event (Xiaomi/Aqara specific data structure) - description:${description} | parseMap:${msgMap}", 1)
-            
             if(msgMap["value"].containsKey("power")) {
                 sendPowerEvent(msgMap["value"]["power"])
             }
@@ -428,6 +428,7 @@ ArrayList<String> parse(String description) {
                 logging("Sending temperature event (Temperature: $t $tempUnit)", 100)
                 sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
             }
+
             break
         case "0000_FFF0":
             //logging("KNOWN event - Button held - description:${description} | parseMap:${msgMap}", 0)
@@ -470,7 +471,7 @@ ArrayList<String> parse(String description) {
                             sendEvent(name:"released", value: button, isStateChange: true, descriptionText: "Button $button was released")
 
                         } else if(msgMap["value"] == "02") {
-
+                            logging("Double Tapped button $button (endpoint: $endpoint)", 100)
                             sendEvent(name:"doubleTapped", value: button, isStateChange: true, descriptionText: "Button $button was double-tapped")
                             sendEvent(name:"pushed", value: usableButtons + button, isStateChange: true, descriptionText: "Button $button was double-tapped")
 
@@ -538,7 +539,7 @@ ArrayList<String> parse(String description) {
                 case "0006":
                     logging("Power Cluster 0006 catchall - description:${description} | parseMap:${msgMap}", 100)
                     sendOnOffEvent(Integer.parseInt(msgMap['sourceEndpoint'], 16), msgMap['data'][0] == '01')
-                    if(isKnownModel() == true && isD1Switch() == false) {
+                    if(isKnownModel() == true && isD1Switch() == false && isOldNoNeutralSwitch() == false) {
                         log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
                     }
 
@@ -549,7 +550,7 @@ ArrayList<String> parse(String description) {
                         logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 1)
                         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
                     }
-                    if(isKnownModel() == true && isD1Switch() == false) {
+                    if(isKnownModel() == true && isD1Switch() == false && isOldNoNeutralSwitch() == false) {
                         log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
                     }
                     
@@ -1055,17 +1056,20 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         '07': 'unknown2',
         '08': 'unknown3',
         '09': 'unknown4',
-        '0A': 'unknown5',
-        '0B': 'unknown6',
+        '0A': 'routerid',
+        '0B': 'unknown5',
         '0C': 'unknown6',
         '6429': 'temperature',
         '6410': 'openClose',
         '6420': 'curtainPosition',
-        '65': 'humidity',
+        '6521': 'humidity',
+        '6510': 'switch2',
         '66': 'pressure',
         '6E': 'unknown10',
+        '6F': 'unknown11',
         '95': 'consumption',
         '96': 'voltage',
+        '98': 'power',
         '9721': 'gestureCounter1',
         '9739': 'consumption',
         '9821': 'gestureCounter2',
@@ -1103,7 +1107,8 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         } else if(tags.containsKey(cTag)) {
             cKey = tags[cTag]
         } else {
-            throw new Exception("The Xiaomi Struct used an unrecognized tag: 0x$cTag (type: 0x$cTypeStr)")
+            cKey = "unknown${cTag}${cTypeStr}"
+            log.warn("PLEASE REPORT TO DEV - The Xiaomi Struct used an unrecognized tag: 0x$cTag (type: 0x$cTypeStr) (struct: $xiaomiStruct)")
         }
         ret = zigbee_generic_convertStructValue(r, values, cType, cKey, cTag)
         r = ret[0]
