@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0703b
+ *  Version: v0.7.1.0707b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -149,11 +149,11 @@ Integer refresh(boolean connectButtons=false) {
             buttonCombos = 1
             break
         case "lumi.ctrl_neutral1":
-            sendEvent(name:"numberOfButtons", value: 2, isStateChange: false, descriptionText: "Aqara Switch (QBKG04LM) detected: set to 2 buttons (physical 1)")
+            sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara Switch (QBKG04LM) detected: set to 2 buttons (physical 1)")
             physicalButtons = 1
             break
         case "lumi.ctrl_neutral2":
-            sendEvent(name:"numberOfButtons", value: 6, isStateChange: false, descriptionText: "Aqara Switch (QBKG03LM) detected: set to 6 buttons (physical 2)")
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara Switch (QBKG03LM) detected: set to 6 buttons (physical 2)")
             physicalButtons = 2
             buttonCombos = 1
             break
@@ -469,10 +469,15 @@ ArrayList<String> parse(String description) {
                             logging("Released button $button (endpoint: $endpoint)", 100)
                             sendEvent(name:"released", value: button, isStateChange: true, descriptionText: "Button $button was released")
 
+                        } else if(msgMap["value"] == "02") {
+
+                            sendEvent(name:"doubleTapped", value: button, isStateChange: true, descriptionText: "Button $button was double-tapped")
+                            sendEvent(name:"pushed", value: usableButtons + button, isStateChange: true, descriptionText: "Button $button was double-tapped")
+
                         } else {
                             logging("Held button $button (endpoint: $endpoint, usableButtons: $usableButtons)", 100)
                             sendEvent(name:"held", value: button, isStateChange: true, descriptionText: "Button $button was held")
-                            sendEvent(name:"pushed", value: usableButtons + button, isStateChange: true, descriptionText: "Button $button was held")
+                            sendEvent(name:"pushed", value: (usableButtons*2) + button, isStateChange: true, descriptionText: "Button $button was held")
                         }
                     }
                 }
@@ -703,7 +708,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0703b"
+    String version = "v0.7.1.0707b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1058,6 +1063,7 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         '6420': 'curtainPosition',
         '65': 'humidity',
         '66': 'pressure',
+        '6E': 'unknown10',
         '95': 'consumption',
         '96': 'voltage',
         '9721': 'gestureCounter1',

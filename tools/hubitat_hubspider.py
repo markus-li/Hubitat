@@ -87,6 +87,10 @@ class HubitatHubSpider:
             'submit': 'Login'}
     #print(data)
     self._prepare_session()
+    # If we don't have a username and password, assume we don't need one
+    if(username == None and password == None):
+      self.test_login = False
+      self.is_logged_in = True
     if(self.test_login):
       # We might have a working login, do q quick check
       r = self.session.get(self.API_base_url + '/hub/messages')

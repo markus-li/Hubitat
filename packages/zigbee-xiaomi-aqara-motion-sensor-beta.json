@@ -2,14 +2,14 @@
   "packageName": "Xiaomi/Aqara Motion Sensor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-03",
+  "dateReleased": "2020-07-07",
   "apps": [],
   "drivers": [
     {
       "id": "1a3c3482-31d9-5e1f-86bf-ee3a36a4585e",
       "internalId": 1154,
       "name": "Zigbee - Xiaomi/Aqara Motion Sensor",
-      "betaVersion": "v0.7.1.0703b",
+      "betaVersion": "v0.7.1.0707b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-motion-sensor-expanded.groovy",
       "required": true

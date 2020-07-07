@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0706b
+ *  Version: v0.7.1.0707b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -350,7 +350,7 @@ void reconnectEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models MCCGQ01LM & MCCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0706b"
+    String version = "v0.7.1.0707b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -705,6 +705,7 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         '6420': 'curtainPosition',
         '65': 'humidity',
         '66': 'pressure',
+        '6E': 'unknown10',
         '95': 'consumption',
         '96': 'voltage',
         '9721': 'gestureCounter1',

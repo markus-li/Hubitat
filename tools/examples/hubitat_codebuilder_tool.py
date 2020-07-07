@@ -128,6 +128,7 @@ def main():
     # Get us a Code Builder...    
     log.debug('Getting started...')
     #HubitatHubSpider.saveConfig('192.168.1.1', 'username', 'password', 'hhs_sample.cfg')
+    #HubitatHubSpider.saveConfig('192.168.1.1', None, None, 'hubitat_hubspider.cfg')
     hhs = HubitatHubSpider(None, 'hubitat_hubspider.cfg')
     hhs_2 = HubitatHubSpider(None, 'hhs_10_2.cfg', id_name='id_2')
     hhs_3 = HubitatHubSpider(None, 'hhs_10_3.cfg', id_name='id_3')
