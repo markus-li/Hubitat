@@ -92,8 +92,10 @@ metadata {
         input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
         input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..2 = maximum number of decimal places, default: 1)<br/>NOTE: If the 2nd decimal is a 0 (eg. 24.70) it will show without the last decimal (eg. 24.7)."), options: ["0", "1", "2"], defaultValue: "1", displayDuringSetup: true, required: false)
         input(name: "humidityOffset", type: "decimal", title: styling_addTitleDiv("Humidity Offset"), description: styling_addDescriptionDiv("Adjust the humidity by this many percent."), displayDuringSetup: true, required: false, range: "*..*")
+        input(name: "humidityRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: 1)"), options: ["0", "1"], defaultValue: "1")
         if(getDeviceDataByName('hasPressure') == "True") {
             input(name: "pressureUnitConversion", type: "enum", title: styling_addTitleDiv("Displayed Pressure Unit"), description: styling_addDescriptionDiv("(default: kPa)"), options: ["mbar", "kPa", "inHg", "mmHg", "atm"], defaultValue: "kPa")
+            input(name: "pressureRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: default)"), options: ["default", "0", "1", "2"], defaultValue: "default")
             input(name: "pressureOffset", type: "decimal", title: styling_addTitleDiv("Pressure Offset"), description: styling_addDescriptionDiv("Adjust the pressure value by this much."), displayDuringSetup: true, required: false, range: "*..*")
         }
         // END:  getDefaultMetadataPreferencesForTHMonitorAlternative1()
@@ -1082,7 +1084,6 @@ void zigbee_sensor_parseSendTemperatureEvent(Integer rawValue, BigDecimal varian
     
     if(tRaw >= -50 && tRaw < 100) {
         BigDecimal oldT = device.currentValue('temperature') == null ? null : device.currentValue('temperature')
-        t = t.setScale(1, BigDecimal.ROUND_HALF_UP)
         if(oldT != null) oldT = oldT.setScale(1, BigDecimal.ROUND_HALF_UP)
         BigDecimal tChange = null
         if(oldT == null) {
@@ -1110,9 +1111,8 @@ void zigbee_sensor_parseSendPressureEvent(Map msgMap) {
     if(msgMap["attrId"] == "0020") {
         rawValue = rawValue / 1000.0
     }
-    BigDecimal p = sensor_data_getAdjustedPressure(sensor_data_convertPressure(rawValue), decimals=2)
+    BigDecimal p = sensor_data_convertPressure(rawValue)
     BigDecimal oldP = device.currentValue('pressure') == null ? null : device.currentValue('pressure')
-    p = p.setScale(2, BigDecimal.ROUND_HALF_UP)
     if(oldP != null) oldP = oldP.setScale(2, BigDecimal.ROUND_HALF_UP)
     BigDecimal pChange = null
     if(oldP == null) {
@@ -1134,7 +1134,6 @@ void zigbee_sensor_parseSendPressureEvent(Map msgMap) {
 void zigbee_sensor_parseSendHumidityEvent(Integer rawValue, BigDecimal variance = 0.02) {
     BigDecimal h = sensor_data_getAdjustedHumidity(rawValue / 100.0)
     BigDecimal oldH = device.currentValue('humidity') == null ? null : device.currentValue('humidity')
-    h = h.setScale(1, BigDecimal.ROUND_HALF_UP)
     if(oldH != null) oldH = oldH.setScale(2, BigDecimal.ROUND_HALF_UP)
     BigDecimal hChange = null
     if(h <= 100) {
@@ -1427,19 +1426,27 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
 }
 
 private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
+    Integer res = 1
+    if(humidityRes != null && humidityRes != '') {
+        res = Integer.parseInt(humidityRes)
+    }
     if (humidityOffset) {
-	   return (value + new BigDecimal(humidityOffset)).setScale(1, BigDecimal.ROUND_HALF_UP)
+	   return (value + new BigDecimal(humidityOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(1, BigDecimal.ROUND_HALF_UP)
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
     }
 }
 
 private BigDecimal sensor_data_getAdjustedPressure(BigDecimal value, Integer decimals=2) {
+    Integer res = decimals
+    if(pressureRes != null && pressureRes != '' && pressureRes != 'default') {
+        res = Integer.parseInt(pressureRes)
+    }
     if (pressureOffset) {
-	   return (value + new BigDecimal(pressureOffset)).setScale(decimals, BigDecimal.ROUND_HALF_UP)
+	   return (value + new BigDecimal(pressureOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(decimals, BigDecimal.ROUND_HALF_UP)
-    }   
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
+    }
 }
 
 private BigDecimal sensor_data_convertPressure(BigDecimal pressureInkPa) {

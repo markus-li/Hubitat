@@ -1734,19 +1734,27 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
 }
 
 private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
+    Integer res = 1
+    if(humidityRes != null && humidityRes != '') {
+        res = Integer.parseInt(humidityRes)
+    }
     if (humidityOffset) {
-	   return (value + new BigDecimal(humidityOffset)).setScale(1, BigDecimal.ROUND_HALF_UP)
+	   return (value + new BigDecimal(humidityOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(1, BigDecimal.ROUND_HALF_UP)
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
     }
 }
 
 private BigDecimal sensor_data_getAdjustedPressure(BigDecimal value, Integer decimals=2) {
+    Integer res = decimals
+    if(pressureRes != null && pressureRes != '' && pressureRes != 'default') {
+        res = Integer.parseInt(pressureRes)
+    }
     if (pressureOffset) {
-	   return (value + new BigDecimal(pressureOffset)).setScale(decimals, BigDecimal.ROUND_HALF_UP)
+	   return (value + new BigDecimal(pressureOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(decimals, BigDecimal.ROUND_HALF_UP)
-    }   
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
+    }
 }
 
 private BigDecimal sensor_data_convertPressure(BigDecimal pressureInkPa) {
