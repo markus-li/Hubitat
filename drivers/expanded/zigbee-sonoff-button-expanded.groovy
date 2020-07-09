@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.5.0.0707b
+ *  Version: v0.5.0.0709b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@ metadata {
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
+        // BEGIN:getCommandsForZigbeePresence()
+        command "forceReconnectMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Reconnect Mode"]]
+        // END:  getCommandsForZigbeePresence()
 
         command "parse", [[name:"Description*", type: "STRING", description: "description"]]
 
@@ -460,7 +463,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with model SNZB-01."
     if(comment != "") state.comment = comment
-    String version = "v0.5.0.0707b"
+    String version = "v0.5.0.0709b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -696,12 +699,16 @@ ArrayList<String> zigbeeReadAttribute(Integer endpoint, Integer cluster, Integer
 }
 
 ArrayList<String> zigbeeWriteLongAttribute(Integer cluster, Integer attributeId, Integer dataType, Long value, Map additionalParams = [:], int delay = 200) {
+    return zigbeeWriteLongAttribute(1, cluster, attributeId, dataType, value, additionalParams, delay)
+}
+
+ArrayList<String> zigbeeWriteLongAttribute(Integer endpoint, Integer cluster, Integer attributeId, Integer dataType, Long value, Map additionalParams = [:], int delay = 200) {
     logging("zigbeeWriteLongAttribute()", 1)
     String mfgCode = ""
     if(additionalParams.containsKey("mfgCode")) {
         mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
     }
-    String wattrArgs = "0x${device.deviceNetworkId} 0x01 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+    String wattrArgs = "0x${device.deviceNetworkId} $endpoint 0x${HexUtils.integerToHexString(cluster, 2)} " + 
                        "0x${HexUtils.integerToHexString(attributeId, 2)} " + 
                        "0x${HexUtils.integerToHexString(dataType, 1)} " + 
                        "{${Long.toHexString(value)}}" + 
@@ -828,7 +835,7 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         '99': 'gestureCounter3',
         '9A21': 'gestureCounter4',
         '9A20': 'unknown7',
-        '9A25': 'unknown8',
+        '9A25': 'accelerometerXYZ',
         '9B': 'unknown9',
     ]
     if(isFCC0 == true) {
@@ -1138,7 +1145,17 @@ Integer kelvinToMired(Integer kelvin) {
     return t
 }
 
-void reconnectEvent() {
+Integer getMaximumMinutesBetweenEvents(BigDecimal forcedMinutes=null) {
+    Integer mbe = null
+    if(forcedMinutes == null && (state.forcedMinutes == null || state.forcedMinutes == 0)) {
+        mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    } else {
+        mbe = forcedMinutes != null ? forcedMinutes.intValue() : state.forcedMinutes.intValue()
+    }
+    return mbe
+}
+
+void reconnectEvent(BigDecimal forcedMinutes=null) {
     try {
         reconnectEventDeviceSpecific()
     } catch(Exception e) {
@@ -1146,7 +1163,7 @@ void reconnectEvent() {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     checkPresence(displayWarnings=false)
-    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    Integer mbe = getMaximumMinutesBetweenEvents(forcedMinutes=forcedMinutes)
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
         if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, reconnect mode DEACTIVATED!")
         unschedule('reconnectEvent')
@@ -1155,11 +1172,11 @@ void reconnectEvent() {
 
 void checkEventInterval(boolean displayWarnings=true) {
     prepareCounters()
-    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    Integer mbe = getMaximumMinutesBetweenEvents()
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
         if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
         Random rnd = new Random()
-        schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
+        schedule("${rnd.nextInt(7)}/7 * * * * ? *", 'reconnectEvent')
     }
     sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
@@ -1169,6 +1186,31 @@ void startCheckEventInterval() {
     Random rnd = new Random()
     schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)}/59 * * * ? *", 'checkEventInterval')
     checkEventInterval(displayWarnings=true)
+}
+
+void forceReconnectMode(BigDecimal minutes) {
+    minutes = minutes == null || minutes < 0 ? 0 : minutes
+    Integer minutesI = minutes.intValue()
+    logging("forceReconnectMode(minutes=$minutesI) ", 1)
+    if(minutesI == 0) {
+        disableForcedReconnectMode()
+    } else if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=minutesI) == false) {
+        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced reconnect mode ACTIVATED!")
+        state.forcedMinutes = minutes
+        runIn(minutesI * 60, 'disableForcedReconnectMode')
+
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(7)}/7 * * * * ? *", 'reconnectEvent')
+        reconnectEvent(forcedMinutes=minutes)
+    } else {
+        log.warn("Forced reconnect mode NOT activated since we already have a checkin event during the last $minutesI minute(s)!")
+    }
+}
+
+void disableForcedReconnectMode() {
+    state.forcedMinutes = 0
+    unschedule('reconnectEvent')
+    if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced reconnect mode DEACTIVATED!")
 }
 // END:  getHelperFunctions('zigbee-generic')
 
@@ -1307,11 +1349,22 @@ boolean isValidDate(String dateFormat, String dateString) {
     return true
 }
 
+Integer retrieveMinimumMinutesToRepeat(Integer minimumMinutesToRepeat=55) {
+    Integer mmr = null
+    if(state.forcedMinutes == null || state.forcedMinutes == 0) {
+        mmr = minimumMinutesToRepeat
+    } else {
+        mmr = state.forcedMinutes - 1 < 1 ? 1 : state.forcedMinutes.intValue() - 1
+    }
+    return mmr
+}
+
 boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
     boolean r = false
+    Integer mmr = retrieveMinimumMinutesToRepeat(minimumMinutesToRepeat=minimumMinutesToRepeat)
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
-        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (minimumMinutesToRepeat * 60 * 1000)) {
+        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (mmr * 60 * 1000)) {
             r = true
 		    sendEvent(name: "lastCheckin", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
             logging("Updated lastCheckin", 1)
@@ -1320,7 +1373,7 @@ boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
         }
 	}
     if (lastCheckinEpochEnable == true) {
-		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (minimumMinutesToRepeat * 60 * 1000)) {
+		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (mmr * 60 * 1000)) {
             r = true
 		    sendEvent(name: "lastCheckinEpoch", value: now())
             logging("Updated lastCheckinEpoch", 1)

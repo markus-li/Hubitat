@@ -406,7 +406,7 @@ def main():
         
         # Zigbee - Not ready for release
         {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model QBKG24LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)', 'publish': False },
+         'comment': 'Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)', 'publish': False },
         
         # Zigbee - Sonoff
         {'id': 1601, 'id_2': 424, 'id_3': 0, 'file': 'zigbee-sonoff-button.groovy', 'version': default_zigbee_version_sonoff,
@@ -421,6 +421,10 @@ def main():
         # Zigbee - Tuya
         {'id': 1633, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-tuya-valve.groovy', 'version': default_zigbee_version,
          'comment': 'Works with Tuya Valves.', 'publish': False },
+
+        # Zigbee - Generic
+        {'id': 1634, 'id_2': 428, 'file': 'zigbee-generic-repeater.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with most repeater-only devices (Xbee with Send Type set to Bind)', 'publish': False },
 
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
@@ -522,6 +526,8 @@ def main():
         # Zigbee - Tuya
         {'id': 1633}, # Tuya Valve
         
+        # Zigbee - Generic
+        {'id': 1634}, # Zigbee Repeater
         
         # Zigbee - Sonoff
         {'id': 1601}, # Sonoff Button
@@ -571,6 +577,7 @@ def main():
         {'id': 1122}, # Xiaomi Mijia Smart Light Sensor
         {'id': 801}, # Aqara Smart Curtain
         {'id': 1377}, # Aqara Water Leak Sensor
+        {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1121}, # Xiaomi/Aqara Button/Switch
@@ -581,6 +588,9 @@ def main():
         {'id': 1602}, # Sonoff Contact
         {'id': 1603}, # Sonoff Motion
         {'id': 1604}, # Sonoff T&H
+
+        # Zigbee - Generic
+        {'id': 1634}, # Zigbee Repeater
     ]
     #driver_files_active_2 = []
     driver_files_private_active_2 = [

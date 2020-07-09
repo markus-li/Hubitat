@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0703Tb
+ *  Version: v1.0.2.0709Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1556,7 +1556,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0703Tb"
+    String version = "v1.0.2.0709Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2196,11 +2196,22 @@ boolean isValidDate(String dateFormat, String dateString) {
     return true
 }
 
+Integer retrieveMinimumMinutesToRepeat(Integer minimumMinutesToRepeat=55) {
+    Integer mmr = null
+    if(state.forcedMinutes == null || state.forcedMinutes == 0) {
+        mmr = minimumMinutesToRepeat
+    } else {
+        mmr = state.forcedMinutes - 1 < 1 ? 1 : state.forcedMinutes.intValue() - 1
+    }
+    return mmr
+}
+
 boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
     boolean r = false
+    Integer mmr = retrieveMinimumMinutesToRepeat(minimumMinutesToRepeat=minimumMinutesToRepeat)
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
-        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (minimumMinutesToRepeat * 60 * 1000)) {
+        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (mmr * 60 * 1000)) {
             r = true
 		    sendEvent(name: "lastCheckin", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
             logging("Updated lastCheckin", 1)
@@ -2209,7 +2220,7 @@ boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
         }
 	}
     if (lastCheckinEpochEnable == true) {
-		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (minimumMinutesToRepeat * 60 * 1000)) {
+		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (mmr * 60 * 1000)) {
             r = true
 		    sendEvent(name: "lastCheckinEpoch", value: now())
             logging("Updated lastCheckinEpoch", 1)

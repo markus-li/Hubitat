@@ -131,6 +131,12 @@ def getCommandsForPresence():
 command "resetRestoredCounter"
 """
 
+def getCommandsForZigbeePresence():
+    return """
+// Zigbee Presence Commands
+command "forceReconnectMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Reconnect Mode"]]
+"""
+
 def getMetadataCommandsForHandlingChildDevices():
     return """
 // Commands for handling Child Devices
