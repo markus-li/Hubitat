@@ -277,13 +277,13 @@ ArrayList<String> parse(String description) {
     }
     
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
-        List<String> restoreCmd = zigbee.readAttribute(CLUSTER_BASIC, 0x0004)
+        List<String> restoreCmd = zigbee.readAttribute(CLUSTER_BASIC, 0x0004, delay=70)
         logging("Restoring bind settings", 100)
-        restoreCmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0406 {${device.zigbeeId}} {}", "delay 200",]
+        restoreCmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0406 {${device.zigbeeId}} {}", "delay 70",]
         if(getDeviceDataByName('model') != "lumi.sensor_motion") {
-            restoreCmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay 200",]
+            restoreCmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay 70",]
         }
-        restoreCmd += ["zdo send ${device.deviceNetworkId} 0x01 0x01", "delay 200"]
+        restoreCmd += ["zdo send ${device.deviceNetworkId} 0x01 0x01", "delay 70"]
         sendZigbeeCommands(restoreCmd)
     }
     sendlastCheckinEvent(minimumMinutesToRepeat=30)

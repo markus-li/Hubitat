@@ -317,7 +317,12 @@ ArrayList<String> parse(String description) {
     }
 
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+        List<String> restoreCmd = zigbee.readAttribute(CLUSTER_BASIC, 0x0004, delay=70)
+        logging("Restoring bind settings", 100)
+        restoreCmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0006 {${device.zigbeeId}} {}", "delay 70",]
+        restoreCmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0000 {${device.zigbeeId}} {}", "delay 70",]
+        restoreCmd += ["zdo send ${device.deviceNetworkId} 0x01 0x01", "delay 70"]
+        sendZigbeeCommands(restoreCmd)
     }
     sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
