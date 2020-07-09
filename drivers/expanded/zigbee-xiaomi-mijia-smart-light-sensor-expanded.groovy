@@ -80,6 +80,7 @@ metadata {
         input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
         // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
         input(name: "secondsMinLux", type: "number", title: styling_addTitleDiv("Minimum Update Time"), description: styling_addDescriptionDiv("Set the minimum number of seconds between Lux updates (5 to 3600, default: 10)"), defaultValue: "10", range: "5..3600")
+        input(name: "luxRes", type: "enum", title: styling_addTitleDiv("Lux Resolution"), description: styling_addDescriptionDiv("Lux sensor resolution (0..1 = maximum number of decimal places, default: 1)"), options: ["0", "1"], defaultValue: "1")
 	}
 }
 
@@ -228,18 +229,18 @@ ArrayList<String> parse(String description) {
     } else if(msgMap["cluster"] == "0400" && msgMap["attrId"] == "0000") {
         Integer rawValue = Integer.parseInt(msgMap['value'], 16)
         Integer variance = 190
-        
+        Integer luxResInt = luxRes == null ? 1 : Integer.parseInt(luxRes)
         BigDecimal lux = rawValue > 0 ? Math.pow(10, rawValue / 10000.0) - 1.0 : 0
         BigDecimal oldLux = device.currentValue('illuminance') == null ? null : device.currentValue('illuminance')
         Integer oldRaw = oldLux == null ? null : oldLux == 0 ? 0 : Math.log10(oldLux + 1) * 10000
-        lux = lux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        if(oldLux != null) oldLux = oldLux.setScale(1, BigDecimal.ROUND_HALF_UP)
+        lux = lux.setScale(luxResInt, BigDecimal.ROUND_HALF_UP)
+        if(oldLux != null) oldLux = oldLux.setScale(luxResInt, BigDecimal.ROUND_HALF_UP)
         BigDecimal luxChange = null
         if(oldRaw == null) {
             logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRawold lux: $oldLux)", 1)
         } else {
             luxChange = lux - oldLux
-            luxChange = luxChange.setScale(1, BigDecimal.ROUND_HALF_UP)
+            luxChange = luxChange.setScale(luxResInt, BigDecimal.ROUND_HALF_UP)
             logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRaw, diff: ${rawValue - oldRaw}, lower: ${oldRaw - variance}, upper: ${oldRaw + variance}, old lux: $oldLux)", 1)
         }
         
