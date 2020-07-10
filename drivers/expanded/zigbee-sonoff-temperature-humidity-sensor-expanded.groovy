@@ -67,6 +67,8 @@ metadata {
 
         fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0402,0405,0001", outClusters:"0003", model:"TH01", manufacturer:"eWeLink", application:"04"
 
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0001,0402,0405", outClusters:"0019", model:"TS0201", manufacturer:"_TZ2000_hjsgdkfl", application:"43"
+        
     }
 
     preferences {
