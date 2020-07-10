@@ -63,7 +63,7 @@ metadata {
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
         // BEGIN:getCommandsForZigbeePresence()
-        command "forceReconnectMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Reconnect Mode"]]
+        command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
 
         command "parse", [[name:"Description*", type: "STRING", description: "description"]]
@@ -83,7 +83,7 @@ metadata {
         input(name: "presenceWarningEnable", type: "bool", title: styling_addTitleDiv("Enable Presence Warning"), description: styling_addDescriptionDiv("Enables Presence Warnings in the Logs (default: true)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
         // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
-        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Normal)<br/>NOTE: The \"Insane\" mode may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane"], defaultValue: "Normal")
+        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Normal)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Normal")
         // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
         input(name: "enableReleaseEvents", type: "bool", title: styling_addTitleDiv("Enable Release Events"), description: styling_addDescriptionDiv("Records button Release events (default: enabled)"), defaultValue: true)
         Integer physicalButtons = getDeviceDataByName('physicalButtons') != null ? getDeviceDataByName('physicalButtons').toInteger() :  0
@@ -1176,8 +1176,11 @@ void reconnectEvent(BigDecimal forcedMinutes=null) {
 void scheduleReconnectEvent(BigDecimal forcedMinutes=null) {
     Random rnd = new Random()
     switch(recoveryMode) {
+        case "Suicidal":
+            schedule("${rnd.nextInt(3)}/3 * * * * ? *", 'reconnectEvent')
+            break
         case "Insane":
-            schedule("${rnd.nextInt(7)}/7 * * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(6)}/6 * * * * ? *", 'reconnectEvent')
             break
         case "Slow":
             schedule("${rnd.nextInt(30)}/30 * * * * ? *", 'reconnectEvent')
@@ -1196,7 +1199,7 @@ void checkEventInterval(boolean displayWarnings=true) {
     Integer mbe = getMaximumMinutesBetweenEvents()
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
         recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, reconnect mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
         scheduleReconnectEvent()
     }
     sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
@@ -1216,28 +1219,28 @@ void startCheckEventInterval() {
     }
 }
 
-void forceReconnectMode(BigDecimal minutes) {
+void forceRecoveryMode(BigDecimal minutes) {
     minutes = minutes == null || minutes < 0 ? 0 : minutes
     Integer minutesI = minutes.intValue()
-    logging("forceReconnectMode(minutes=$minutesI) ", 1)
+    logging("forceRecoveryMode(minutes=$minutesI) ", 1)
     if(minutesI == 0) {
         disableForcedReconnectMode()
     } else if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=minutesI) == false) {
         recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced reconnect mode ($recoveryMode) ACTIVATED!")
+        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode ($recoveryMode) ACTIVATED!")
         state.forcedMinutes = minutes
-        runIn(minutesI * 60, 'disableForcedReconnectMode')
+        runIn(minutesI * 60, 'disableForcedRecoveryMode')
 
         scheduleReconnectEvent(forcedMinutes=minutes)
     } else {
-        log.warn("Forced reconnect mode NOT activated since we already have a checkin event during the last $minutesI minute(s)!")
+        log.warn("Forced recovery mode NOT activated since we already have a checkin event during the last $minutesI minute(s)!")
     }
 }
 
-void disableForcedReconnectMode() {
+void disableForcedRecoveryMode() {
     state.forcedMinutes = 0
     unschedule('reconnectEvent')
-    if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced reconnect mode DEACTIVATED!")
+    if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode DEACTIVATED!")
 }
 // END:  getHelperFunctions('zigbee-generic')
 

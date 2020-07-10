@@ -134,7 +134,7 @@ command "resetRestoredCounter"
 def getCommandsForZigbeePresence():
     return """
 // Zigbee Presence Commands
-command "forceReconnectMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Reconnect Mode"]]
+command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
 """
 
 def getMetadataCommandsForHandlingChildDevices():
@@ -325,8 +325,8 @@ input(name: "presenceWarningEnable", type: "bool", title: styling_addTitleDiv("E
 
 def getMetadataPreferencesForRecoveryMode(defaultMode="Normal"):
     return '''
-// Preferences for the Reconnect Feature
-input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: ''' + defaultMode + ''')<br/>NOTE: The \\"Insane\\" mode may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane"], defaultValue: "''' + defaultMode + '''")
+// Preferences for the Recovery Feature
+input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: ''' + defaultMode + ''')<br/>NOTE: The \\"Insane\\" and \\"Suicidal\\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "''' + defaultMode + '''")
 '''
 
 def getMetadataPreferencesForZigbeeDevicesWithBattery():
