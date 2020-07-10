@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0709b
+ *  Version: v0.7.1.0710b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,6 +83,9 @@ metadata {
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         input(name: "presenceWarningEnable", type: "bool", title: styling_addTitleDiv("Enable Presence Warning"), description: styling_addDescriptionDiv("Enables Presence Warnings in the Logs (default: true)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
+        // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
+        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Normal)<br/>NOTE: The \"Insane\" mode may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane"], defaultValue: "Normal")
+        // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
         // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
         input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
         input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
@@ -358,7 +361,7 @@ void reconnectEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models MCCGQ01LM & MCCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0709b"
+    String version = "v0.7.1.0710b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1065,22 +1068,47 @@ void reconnectEvent(BigDecimal forcedMinutes=null) {
     }
 }
 
+void scheduleReconnectEvent(BigDecimal forcedMinutes=null) {
+    Random rnd = new Random()
+    switch(recoveryMode) {
+        case "Insane":
+            schedule("${rnd.nextInt(7)}/7 * * * * ? *", 'reconnectEvent')
+            break
+        case "Slow":
+            schedule("${rnd.nextInt(30)}/30 * * * * ? *", 'reconnectEvent')
+            break
+        case null:
+        case "Normal":
+        default:
+            schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
+            break
+    }
+    reconnectEvent(forcedMinutes=forcedMinutes)
+}
+
 void checkEventInterval(boolean displayWarnings=true) {
     prepareCounters()
     Integer mbe = getMaximumMinutesBetweenEvents()
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        Random rnd = new Random()
-        schedule("${rnd.nextInt(7)}/7 * * * * ? *", 'reconnectEvent')
+        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, reconnect mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+        scheduleReconnectEvent()
     }
     sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
 void startCheckEventInterval() {
-    logging("startCheckEventInterval()", 100)
-    Random rnd = new Random()
-    schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)}/59 * * * ? *", 'checkEventInterval')
-    checkEventInterval(displayWarnings=true)
+    logging("startCheckEventInterval()", 1)
+    if(recoveryMode != "Disabled") {
+        logging("Recovery feature ENABLED", 100)
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)}/59 * * * ? *", 'checkEventInterval')
+        checkEventInterval(displayWarnings=true)
+    } else {
+        logging("Recovery feature DISABLED", 100)
+        unschedule('checkEventInterval')
+        unschedule('reconnectEvent')
+    }
 }
 
 void forceReconnectMode(BigDecimal minutes) {
@@ -1090,13 +1118,12 @@ void forceReconnectMode(BigDecimal minutes) {
     if(minutesI == 0) {
         disableForcedReconnectMode()
     } else if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=minutesI) == false) {
-        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced reconnect mode ACTIVATED!")
+        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced reconnect mode ($recoveryMode) ACTIVATED!")
         state.forcedMinutes = minutes
         runIn(minutesI * 60, 'disableForcedReconnectMode')
 
-        Random rnd = new Random()
-        schedule("${rnd.nextInt(7)}/7 * * * * ? *", 'reconnectEvent')
-        reconnectEvent(forcedMinutes=minutes)
+        scheduleReconnectEvent(forcedMinutes=minutes)
     } else {
         log.warn("Forced reconnect mode NOT activated since we already have a checkin event during the last $minutesI minute(s)!")
     }

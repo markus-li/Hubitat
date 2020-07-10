@@ -2,14 +2,14 @@
   "packageName": "Xiaomi/Aqara/Opple Button/Switch/Remote",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-09",
+  "dateReleased": "2020-07-10",
   "apps": [],
   "drivers": [
     {
       "id": "c31bf234-d72d-5629-8b40-e35341a38b67",
       "internalId": 1121,
       "name": "Zigbee - Xiaomi/Aqara/Opple Button/Switch/Remote",
-      "betaVersion": "v0.7.1.0709b",
+      "betaVersion": "v0.7.1.0710b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-opple-button-switch-remote-expanded.groovy",
       "required": true

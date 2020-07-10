@@ -323,6 +323,12 @@ input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable P
 input(name: "presenceWarningEnable", type: "bool", title: styling_addTitleDiv("Enable Presence Warning"), description: styling_addDescriptionDiv("Enables Presence Warnings in the Logs (default: true)"), defaultValue: true)
 '''
 
+def getMetadataPreferencesForRecoveryMode(defaultMode="Normal"):
+    return '''
+// Preferences for the Reconnect Feature
+input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: ''' + defaultMode + ''')<br/>NOTE: The \\"Insane\\" mode may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane"], defaultValue: "''' + defaultMode + '''")
+'''
+
 def getMetadataPreferencesForZigbeeDevicesWithBattery():
     return '''
 // Preferences for Zigbee Devices with Battery
