@@ -225,7 +225,7 @@ ArrayList<String> parse(String description) {
                     //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
                     break
                 default:
-                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    logging("Unhandled Event IGNORE THIS - description:${description} | msgMap:${msgMap}", 100)
                     break
             }
             break
