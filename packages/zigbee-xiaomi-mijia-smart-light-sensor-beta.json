@@ -2,14 +2,14 @@
   "packageName": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-10",
+  "dateReleased": "2020-07-11",
   "apps": [],
   "drivers": [
     {
       "id": "93a1e235-91b2-5320-9c30-25802b26ac5d",
       "internalId": 1122,
       "name": "Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
-      "betaVersion": "v0.7.1.0710b",
+      "betaVersion": "v0.7.1.0711b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy",
       "required": true

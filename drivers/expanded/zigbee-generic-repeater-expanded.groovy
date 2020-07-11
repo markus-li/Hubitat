@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0710b
+ *  Version: v0.7.1.0711b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -135,6 +135,7 @@ void ping() {
 
 def initialize() {
     logging("initialize()", 100)
+    unschedule()
     refresh()
 }
 
@@ -278,7 +279,7 @@ ArrayList<String> parse(String description) {
 private String getDriverVersion() {
     comment = "Works with most repeater-only devices (Xbee with Send Type set to Bind)"
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0710b"
+    String version = "v0.7.1.0711b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -353,13 +354,6 @@ void setLogsOffTask(boolean noLogWarning=false) {
         }
         runIn(1800, "logsOff")
     }
-}
-
-def generalInitialize() {
-    logging("generalInitialize()", 100)
-	unschedule("tasmota_updatePresence")
-    setLogsOffTask()
-    refresh()
 }
 
 void logsOff() {
@@ -989,18 +983,18 @@ void scheduleReconnectEvent(BigDecimal forcedMinutes=null) {
     Random rnd = new Random()
     switch(recoveryMode) {
         case "Suicidal":
-            schedule("${rnd.nextInt(3)}/3 * * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
             break
         case "Insane":
-            schedule("${rnd.nextInt(6)}/6 * * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(30)}/30 * * * * ? *", 'reconnectEvent')
             break
         case "Slow":
-            schedule("${rnd.nextInt(30)}/30 * * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(59)} ${rnd.nextInt(3)}/3 * * * ? *", 'reconnectEvent')
             break
         case null:
         case "Normal":
         default:
-            schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(59)} ${rnd.nextInt(2)}/2 * * * ? *", 'reconnectEvent')
             break
     }
     reconnectEvent(forcedMinutes=forcedMinutes)

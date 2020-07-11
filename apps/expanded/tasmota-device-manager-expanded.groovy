@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0630Tb
+ *  Version: v1.0.2.0711Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -632,7 +632,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.2.0630Tb"
+    String version = "v1.0.2.0711Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -1317,13 +1317,6 @@ void setLogsOffTask(boolean noLogWarning=false) {
     }
 }
 
-def generalInitialize() {
-    logging("generalInitialize()", 100)
-	unschedule("tasmota_updatePresence")
-    setLogsOffTask()
-    refresh()
-}
-
 void logsOff() {
     if(runReset != "DEBUG") {
         log.warn "Debug logging disabled..."
@@ -1904,6 +1897,13 @@ private Integer convertHexToInt(hex) {
 // END:  getHelperFunctions('app-tasmota-device-discovery')
 
 // BEGIN:getHelperFunctions('tasmota')
+def generalInitialize() {
+    logging("generalInitialize()", 100)
+	unschedule()
+    setLogsOffTask()
+    refresh()
+}
+
 void parse(hubitat.scheduling.AsyncResponse asyncResponse, data) {
     if(asyncResponse != null) {
         try{
