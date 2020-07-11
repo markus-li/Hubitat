@@ -425,7 +425,9 @@ def main():
         # Zigbee - Generic
         {'id': 1634, 'id_2': 428, 'file': 'zigbee-generic-repeater.groovy', 'version': default_zigbee_version,
          'comment': 'Works with most repeater-only devices (Xbee with Send Type set to Bind)', 'publish': False },
-
+        {'id': 1635, 'id_2': 460, 'file': 'zigbee-generic-outlet.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with Generic Outlets (pelase report your fingerprints)', 'publish': False },
+        
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
 
@@ -528,6 +530,7 @@ def main():
         
         # Zigbee - Generic
         {'id': 1634}, # Zigbee Repeater
+        {'id': 1635}, # Zigbee Outlet
         
         # Zigbee - Sonoff
         {'id': 1601}, # Sonoff Button
@@ -535,7 +538,10 @@ def main():
         {'id': 1603}, # Sonoff Motion
         {'id': 1604}, # Sonoff T&H
 
+
         {'id': 1409, 'id_3': 0, 'file': 'dashboard-background-image.groovy', 'version': 'v0.1.0.MMDD' + version_suffix},
+
+        
 
         # RF/IR Drivers
         #{'id': 648},
@@ -591,6 +597,7 @@ def main():
 
         # Zigbee - Generic
         {'id': 1634}, # Zigbee Repeater
+        {'id': 1635}, # Zigbee Outlet
     ]
     #driver_files_active_2 = []
     driver_files_private_active_2 = [
