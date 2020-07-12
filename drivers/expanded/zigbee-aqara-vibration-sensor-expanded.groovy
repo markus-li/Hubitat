@@ -81,7 +81,6 @@ metadata {
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
 
-        command "parse", [[name:"Description*", type: "STRING", description: "description"]]
         command "setOpenPosition"
         command "setClosedPosition"
 

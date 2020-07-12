@@ -104,11 +104,15 @@ ArrayList<String> refresh() {
         ping()
     }
 
+    String endpoint = device.getEndpointId()
+    endpoint = endpoint == null ? "01" : endpoint
+
     ArrayList<String> cmd = []
     cmd += zigbee.readAttribute(0x000, 0x0005)
-    cmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200",]
-    cmd += ["zdo send ${device.deviceNetworkId} 0x01 0x01", "delay 200"]
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["zdo send ${device.deviceNetworkId} 0x$endpoint 0x01", "delay 200"]
     logging("refresh cmd: $cmd", 1)
+
     sendZigbeeCommands(cmd)
 }
 
@@ -208,7 +212,7 @@ ArrayList<String> parse(String description) {
 
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_0004":
-            logging("Manufacturer Name Received", 100)
+            logging("Manufacturer Name Received", 1)
             if(sendlastCheckinEvent(minimumMinutesToRepeat=25) == true) {
                 logging("Sending request to read attribute 0x0005 from cluster 0x0000...", 1)
                 sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
@@ -219,28 +223,42 @@ ArrayList<String> parse(String description) {
             setCleanModelName(newModelToSet=msgMap["value"])
             break
         case "0006_0000":
-            logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 1)
-            sendOnOffEvent(Integer.parseInt(msgMap['value'], 16) == 1)
+            logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 100)
+            String endpoint = device.getEndpointId()
+            endpoint = endpoint == null ? "01" : endpoint
+            if(msgMap['endpoint'] == '01' || msgMap['endpoint'] == endpoint) {
+                sendOnOffEvent(Integer.parseInt(msgMap['value'], 16) == 1)
+            }
             sendlastCheckinEvent(minimumMinutesToRepeat=25)
             break
         default:
             switch(msgMap["clusterId"]) {
+                case "0006":
+                    logging("ON/OFF CATCHALL CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
+                    String endpoint = device.getEndpointId()
+                    endpoint = endpoint == null ? "01" : endpoint
+                    //logging("endpoint = $endpoint, sourceEndpoint = ${msgMap['sourceEndpoint']}, data=${Integer.parseInt(msgMap['data'][0], 16)}", 0)
+                    if(msgMap['sourceEndpoint'] == endpoint) {
+                        sendOnOffEvent(Integer.parseInt(msgMap['data'][0], 16) == 1)
+                    }
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
+                    break
                 case "0013":
                     logging("MULTISTATE CLUSTER EVENT", 1)
                     sendlastCheckinEvent(minimumMinutesToRepeat=25)
                     break
                 case "8021":
-                    logging("BIND RESPONSE CLUSTER EVENT", 100)
+                    logging("BIND RESPONSE CLUSTER EVENT", 1)
                     sendlastCheckinEvent(minimumMinutesToRepeat=25)
                     break
                 case "8001":
-                    logging("GENERAL CLUSTER EVENT", 100)
+                    logging("GENERAL CLUSTER EVENT", 1)
                     sendlastCheckinEvent(minimumMinutesToRepeat=25)
                     break
                 case "8021":
                 case "8032":
                 case "8038":
-                    logging("GENERAL CATCHALL (0x${msgMap["clusterId"]}", 100)
+                    logging("GENERAL CATCHALL (0x${msgMap["clusterId"]}", 1)
                     break
                 default:
                     sendlastCheckinEvent(minimumMinutesToRepeat=25)
