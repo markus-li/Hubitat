@@ -405,6 +405,8 @@ def main():
          'comment': 'Works with model SJCGQ11LM.' },
         {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model DJT11LM.', 'publish': False },
+        {'id': 1667, 'id_2': 493, 'id_3': 0, 'file': 'zigbee-aqara-cube.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with model MFKZQ01LM.', 'publish': False },
         
         # Zigbee - Not ready for release
         {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
@@ -527,7 +529,7 @@ def main():
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
-        
+        #{'id': 1667}, # Aqara Cube
         
         # Zigbee - Tuya
         {'id': 1633}, # Tuya Valve
@@ -594,6 +596,7 @@ def main():
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1121}, # Xiaomi/Aqara Button/Switch
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
+        {'id': 1667}, # Aqara Cube
 
         # Zigbee - Sonoff
         {'id': 1601}, # Sonoff Button

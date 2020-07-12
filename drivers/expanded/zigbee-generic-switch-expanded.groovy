@@ -57,6 +57,7 @@ metadata {
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
 
+        fingerprint deviceJoinName: "Tuya Light Switch", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0006", outClusters:"0019", model:"TS0011", manufacturer:"TUYATEC-j5khr9vo"
     }
 
     preferences {
@@ -1142,6 +1143,8 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
+String getDEGREE() { return String.valueOf((char)(176)) }
+
 void refresh(String cmd) {
     deviceCommand(cmd)
 }

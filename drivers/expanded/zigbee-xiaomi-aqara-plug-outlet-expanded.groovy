@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0711b
+ *  Version: v0.7.1.0712b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -102,6 +102,7 @@ ArrayList<String> refresh() {
     configurePresence()
     startCheckEventInterval()
     setLogsOffTask(noLogWarning=true)
+    state.remove("prefsSetCount")
     
     setCleanModelName(newModelToSet=null, acceptedModels=[
         "lumi.ctrl_86plug.aq1",
@@ -331,7 +332,7 @@ ArrayList<String> off() {
 private String getDriverVersion() {
     comment = "Works with models ZNCZ02LM, ZNCZ12LM(needs testing) & QBCZ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0711b"
+    String version = "v0.7.1.0712b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1160,6 +1161,8 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
+String getDEGREE() { return String.valueOf((char)(176)) }
+
 void refresh(String cmd) {
     deviceCommand(cmd)
 }

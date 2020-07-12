@@ -1108,6 +1108,8 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
+String getDEGREE() { return String.valueOf((char)(176)) }
+
 void refresh(String cmd) {
     deviceCommand(cmd)
 }

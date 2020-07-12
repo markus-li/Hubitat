@@ -89,12 +89,10 @@ metadata {
     }
 
     preferences {
-        // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=True)
-        input(name: "runReset", description: styling_addDescriptionDiv("DISABLE BEFORE RELEASE"), title: styling_addTitleDiv("DISABLE BEFORE RELEASE"))
-        
+        // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
         input(name: "debugLogging", type: "bool", title: styling_addTitleDiv("Enable debug logging"), description: ""  + styling_getDefaultCSS(), defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
         input(name: "infoLogging", type: "bool", title: styling_addTitleDiv("Enable info logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
-        // END:  getDefaultMetadataPreferences(includeCSS=True, includeRunReset=True)
+        // END:  getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
         // BEGIN:getMetadataPreferencesForLastCheckin()
         input(name: "lastCheckinEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Date"), description: styling_addDescriptionDiv("Records Date events if enabled"), defaultValue: true)
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
@@ -162,8 +160,6 @@ void updated() {
     setSensitivity()
     refresh()
 }
-
-String getDEGREE() { return String.valueOf((char)(176)) }
 
 ArrayList<String> parse(String description) {
     // BEGIN:getGenericZigbeeParseHeader(loglevel=0)
@@ -1351,6 +1347,8 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
+String getDEGREE() { return String.valueOf((char)(176)) }
+
 void refresh(String cmd) {
     deviceCommand(cmd)
 }
