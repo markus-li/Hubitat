@@ -403,6 +403,8 @@ def main():
          'comment': 'Works with models WSDCGQ01LM & WSDCGQ11LM.' },
         {'id': 1377, 'id_2': 327, 'id_3': 0, 'file': 'zigbee-aqara-water-leak-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model SJCGQ11LM.' },
+        {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with model DJT11LM.', 'publish': False },
         
         # Zigbee - Not ready for release
         {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
@@ -426,7 +428,9 @@ def main():
         {'id': 1634, 'id_2': 428, 'file': 'zigbee-generic-repeater.groovy', 'version': default_zigbee_version,
          'comment': 'Works with most repeater-only devices (Xbee with Send Type set to Bind)', 'publish': False },
         {'id': 1635, 'id_2': 460, 'file': 'zigbee-generic-outlet.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with Generic Outlets (pelase report your fingerprints)', 'publish': False },
+         'comment': 'Works with Generic Outlets (please report your fingerprints)', 'publish': False },
+        {'id': 1666, 'id_2': 492, 'file': 'zigbee-generic-switch.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with Generic Switches (please report your fingerprints)', 'publish': False },
         
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
@@ -451,8 +455,7 @@ def main():
         {'id': 1313, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-5-button-remote.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model ???.' },
         
-        {'id': 1378, 'id_2': 360, 'id_3': 0, 'file': 'zigbee-aqara-vibration-sensor.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with model DJT11LM.' },
+        
 
         #{'id': 1441, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-ikea-tradfri-on-off-switch.groovy', 'version': default_zigbee_version,
         # 'comment': 'Works with model E1743.' },
@@ -520,6 +523,7 @@ def main():
         {'id': 1121}, # Xiaomi/Aqara Button/Switch
         {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
         {'id': 1377}, # Aqara Water Leak Sensor
+        {'id': 1378}, # Aqara Vibration Sensor
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
         {'id': 1154}, # Xiaomi/Aqara Motion Sensors
@@ -531,6 +535,7 @@ def main():
         # Zigbee - Generic
         {'id': 1634}, # Zigbee Repeater
         {'id': 1635}, # Zigbee Outlet
+        {'id': 1666}, # Zigbee Switch
         
         # Zigbee - Sonoff
         {'id': 1601}, # Sonoff Button
@@ -559,7 +564,7 @@ def main():
         #{'id': 866},
 
         # Zigbee
-        {'id': 1378}, # Aqara Vibration Sensor
+        
         {'id': 1186}, # Aqara Bulb
         
         {'id': 1155}, # iHorn Motion Sensor
@@ -583,6 +588,7 @@ def main():
         {'id': 1122}, # Xiaomi Mijia Smart Light Sensor
         {'id': 801}, # Aqara Smart Curtain
         {'id': 1377}, # Aqara Water Leak Sensor
+        {'id': 1378}, # Aqara Vibration Sensor
         {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
         {'id': 1345}, # Xiaomi/Aqara Temperature/Humidity Sensor
         {'id': 1153}, # Xiaomi/Aqara Contact Sensors
@@ -598,6 +604,7 @@ def main():
         # Zigbee - Generic
         {'id': 1634}, # Zigbee Repeater
         {'id': 1635}, # Zigbee Outlet
+        {'id': 1666}, # Zigbee Switch
     ]
     #driver_files_active_2 = []
     driver_files_private_active_2 = [
@@ -606,7 +613,7 @@ def main():
         #{'id': 865}, {'id': 866}, # Universal Drivers RELEASE
 
         # Zigbee
-        {'id': 1378}, # Aqara Vibration Sensor
+        
         {'id': 1186}, # Aqara Bulb
         {'id': 1185}, # Xiaomi/Aqara Plug/Outlet
         {'id': 1155}, # iHorn Motion Sensor

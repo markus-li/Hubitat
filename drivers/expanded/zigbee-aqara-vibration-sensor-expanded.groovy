@@ -19,6 +19,11 @@
  *
  */
 
+/* 
+   Some code borrowed from veecceoh for now, it will be replaced when I have the time. It comes from this driver:
+   github.com/veeceeoh/xiaomi-hubitat/blob/master/devicedrivers/xiaomi-aqara-vibration-sensor-hubitat.src/xiaomi-aqara-vibration-sensor-hubitat.groovy
+ */
+
 // BEGIN:getDefaultImports()
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
@@ -28,28 +33,47 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Generic Outlet (with Presence)", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-outlet-expanded.groovy") {
+    definition (name: "Zigbee - Aqara Vibration Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-vibration-sensor-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
         capability "Initialize"
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
-        capability "HealthCheck"
-        capability "Actuator"
-        capability "Switch"
-        capability "Outlet"
+        capability "Battery"
+        capability "AccelerationSensor"
+        capability "ContactSensor"
+        capability "MotionSensor"
+        capability "PushableButton"
+        
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
         // END:  getDefaultMetadataAttributes()
-
         // BEGIN:getMetadataAttributesForLastCheckin()
         attribute "lastCheckin", "Date"
         attribute "lastCheckinEpoch", "number"
         attribute "notPresentCounter", "number"
         attribute "restoredCounter", "number"
         // END:  getMetadataAttributesForLastCheckin()
+        // BEGIN:getZigbeeBatteryMetadataAttributes()
+        attribute "batteryLastReplaced", "String"
+        // END:  getZigbeeBatteryMetadataAttributes()
+        attribute "activityLevel", "NUMBER"
+        attribute "lastDropped", "STRING"
+        attribute "lastStationary", "STRING"
+        attribute "lastTilted", "STRING"
+        attribute "lastVibration", "STRING"
+        attribute "tiltAngle", "STRING"
+        attribute "sensitivityLevel", "STRING"
+        attribute "sensorState", "ENUM", ["stationary", "vibrating", "tilted", "dropped"]
 
+        attribute "currentX", "DECIMAL"
+        attribute "currentY", "DECIMAL"
+        attribute "currentZ", "DECIMAL"
+        
+        // BEGIN:getZigbeeBatteryCommands()
+        command "resetBatteryReplacedDate"
+        // END:  getZigbeeBatteryCommands()
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
@@ -57,33 +81,44 @@ metadata {
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
 
-        fingerprint model:"TRADFRI control outlet", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008,1000,FC7C", outClusters:"0005,0019,0020,1000", manufacturer:"IKEA of Sweden"
+        command "parse", [[name:"Description*", type: "STRING", description: "description"]]
+        command "setOpenPosition"
+        command "setClosedPosition"
 
-        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0B04,0B05,FC03", outClusters:"0019", model:"3210-L", manufacturer:"CentraLite"
+        fingerprint deviceJoinName: "Aqara Vibration Sensor (DJT11LM)", model: "lumi.vibration.aq1", profileId: "0104", inClusters: "0000,0003,0019,0101", outClusters: "0000,0004,0003,0005,0019,0101", manufacturer: "LUMI", endpointId: "01"
+
     }
 
     preferences {
-        // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
+        // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=True)
+        input(name: "runReset", description: styling_addDescriptionDiv("DISABLE BEFORE RELEASE"), title: styling_addTitleDiv("DISABLE BEFORE RELEASE"))
+        
         input(name: "debugLogging", type: "bool", title: styling_addTitleDiv("Enable debug logging"), description: ""  + styling_getDefaultCSS(), defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
         input(name: "infoLogging", type: "bool", title: styling_addTitleDiv("Enable info logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
-        // END:  getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
+        // END:  getDefaultMetadataPreferences(includeCSS=True, includeRunReset=True)
         // BEGIN:getMetadataPreferencesForLastCheckin()
         input(name: "lastCheckinEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Date"), description: styling_addDescriptionDiv("Records Date events if enabled"), defaultValue: true)
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         input(name: "presenceWarningEnable", type: "bool", title: styling_addTitleDiv("Enable Presence Warning"), description: styling_addDescriptionDiv("Enables Presence Warnings in the Logs (default: true)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
-        // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Slow")
-        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Slow)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Slow")
-        // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Slow")
-        input(name: "enablePing", type: "bool", title: styling_addTitleDiv("Enable Automatic Ping"), description: styling_addDescriptionDiv("Sends an, infrequent, ping to the device if needed for knowing if Present (default: enabled)"), defaultValue: true)
-	}
+        // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
+        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Normal)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Normal")
+        // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
+        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
+        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
+        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
+        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
+        input(name: "resetTimeSetting", type: "number", title: styling_addTitleDiv("Reset Motion Timer"), description: styling_addDescriptionDiv("After X number of seconds, reset motion to inactive (1 to 3600, default: 61)"), defaultValue: "61", range: "1..3600")
+        input(name: "sensitivityLevelSetting", type: "enum", title: styling_addTitleDiv("Sensitivity Level"), description: styling_addDescriptionDiv("Sets the sensitivity of the sensor (default: low)<br>If sensitivity level doesn't update in \"Current States\", click the device Reset button."), defaultValue: "0", options:[["0":"Low"], ["1":"Medium"], ["2":"High"]])
+        input(name: "margin", title: styling_addTitleDiv("Margin of error"), description: styling_addDescriptionDiv("Used when comparing sensor position to user-set open/close positions (default = 10.0)"), type: "decimal", range: "0..100")
+    }
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Generic Outlet (with Presence)', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-outlet-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Aqara Vibration Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-vibration-sensor-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -96,44 +131,23 @@ ArrayList<String> refresh() {
     
     getDriverVersion()
     configurePresence()
-    startCheckEventInterval()
+    resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
     
-    setCleanModelName(newModelToSet=null, acceptedModels=null)
+    setCleanModelName(newModelToSet=null, acceptedModels=[
+        "lumi.sensor_motion.aq2",
+        "lumi.sensor_motion"
+    ])
 
-    if(enablePing == null || enablePing == true) {
-        Random rnd = new Random()
-        schedule("${rnd.nextInt(59)} ${rnd.nextInt(29)}/29 * * * ? *", 'ping')
-        ping()
-    }
+    sendEvent(name:"numberOfButtons", value: 1, isStateChange: false)
 
     ArrayList<String> cmd = []
-    cmd += zigbee.readAttribute(0x000, 0x0005)
-    cmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200",]
-    cmd += ["zdo send ${device.deviceNetworkId} 0x01 0x01", "delay 200"]
+    
     logging("refresh cmd: $cmd", 1)
-    sendZigbeeCommands(cmd)
+    return cmd
 }
 
-void ping() {
-    if(enablePing == false) {
-        unschedule('ping')
-    } else if(hasCorrectCheckinEvents(25, false) == false){
-        logging("ping()", 100)
-        /* If additional Ping types are needed, please contact the Developer */
-        List<String> cmd = []
-        cmd += zigbee.readAttribute(CLUSTER_BASIC, 0x0004)
-        
-        cmd.each() {
-            if(it.startsWith("delay") == false) {
-                logging(it, 1)
-            }
-        }
-        sendZigbeeCommands(cmd)
-    }
-}
-
-def initialize() {
+void initialize() {
     logging("initialize()", 100)
     unschedule()
     refresh()
@@ -146,8 +160,11 @@ void installed() {
 
 void updated() {
     logging("updated()", 100)
+    setSensitivity()
     refresh()
 }
+
+String getDEGREE() { return String.valueOf((char)(176)) }
 
 ArrayList<String> parse(String description) {
     // BEGIN:getGenericZigbeeParseHeader(loglevel=0)
@@ -209,45 +226,102 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
+    sendlastCheckinEvent(minimumMinutesToRepeat=55)
+
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
-        case "0000_0004":
-            logging("Manufacturer Name Received", 100)
-            if(sendlastCheckinEvent(minimumMinutesToRepeat=25) == true) {
-                logging("Sending request to read attribute 0x0005 from cluster 0x0000...", 1)
-                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+        case "0000_FF01":
+        case "0000_FF02":
+            switch(msgMap["encoding"]) {
+                case "x4C":
+                    logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C) - description:${description} | parseMap:${msgMap}", 1)
+                    parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
+                    break
+                case "42":
+                case "41":
+                    logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42) - description:${description} | parseMap:${msgMap}", 1)
+                    if(msgMap["value"].containsKey("battery")) {
+                        parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
+                    }
+                    if(msgMap["value"].containsKey("accelerometerXYZ")) {
+                        List values = msgMap["value"]["raw"]["accelerometerXYZ"].split("(?<=\\G..)")
+                        msgMap["valueX"] = (Integer) (short) Integer.parseInt(values[0..1].join(), 16)
+                        msgMap["valueY"] = (Integer) (short) Integer.parseInt(values[2..3].join(), 16)
+                        msgMap["valueZ"] = (Integer) (short) Integer.parseInt(values[4..5].join(), 16)
+                        convertAccelerometerValues(msgMap["valueX"], msgMap["valueY"], msgMap["valueZ"])
+                    }
+                    break
+                default:
+                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    break
             }
             break
         case "0000_0005":
-            logging("Model Name Received", 1)
+            logging("Reset button pressed - description:${description} | parseMap:${msgMap}", 1)    
             setCleanModelName(newModelToSet=msgMap["value"])
+            
+            setSensitivity()
             break
-        case "0006_0000":
-            logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 1)
-            sendOnOffEvent(Integer.parseInt(msgMap['value'], 16) == 1)
-            sendlastCheckinEvent(minimumMinutesToRepeat=25)
+        case "0101_0055":
+            logging("Vibration, tilt, drop Cluster 0x0101, Attribute 0x0055", 100)
+            msgMap["eventType"] = msgMap["valueParsed"]
+            if(msgMap.containsKey("additionalAttrs")) {
+                if(msgMap["eventType"] == 2) {
+                    msgMap["tiltAngle"] = Integer.parseInt(msgMap["additionalAttrs"][0]["value"], 16)
+                    String dText = "Tilt angle changed by ${msgMap["tiltAngle"]}$DEGREE"
+                    sendEvent(
+                        name: 'tiltAngle',
+                        value: msgMap["tiltAngle"],
+                        descriptionText: dText,
+                        isStateChange:true
+                    )
+                    logging(dText, 100)
+                } else {
+                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                }
+                
+            }
+
+            sendSensorEvent(msgMap["eventType"])
+            logging("AQARA VIBRATION EVENT - description:${description} | parseMap:${msgMap}", 100)
+            break
+        case "0101_0505":
+            logging("Activity level Cluster 0x0101, Attribute 0x0505", 100)
+            msgMap["valueActivity"] = Integer.parseInt(msgMap["value"][0..3], 16)
+            sendEvent(name:"activityLevel", value: msgMap["valueActivity"], isStateChange: false)
+            logging("AQARA ACTIVITY LEVEL EVENT - description:${description} | parseMap:${msgMap}", 1)
+            break
+        case "0101_0508":
+            logging("XYZ Accelerometer Cluster 0x0101, Attribute 0x0508", 100)
+            List values = msgMap["value"].split("(?<=\\G..)")
+            msgMap["valueX"] = (Integer) (short) Integer.parseInt(values[0..1].join(), 16)
+            msgMap["valueY"] = (Integer) (short) Integer.parseInt(values[2..3].join(), 16)
+            msgMap["valueZ"] = (Integer) (short) Integer.parseInt(values[4..5].join(), 16)
+            convertAccelerometerValues(msgMap["valueX"], msgMap["valueY"], msgMap["valueZ"])
+            logging("AQARA ACCELEROMETER EVENT - description:${description} | parseMap:${msgMap}", 100)
+            break
+        case "x0406_0000":
+            logging("XIAOMI/AQARA MOTION EVENT - description:${description} | parseMap:${msgMap}", 1)
+            sendMotionEvent()
+            break
+        case "0000_FF0D":
+            logging("SENSITIVITY LEVEL ATTRIBUTE READ EVENT - description:${description} | parseMap:${msgMap}", 1)
+            Map<Integer,String> sensitivityMapping = [
+                0x15: "Low",
+                0x0B: "Medium",
+                0x01: "High"
+            ]
+            sendEvent(name:"sensitivityLevel", value: sensitivityMapping[msgMap["valueParsed"]], isStateChange: false)
             break
         default:
             switch(msgMap["clusterId"]) {
+                case "0000":
+                    logging("BASIC CLUSTER COMMAND CONFIRMATION EVENT - description:${description} | parseMap:${msgMap}", 100)
+                break
                 case "0013":
-                    logging("MULTISTATE CLUSTER EVENT", 1)
-                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
-                    break
-                case "8021":
-                    logging("BIND RESPONSE CLUSTER EVENT", 100)
-                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
-                    break
-                case "8001":
-                    logging("GENERAL CLUSTER EVENT", 100)
-                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
-                    break
-                case "8021":
-                case "8032":
-                case "8038":
-                    logging("GENERAL CATCHALL (0x${msgMap["clusterId"]}", 100)
-                    break
+                    logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
+                break
                 default:
-                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
-                    logging("Unhandled Event IGNORE THIS - description:${description} | msgMap:${msgMap}", 100)
+                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
                     break
             }
             break
@@ -260,26 +334,177 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
-void sendOnOffEvent(boolean onOff) {
-    logging("sendOnOffEvent(onOff=$onOff)", 1)
-    if(onOff == false) {
-        sendEvent(name:"switch", value: "off", isStateChange: false, descriptionText: "Switch was turned off")
-    } else {
-        sendEvent(name:"switch", value: "on", isStateChange: false, descriptionText: "Switch was turned on")
-    }
+void sendMotionEvent() {
+    logging("sendMotionEvent()", 1)
+    Integer resetTime = resetTimeSetting != null ? resetTimeSetting : 61
+    runIn(resetTime, "resetMotionEvent")
+    sendEvent(name:"motion", value: "active", isStateChange: false, descriptionText: "Contact was Closed")
+}
+
+void resetMotionEvent() {
+    logging("resetMotionEvent()", 1)
+    sendEvent(name:"motion", value: "inactive", isStateChange: false, descriptionText: "Contact was Closed")
 }
 
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
-ArrayList<String> on() {
-    logging("on()", 1)
-	return zigbeeCommand(0x006, 0x01)
+
+void setSensitivity() {
+    Integer sensitivity = 0x15
+    if(sensitivityLevelSetting == "1") {
+        sensitivity = 0x0B
+    } else if(sensitivityLevelSetting == "2") {
+        sensitivity = 0x01
+    }
+
+    ArrayList<String> cmd = []
+
+    cmd += zigbeeWriteAttribute(0x0000, 0xFF0D, 0x20, sensitivity, [mfgCode: "0x115F"])
+    cmd += zigbeeReadAttribute(0x0000, 0xFF0D, [mfgCode: "0x115F"])
+    
+    sendZigbeeCommands(cmd)
 }
 
-ArrayList<String> off() {
-    logging("off()", 1)
-	return zigbeeCommand(0x006, 0x00)
+void convertAccelerometerValues(Integer x, Integer y, Integer z) {
+    /* Some parts borrowed from veeceeoh in this method */
+    BigDecimal psi = new BigDecimal(Math.atan(x.div(Math.sqrt(z * z + y * y))) * 180 / Math.PI).setScale(1, BigDecimal.ROUND_HALF_UP)
+    BigDecimal phi = new BigDecimal(Math.atan(y.div(Math.sqrt(x * x + z * z))) * 180 / Math.PI).setScale(1, BigDecimal.ROUND_HALF_UP)
+    BigDecimal theta = new BigDecimal(Math.atan(z.div(Math.sqrt(x * x + y * y))) * 180 / Math.PI).setScale(1, BigDecimal.ROUND_HALF_UP)
+    
+    logging("Raw accelerometer XYZ axis values = $x, $y, $z", 100)
+    logging("Calculated angles are Psi = ${psi}$DEGREE, Phi = ${phi}$DEGREE, Theta = ${theta}$DEGREE ", 100)
+    sendEvent(name: "currentX", value: psi)
+    sendEvent(name: "currentY", value: phi)
+    sendEvent(name: "currentZ", value: theta)
+    if(state.closedX == null || state.openX == null) {
+        logging("Open and/or Closed positions have not been set!", 100)
+    } else {
+        BigDecimal cX = state.closedX
+        BigDecimal cY = state.closedY
+        BigDecimal cZ = state.closedZ
+        BigDecimal oX = state.openX
+        BigDecimal oY = state.openY
+        BigDecimal oZ = state.openZ
+        BigDecimal e = margin != null ? margin : 10.0
+        String position = "unknown"
+        if((psi < cX + e) && (psi > cX - e) && (phi < cY + e) && (phi > cY - e) && (theta < cZ + e) && (theta > cZ - e)) {
+            position = "closed"
+        } else if((psi < oX + e) && (psi > oX - e) && (phi < oY + e) && (phi > oY - e) && (theta < oZ + e) && (theta > oZ - e)) {
+            position = "open"
+        } else {
+            logging("The current calculated angle position does not match either of the stored open/closed positions", 100)
+        }
+        sendPositionEvent(position)
+    }
+}
+
+void sendSensorEvent(Integer value) {
+    /* Minor things inspired by a driver from veeceeoh in this method */
+    logging("sendSensorEvent(value=$value)", 100)
+    Integer seconds = (value == 1 || value == 4) ? (resetTimeSetting != null ? resetTimeSetting : 61) : 2
+    Date time = new Date(now() + (seconds * 1000))
+    List<String> statusType = ["stationary", "vibration", "tilted", "dropped", "", ""]
+    List<String> eventName = ["", "motion", "acceleration", "pushed", "motion", "acceleration"]
+    
+    List eventType = ["", "active", "active", 1, "inactive", "inactive"]
+    List<String> eventMessage = ["Sensor is stationary", "Vibration/movement detected (Motion active)", "Tilt detected (Acceleration active)", "Drop detected (Button pushed)", "Motion reset to inactive after $seconds seconds", "Acceleration reset to inactive"]
+    if(value < 4) {
+        sendEvent(name: "sensorState", value: statusType[value], descriptionText: eventMessage[value])
+        updateTimestamp(statusType[value])
+    }
+    logging("${eventMessage[value]}", 100)
+    switch(value) {
+        case 1:
+            runOnce(time, clearMotionEvent)
+            break
+        case 2:
+            runOnce(time, clearAccelEvent)
+            break
+        case 3:
+            runOnce(time, clearDropEvent)
+            break
+        
+    }
+    if(value > 0) {
+        Map result = [
+            name: eventName[value],
+            value: eventType[value],
+            descriptionText: (value > 3) ? eventMessage[value] : ""
+        ]
+        logging("Sending event $result", 100)
+        sendEvent(result)
+    }
+}
+
+void clearMotionEvent() {
+    if(device.currentState('sensorState')?.value == "vibration") {
+        sendSensorEvent(0)
+    }
+    sendSensorEvent(4)
+}
+
+void clearAccelEvent() {
+    if(device.currentState('sensorState')?.value == "tilted") {
+        if(device.currentState('motion')?.value == "active") {
+            sendEvent(name: "sensorState", value: "vibration")
+        } else {
+            sendSensorEvent(0)
+        }
+    }
+    sendSensorEvent(5)
+}
+
+void clearDropEvent() {
+    if(device.currentState('sensorState')?.value == "dropped") {
+        if(device.currentState('motion')?.value == "active") {
+            sendEvent(name: "sensorState", value: "vibration")
+        } else {
+            sendSensorEvent(0)
+        }
+    }
+}
+
+void setClosedPosition() {
+    BigDecimal cX = device.currentState("currentX")?.value
+    if(cX != null) {
+        state.closedX = cX
+        BigDecimal cY = device.currentState("currentY")?.value
+        state.closedY = cY
+        BigDecimal cZ = device.currentState("currentZ")?.value
+        state.closedZ = cZ
+        sendPositionEvent("closed")
+        logging("Closed position set to $cX$DEGREE, $cY$DEGREE, $cZ$DEGREE", 100)
+    } else {
+        logging("Closed position NOT set because no 3-axis accelerometer reports have been received yet", 100)
+    }
+}
+
+void setOpenPosition() {
+    BigDecimal cX = device.currentState("currentX")?.value
+    if(cX != null) {
+        state.openX = cX
+        BigDecimal cY = device.currentState("currentY")?.value
+        state.openY = cY
+        BigDecimal cZ = device.currentState("currentZ")?.value
+        state.openZ = cZ
+        sendPositionEvent("open")
+        logging("Open position set to $cX$DEGREE, $cY$DEGREE, $cZ$DEGREE", 100)
+    } else {
+        logging("Open position NOT set because no 3-axis accelerometer reports have been received yet", 100)
+    }
+}
+
+void sendPositionEvent(String position) {
+    String description = "Position set as $position"
+    logging(description, 100)
+    sendEvent(name: "contact", value: position, descriptionText: description)
+}
+
+void updateTimestamp(String type) {
+    type = type[0].toUpperCase() + type.substring(1).toLowerCase()
+    logging("Setting last${type} to now()", 100)
+    sendEvent(name: "last${type}", value: new Date().format('yyyy-MM-dd HH:mm:ss'), descriptionText: "Updated last ${type}")
 }
 
 /**
@@ -296,7 +521,7 @@ ArrayList<String> off() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with Generic Outlets (please report your fingerprints)"
+    comment = "Works with model DJT11LM."
     if(comment != "") state.comment = comment
     String version = "v0.7.1.0712b"
     logging("getDriverVersion() = ${version}", 100)

@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Generic Outlet (with Presence)", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-outlet-expanded.groovy") {
+	definition (name: "Zigbee - Generic Switch (with Presence)", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-switch-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -38,7 +38,7 @@ metadata {
         capability "HealthCheck"
         capability "Actuator"
         capability "Switch"
-        capability "Outlet"
+        capability "Light"
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
         // END:  getDefaultMetadataAttributes()
@@ -57,9 +57,6 @@ metadata {
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
 
-        fingerprint model:"TRADFRI control outlet", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008,1000,FC7C", outClusters:"0005,0019,0020,1000", manufacturer:"IKEA of Sweden"
-
-        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0B04,0B05,FC03", outClusters:"0019", model:"3210-L", manufacturer:"CentraLite"
     }
 
     preferences {
@@ -83,7 +80,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Generic Outlet (with Presence)', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-outlet-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Generic Switch (with Presence)', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-switch-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -296,7 +293,7 @@ ArrayList<String> off() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with Generic Outlets (please report your fingerprints)"
+    comment = "Works with Generic Switches (please report your fingerprints)"
     if(comment != "") state.comment = comment
     String version = "v0.7.1.0712b"
     logging("getDriverVersion() = ${version}", 100)
