@@ -432,7 +432,9 @@ def main():
         {'id': 1635, 'id_2': 460, 'file': 'zigbee-generic-outlet.groovy', 'version': default_zigbee_version,
          'comment': 'Works with Generic Outlets (please report your fingerprints)', 'publish': False },
         {'id': 1666, 'id_2': 492, 'file': 'zigbee-generic-switch.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with Generic Switches (please report your fingerprints)', 'publish': False },
+         'comment': 'Works with Generic Switches (this includes many multi-relay ones, like Nue. Please report your fingerprints)', 'publish': False },
+        {'id': 1698, 'id_2': 494, 'file': 'zigbee-generic-repair.groovy', 'version': default_zigbee_version,
+         'comment': 'Used to clean device data and get Zigbee device fingerprints', 'publish': False },
         
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
@@ -538,6 +540,7 @@ def main():
         {'id': 1634}, # Zigbee Repeater
         {'id': 1635}, # Zigbee Outlet
         {'id': 1666}, # Zigbee Switch
+        {'id': 1698}, # Zigbee Repair
         
         # Zigbee - Sonoff
         {'id': 1601}, # Sonoff Button
@@ -608,6 +611,7 @@ def main():
         {'id': 1634}, # Zigbee Repeater
         {'id': 1635}, # Zigbee Outlet
         {'id': 1666}, # Zigbee Switch
+        {'id': 1698}, # Zigbee Repair
     ]
     #driver_files_active_2 = []
     driver_files_private_active_2 = [

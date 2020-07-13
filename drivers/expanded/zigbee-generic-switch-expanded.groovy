@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0712b
+ *  Version: v0.7.1.0713b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,8 +56,18 @@ metadata {
         // BEGIN:getCommandsForZigbeePresence()
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
+        // BEGIN:getZigbeeGenericDeviceCommands()
+        command "stopSchedules"
+        command "getInfo"
+        // END:  getZigbeeGenericDeviceCommands()
 
         fingerprint deviceJoinName: "Tuya Light Switch", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0006", outClusters:"0019", model:"TS0011", manufacturer:"TUYATEC-j5khr9vo"
+
+        fingerprint model:"FNB56-ZSW01LX2.0", manufacturer:"FeiBit", profileId:"C05E", endpointId:"0B", inClusters:"0000,0004,0003,0006,0005,1000,0008", outClusters:"0019"
+
+        fingerprint model:"FNB56-ZSW02LX2.0", manufacturer:"FeiBit", profileId:"C05E", endpointId:"0B", inClusters:"0000,0004,0003,0006,0005,1000,0008", outClusters:"0019"
+        
+        fingerprint model:"FNB56-ZSW03LX2.0", manufacturer:"FeiBit", profileId:"C05E", endpointId:"01", inClusters:"0000,0004,0003,0006,0005,1000,0008", outClusters:"0019"
     }
 
     preferences {
@@ -75,6 +85,7 @@ metadata {
         input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Slow)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Slow")
         // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Slow")
         input(name: "enablePing", type: "bool", title: styling_addTitleDiv("Enable Automatic Ping"), description: styling_addDescriptionDiv("Sends an, infrequent, ping to the device if needed for knowing if Present (default: enabled)"), defaultValue: true)
+        input(name: "enableMultiEP", type: "bool", title: styling_addTitleDiv("Enable Multi Endpoint Discovery"), description: styling_addDescriptionDiv("Allows auto-discovery of multiple endpoints, disable this if your device reports multiple endpoints, and child devices are created, but it doesn't actually have multiple relays (default: enabled)"), defaultValue: true)
 	}
 }
 
@@ -109,12 +120,12 @@ ArrayList<String> refresh() {
     endpoint = endpoint == null ? "01" : endpoint
 
     ArrayList<String> cmd = []
+    cmd += ["he raw ${device.deviceNetworkId} 0 0 0x0005 {00 ${zigbee.swapOctets(device.deviceNetworkId)}} {0x0000}"]
     cmd += zigbee.readAttribute(0x000, 0x0005)
-    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200",]
-    cmd += ["zdo send ${device.deviceNetworkId} 0x$endpoint 0x01", "delay 200"]
     logging("refresh cmd: $cmd", 1)
 
     sendZigbeeCommands(cmd)
+    bindOnOffForEndpoint(Integer.parseInt(endpoint, 16))
 }
 
 void ping() {
@@ -212,36 +223,34 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
+        case "0000_0001":
+            logging("Application ID Received", 100)
+            updateApplicationId(msgMap['value'])
+            break
         case "0000_0004":
+            logging("Manufacturer Name Received - description:${description} | parseMap:${msgMap}", 100)
             logging("Manufacturer Name Received", 1)
             if(sendlastCheckinEvent(minimumMinutesToRepeat=25) == true) {
                 logging("Sending request to read attribute 0x0005 from cluster 0x0000...", 1)
                 sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
             }
+            updateManufacturer(msgMap['value'])
             break
         case "0000_0005":
+            logging("Model Name Received - description:${description} | parseMap:${msgMap}", 100)
             logging("Model Name Received", 1)
             setCleanModelName(newModelToSet=msgMap["value"])
             break
         case "0006_0000":
             logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 100)
-            String endpoint = device.getEndpointId()
-            endpoint = endpoint == null ? "01" : endpoint
-            if(msgMap['endpoint'] == '01' || msgMap['endpoint'] == endpoint) {
-                sendOnOffEvent(Integer.parseInt(msgMap['value'], 16) == 1)
-            }
+            sendOnOffEvent(Integer.parseInt(msgMap['endpoint'], 16), Integer.parseInt(msgMap['value'], 16) == 1)
             sendlastCheckinEvent(minimumMinutesToRepeat=25)
             break
         default:
             switch(msgMap["clusterId"]) {
                 case "0006":
                     logging("ON/OFF CATCHALL CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
-                    String endpoint = device.getEndpointId()
-                    endpoint = endpoint == null ? "01" : endpoint
-                    //logging("endpoint = $endpoint, sourceEndpoint = ${msgMap['sourceEndpoint']}, data=${Integer.parseInt(msgMap['data'][0], 16)}", 0)
-                    if(msgMap['sourceEndpoint'] == endpoint) {
-                        sendOnOffEvent(Integer.parseInt(msgMap['data'][0], 16) == 1)
-                    }
+                    sendOnOffEvent(Integer.parseInt(msgMap['sourceEndpoint'], 16), Integer.parseInt(msgMap['data'][0], 16) == 1)
                     sendlastCheckinEvent(minimumMinutesToRepeat=25)
                     break
                 case "0013":
@@ -256,6 +265,27 @@ ArrayList<String> parse(String description) {
                     logging("GENERAL CLUSTER EVENT", 1)
                     sendlastCheckinEvent(minimumMinutesToRepeat=25)
                     break
+                case "8004":
+                    updateDataFromSimpleDescriptorData(msgMap["data"])
+                    break
+                case "8005":
+                    logging("Endpoint Discovery Cluster Event- description:${description} | parseMap:${msgMap}", 100)
+                    if(enableMultiEP == null || enableMultiEP == true) {
+                        Integer numEndpoints = Integer.parseInt(msgMap["data"][4], 16)
+                        if(numEndpoints > 1) {
+                            updateDataValue("hasMultiEP", "true")
+                            Integer currentEndpoint = null
+                            (1..numEndpoints).each { n ->
+                                currentEndpoint = Integer.parseInt(msgMap["data"][4+n], 16)
+                                createChildDevice(currentEndpoint)
+                                bindOnOffForEndpoint(currentEndpoint)
+                            }
+                        }
+                    }
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
+
+                    break
+                    
                 case "8021":
                 case "8032":
                 case "8038":
@@ -276,26 +306,128 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
-void sendOnOffEvent(boolean onOff) {
-    logging("sendOnOffEvent(onOff=$onOff)", 1)
-    if(onOff == false) {
-        sendEvent(name:"switch", value: "off", isStateChange: false, descriptionText: "Switch was turned off")
-    } else {
-        sendEvent(name:"switch", value: "on", isStateChange: false, descriptionText: "Switch was turned on")
+boolean useMultiEP() {
+    return getDataValue("hasMultiEP") == "true" && (enableMultiEP == null || enableMultiEP == true)
+}
+
+boolean allChildrenOffExceptSpecifiedEndpoint(Integer excludedEndpoint) {
+    List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
+    logging("children: $childDevices", 1)
+    boolean isOff = true
+    children.each {child->
+        if(isOff == true && getEndpointFromChildId(child.deviceNetworkId) != excludedEndpoint) {
+            isOff = child.currentValue("switch") == "off"
+        }
     }
+    return isOff
+}
+
+void sendOnOffEvent(Integer endpoint, boolean state) {
+    logging("sendOnOffEvent(endpoint=$endpoint, state=$state)", 1)
+    if(useMultiEP() == true) {
+        if(state == true) {
+            getChildDevice(buildChildDeviceIdFromEndpoint(endpoint))?.parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch turned ON"]])
+            sendEvent(name:"switch", value: "on", isStateChange: false, descriptionText: "Switch was turned on")
+        } else {
+            getChildDevice(buildChildDeviceIdFromEndpoint(endpoint))?.parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch turned OFF"]])
+            if(allChildrenOffExceptSpecifiedEndpoint(endpoint) == true) {
+                sendEvent(name:"switch", value: "off", isStateChange: false, descriptionText: "Switch was turned off")
+            }
+        }
+    } else {
+        if(state == false) {
+            sendEvent(name:"switch", value: "off", isStateChange: false, descriptionText: "Switch was turned off")
+        } else {
+            sendEvent(name:"switch", value: "on", isStateChange: false, descriptionText: "Switch was turned on")
+        }
+    }
+}
+
+String endpointToHex(Integer childNumber) {
+    return integerToHexString(childNumber, 1)
+}
+
+String buildChildDeviceIdFromEndpoint(Integer endpoint) {
+    return "$device.id-${endpointToHex(endpoint)}"
+}
+
+Integer getEndpointFromChildId(String childId) {
+    return Integer.parseInt(childId.split('-')[1], 16)
+}
+
+void createChildDevice(Integer endpoint) {
+    String driver = "Generic Component Switch"
+    String name = device.getName()
+    String label = device.getLabel()
+    try {
+        String cId = endpointToHex(endpoint)
+        logging("Making device with id $device.id-$cId (name: $name $cId, label: $label $cId)", 100)
+        com.hubitat.app.DeviceWrapper cd = addChildDevice("hubitat", driver, buildChildDeviceIdFromEndpoint(endpoint), [name: "$name $cId", label: "$label $cId", isComponent: false])
+        cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Switch Initialized as OFF"]])
+        componentRefresh(cd)
+    } catch (com.hubitat.app.exception.UnknownDeviceTypeException e) {
+        log.error "'$driver' driver can't be found! This is supposed to be built-in! Is your hub broken?"
+    } catch (java.lang.IllegalArgumentException e) {
+        logging("Do nothing - The device already exists", 100)
+    }
+}
+
+/**
+ *  --------- COMPONENT METHODS ---------
+ */
+
+void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentRefresh() from $cd.deviceNetworkId", 1)
+    Integer endpoint = getEndpointFromChildId(cd.deviceNetworkId)
+    sendZigbeeCommands(zigbeeReadAttribute(endpoint, 0x0006, 0x00))
+}
+
+void componentOn(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOn() from $cd.deviceNetworkId", 1)
+    Integer endpoint = getEndpointFromChildId(cd.deviceNetworkId)
+    sendZigbeeCommands(zigbeeCommand(endpoint, 0x0006, 0x01))
+}
+
+void componentOff(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOff() from $cd.deviceNetworkId", 1)
+    Integer endpoint = getEndpointFromChildId(cd.deviceNetworkId)
+    sendZigbeeCommands(zigbeeCommand(endpoint, 0x0006, 0x00))
 }
 
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
-ArrayList<String> on() {
-    logging("on()", 1)
-	return zigbeeCommand(0x006, 0x01)
+void onOffCommand(Integer command) {
+    logging("onOffCommand(command=$command)", 1)
+    List<String> cmd = []
+    if(useMultiEP() == true) {
+        List<com.hubitat.app.ChildDeviceWrapper> children = getChildDevices()
+        logging("children: $childDevices", 1)
+        children.each {child->
+            logging("Sending command $command to cluster 0x0006 for Child deviceNetworkId: $child.deviceNetworkId", 100)
+            cmd += [zigbeeCommand(getEndpointFromChildId(child.deviceNetworkId), 0x0006, command)[0]]
+        }
+    } else {
+        cmd += zigbeeCommand(0x0006, command)
+    }
+	sendZigbeeCommands(cmd)
 }
 
-ArrayList<String> off() {
+void on() {
+    logging("on()", 1)
+    onOffCommand(0x01)
+}
+
+void off() {
     logging("off()", 1)
-	return zigbeeCommand(0x006, 0x00)
+	onOffCommand(0x00)
+}
+
+void bindOnOffForEndpoint(Integer endpoint) {
+    List<String> cmd = []
+    cmd += ["zdo bind ${device.deviceNetworkId} $endpoint 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["zdo send ${device.deviceNetworkId} $endpoint 0x01", "delay 200"]
+    sendZigbeeCommands(cmd)
 }
 
 /**
@@ -312,9 +444,9 @@ ArrayList<String> off() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with Generic Switches (please report your fingerprints)"
+    comment = "Works with Generic Switches (this includes many multi-relay ones, like Nue. Please report your fingerprints)"
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0712b"
+    String version = "v0.7.1.0713b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -928,8 +1060,8 @@ Float parseSingleHexToFloat(String singleHex) {
 }
 
 Integer convertToSignedInt8(Integer signedByte) {
-    Integer sign = signedByte & (1 << 7);
-    return (signedByte & 0x7f) * (sign != 0 ? -1 : 1);
+    Integer sign = signedByte & (1 << 7)
+    return (signedByte & 0x7f) * (sign != 0 ? -1 : 1)
 }
 
 Integer parseIntReverseHex(String hexString) {
@@ -1083,6 +1215,118 @@ void disableForcedRecoveryMode() {
     unschedule('reconnectEvent')
     if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode DEACTIVATED!")
 }
+
+void updateManufacturer(String manfacturer) {
+    if(getDataValue("manufacturer") == null) {
+        updateDataValue("manufacturer", manfacturer)
+    }
+}
+
+void updateApplicationId(String application) {
+    if(getDataValue("application") == null) {
+        updateDataValue("application", application)
+    }
+}
+
+Map parseSimpleDescriptorData(List<String> data) {
+    Map<String,String> d = [:]
+    if(data[1] == "00") {
+        d["nwkAddrOfInterest"] = data[2..3].reverse().join()
+        Integer ll = Integer.parseInt(data[4], 16)
+        d["endpointId"] = data[5]
+        d["profileId"] = data[6..7].reverse().join()
+        d["applicationDevice"] = data[8..9].reverse().join()
+        d["applicationVersion"] = data[10]
+        Integer icn = Integer.parseInt(data[11], 16)
+        Integer pos = 12
+        Integer cPos = null
+        d["inClusters"] = ""
+        if(icn > 0) {
+            (1..icn).each() {b->
+                cPos = pos+((b-1)*2)
+                d["inClusters"] += data[cPos..cPos+1].reverse().join()
+                if(b < icn) {
+                    d["inClusters"] += ","
+                }
+            }
+        }
+        pos += icn*2
+        Integer ocn = Integer.parseInt(data[pos], 16)
+        pos += 1
+        d["outClusters"] = ""
+        if(ocn > 0) {
+            (1..ocn).each() {b->
+                cPos = pos+((b-1)*2)
+                d["outClusters"] += data[cPos..cPos+1].reverse().join()
+                if(b < ocn) {
+                    d["outClusters"] += ","
+                }
+            }
+        }
+        logging("d=$d, ll=$ll, icn=$icn, ocn=$ocn", 1)
+    } else {
+        log.warn("Incorrect Simple Descriptor Data received: $data")
+    }
+    return d
+}
+
+void updateDataFromSimpleDescriptorData(List<String> data) {
+    Map<String,String> sdi = parseSimpleDescriptorData(data)
+    if(sdi != [:]) {
+        updateDataValue("endpointId", sdi['endpointId'])
+        updateDataValue("profileId", sdi['profileId'])
+        updateDataValue("inClusters", sdi['inClusters'])
+        updateDataValue("outClusters", sdi['outClusters'])
+    } else {
+        log.warn("No VALID Simple Descriptor Data received!")
+    }
+    sdi = null
+}
+
+void getInfo() {
+    log.debug("Getting info for Zigbee device...")
+    String endpointId = device.getEndpointId()
+    endpointId = endpointId == null ? getDataValue("endpointId") : endpointId
+    String profileId = getDataValue("profileId")
+    String inClusters = getDataValue("inClusters")
+    String outClusters = getDataValue("outClusters")
+    String model = getDataValue("model")
+    String manufacturer = getDataValue("manufacturer")
+    String application = getDataValue("application")
+    String extraFingerPrint = ""
+    boolean missing = false
+    if(manufacturer == null) {
+        missing = true
+        log.warn("Manufacturer name is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
+    log.trace("Manufacturer: $manufacturer")
+    if(model == null) {
+        missing = true
+        log.warn("Model name is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+    }
+    log.trace("Model: $model")
+    if(application == null) {
+        log.info("NOT IMPORTANT: Application ID is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0001))
+    } else {
+        extraFingerPrint += ", application:\"$application\""
+    }
+    log.trace("Application: $application")
+    if(profileId == null || endpointId == null || inClusters == null || outClusters == null) {
+        missing = true
+        String endpointIdTemp = endpointId == null ? "01" : endpointId
+        log.warn("One or multiple pieces of data needed for the fingerprint is missing, requesting them from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(["he raw ${device.deviceNetworkId} 0 0 0x0004 {00 ${zigbee.swapOctets(device.deviceNetworkId)} $endpointIdTemp} {0x0000}"])
+    }
+    profileId = profileId == null ? "0104" : profileId
+    if(missing == true) {
+        log.info("INCOMPLETE - TRY AGAIN: fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+    } else {
+        log.info("fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+    }
+}
 // END:  getHelperFunctions('zigbee-generic')
 
 // BEGIN:getHelperFunctions('styling')
@@ -1186,6 +1430,10 @@ void configurePresence() {
     } else {
         unschedule('checkPresence')
     }
+}
+
+void stopSchedules() {
+    unschedule()
 }
 
 void prepareCounters() {

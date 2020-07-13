@@ -192,6 +192,13 @@ def getZigbeeBatteryCommands():
 command "resetBatteryReplacedDate"
 """
 
+def getZigbeeGenericDeviceCommands():
+    return """
+// Commands used by Generic Zigbee devices
+command "stopSchedules"
+command "getInfo"
+"""
+
 def getMetadataCustomizationMethods():
     #input(description: "Once you change values on this page, the corner of the 'configuration' icon will change to orange until all configuration parameters are updated.", title: "Settings", displayDuringSetup: false, type: "paragraph", element: "paragraph")
     return """

@@ -2,14 +2,14 @@
   "packageName": "Sonoff Motion Sensor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-12",
+  "dateReleased": "2020-07-13",
   "apps": [],
   "drivers": [
     {
       "id": "c33a21ae-e526-5f21-8b63-46d59150a8f8",
       "internalId": 1603,
       "name": "Zigbee - Sonoff Motion Sensor",
-      "betaVersion": "v0.5.0.0712b",
+      "betaVersion": "v0.5.0.0713b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-motion-sensor-expanded.groovy",
       "required": true

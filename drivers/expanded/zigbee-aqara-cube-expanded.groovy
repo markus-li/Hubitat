@@ -378,7 +378,7 @@ void sendMotionPush(String type, Integer button, Integer face, String rotation =
 }
 
 boolean flipped180(Integer prevFaceId, targetFace) {
-    switch((prevFaceId + (prevFaceId * 0xF)) + targetFace) {
+    switch((prevFaceId * 0x10) + targetFace) {
         case 0x03:
         case 0x14:
         case 0x25:
@@ -1173,8 +1173,8 @@ Float parseSingleHexToFloat(String singleHex) {
 }
 
 Integer convertToSignedInt8(Integer signedByte) {
-    Integer sign = signedByte & (1 << 7);
-    return (signedByte & 0x7f) * (sign != 0 ? -1 : 1);
+    Integer sign = signedByte & (1 << 7)
+    return (signedByte & 0x7f) * (sign != 0 ? -1 : 1)
 }
 
 Integer parseIntReverseHex(String hexString) {
@@ -1328,6 +1328,118 @@ void disableForcedRecoveryMode() {
     unschedule('reconnectEvent')
     if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode DEACTIVATED!")
 }
+
+void updateManufacturer(String manfacturer) {
+    if(getDataValue("manufacturer") == null) {
+        updateDataValue("manufacturer", manfacturer)
+    }
+}
+
+void updateApplicationId(String application) {
+    if(getDataValue("application") == null) {
+        updateDataValue("application", application)
+    }
+}
+
+Map parseSimpleDescriptorData(List<String> data) {
+    Map<String,String> d = [:]
+    if(data[1] == "00") {
+        d["nwkAddrOfInterest"] = data[2..3].reverse().join()
+        Integer ll = Integer.parseInt(data[4], 16)
+        d["endpointId"] = data[5]
+        d["profileId"] = data[6..7].reverse().join()
+        d["applicationDevice"] = data[8..9].reverse().join()
+        d["applicationVersion"] = data[10]
+        Integer icn = Integer.parseInt(data[11], 16)
+        Integer pos = 12
+        Integer cPos = null
+        d["inClusters"] = ""
+        if(icn > 0) {
+            (1..icn).each() {b->
+                cPos = pos+((b-1)*2)
+                d["inClusters"] += data[cPos..cPos+1].reverse().join()
+                if(b < icn) {
+                    d["inClusters"] += ","
+                }
+            }
+        }
+        pos += icn*2
+        Integer ocn = Integer.parseInt(data[pos], 16)
+        pos += 1
+        d["outClusters"] = ""
+        if(ocn > 0) {
+            (1..ocn).each() {b->
+                cPos = pos+((b-1)*2)
+                d["outClusters"] += data[cPos..cPos+1].reverse().join()
+                if(b < ocn) {
+                    d["outClusters"] += ","
+                }
+            }
+        }
+        logging("d=$d, ll=$ll, icn=$icn, ocn=$ocn", 1)
+    } else {
+        log.warn("Incorrect Simple Descriptor Data received: $data")
+    }
+    return d
+}
+
+void updateDataFromSimpleDescriptorData(List<String> data) {
+    Map<String,String> sdi = parseSimpleDescriptorData(data)
+    if(sdi != [:]) {
+        updateDataValue("endpointId", sdi['endpointId'])
+        updateDataValue("profileId", sdi['profileId'])
+        updateDataValue("inClusters", sdi['inClusters'])
+        updateDataValue("outClusters", sdi['outClusters'])
+    } else {
+        log.warn("No VALID Simple Descriptor Data received!")
+    }
+    sdi = null
+}
+
+void getInfo() {
+    log.debug("Getting info for Zigbee device...")
+    String endpointId = device.getEndpointId()
+    endpointId = endpointId == null ? getDataValue("endpointId") : endpointId
+    String profileId = getDataValue("profileId")
+    String inClusters = getDataValue("inClusters")
+    String outClusters = getDataValue("outClusters")
+    String model = getDataValue("model")
+    String manufacturer = getDataValue("manufacturer")
+    String application = getDataValue("application")
+    String extraFingerPrint = ""
+    boolean missing = false
+    if(manufacturer == null) {
+        missing = true
+        log.warn("Manufacturer name is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
+    log.trace("Manufacturer: $manufacturer")
+    if(model == null) {
+        missing = true
+        log.warn("Model name is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+    }
+    log.trace("Model: $model")
+    if(application == null) {
+        log.info("NOT IMPORTANT: Application ID is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0001))
+    } else {
+        extraFingerPrint += ", application:\"$application\""
+    }
+    log.trace("Application: $application")
+    if(profileId == null || endpointId == null || inClusters == null || outClusters == null) {
+        missing = true
+        String endpointIdTemp = endpointId == null ? "01" : endpointId
+        log.warn("One or multiple pieces of data needed for the fingerprint is missing, requesting them from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
+        sendZigbeeCommands(["he raw ${device.deviceNetworkId} 0 0 0x0004 {00 ${zigbee.swapOctets(device.deviceNetworkId)} $endpointIdTemp} {0x0000}"])
+    }
+    profileId = profileId == null ? "0104" : profileId
+    if(missing == true) {
+        log.info("INCOMPLETE - TRY AGAIN: fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+    } else {
+        log.info("fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+    }
+}
 // END:  getHelperFunctions('zigbee-generic')
 
 // BEGIN:getHelperFunctions('styling')
@@ -1431,6 +1543,10 @@ void configurePresence() {
     } else {
         unschedule('checkPresence')
     }
+}
+
+void stopSchedules() {
+    unschedule()
 }
 
 void prepareCounters() {

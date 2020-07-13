@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0711Tb
+ *  Version: v1.0.2.0713Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -632,7 +632,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.2.0711Tb"
+    String version = "v1.0.2.0713Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -1196,7 +1196,7 @@ def getAllTasmotaDevices() {
         }
     }
     def childDevices = getChildDevices()
-    logging("getChildDevices: ${getChildDevices()}", 1)
+    logging("getChildDevices: $childDevices", 1)
     childDevices.eachWithIndex { it, i ->
         def namespace = 'unknown'
         try {
