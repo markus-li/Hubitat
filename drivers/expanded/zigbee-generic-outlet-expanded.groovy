@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0713b
+ *  Version: v0.7.1.0717b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -241,6 +241,11 @@ ArrayList<String> parse(String description) {
             break
         default:
             switch(msgMap["clusterId"]) {
+                case "0006":
+                    logging("ON/OFF CATCHALL CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
+                    sendOnOffEvent(Integer.parseInt(msgMap['sourceEndpoint'], 16), Integer.parseInt(msgMap['data'][0], 16) == 1)
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
+                    break
                 case "0013":
                     logging("MULTISTATE CLUSTER EVENT", 1)
                     sendlastCheckinEvent(minimumMinutesToRepeat=25)
@@ -314,7 +319,7 @@ ArrayList<String> off() {
 private String getDriverVersion() {
     comment = "Works with Generic Outlets (please report your fingerprints)"
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0713b"
+    String version = "v0.7.1.0717b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1000,39 +1005,44 @@ Integer getMaximumMinutesBetweenEvents(BigDecimal forcedMinutes=null) {
 }
 
 void reconnectEvent(BigDecimal forcedMinutes=null) {
+    recoveryEvent(forcedMinutes)
+}
+
+void recoveryEvent(BigDecimal forcedMinutes=null) {
     try {
-        reconnectEventDeviceSpecific()
+        recoveryEventDeviceSpecific()
     } catch(Exception e) {
-        logging("reconnectEvent()", 1)
+        logging("recoveryEvent()", 1)
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     checkPresence(displayWarnings=false)
     Integer mbe = getMaximumMinutesBetweenEvents(forcedMinutes=forcedMinutes)
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
-        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, reconnect mode DEACTIVATED!")
+        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
+        unschedule('recoveryEvent')
         unschedule('reconnectEvent')
     }
 }
 
-void scheduleReconnectEvent(BigDecimal forcedMinutes=null) {
+void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
     Random rnd = new Random()
     switch(recoveryMode) {
         case "Suicidal":
-            schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'recoveryEvent')
             break
         case "Insane":
-            schedule("${rnd.nextInt(30)}/30 * * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(30)}/30 * * * * ? *", 'recoveryEvent')
             break
         case "Slow":
-            schedule("${rnd.nextInt(59)} ${rnd.nextInt(3)}/3 * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(59)} ${rnd.nextInt(3)}/3 * * * ? *", 'recoveryEvent')
             break
         case null:
         case "Normal":
         default:
-            schedule("${rnd.nextInt(59)} ${rnd.nextInt(2)}/2 * * * ? *", 'reconnectEvent')
+            schedule("${rnd.nextInt(59)} ${rnd.nextInt(2)}/2 * * * ? *", 'recoveryEvent')
             break
     }
-    reconnectEvent(forcedMinutes=forcedMinutes)
+    recoveryEvent(forcedMinutes=forcedMinutes)
 }
 
 void checkEventInterval(boolean displayWarnings=true) {
@@ -1041,7 +1051,7 @@ void checkEventInterval(boolean displayWarnings=true) {
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
         recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
         if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        scheduleReconnectEvent()
+        scheduleRecoveryEvent()
     }
     sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
@@ -1056,6 +1066,7 @@ void startCheckEventInterval() {
     } else {
         logging("Recovery feature DISABLED", 100)
         unschedule('checkEventInterval')
+        unschedule('recoveryEvent')
         unschedule('reconnectEvent')
     }
 }
@@ -1065,14 +1076,14 @@ void forceRecoveryMode(BigDecimal minutes) {
     Integer minutesI = minutes.intValue()
     logging("forceRecoveryMode(minutes=$minutesI) ", 1)
     if(minutesI == 0) {
-        disableForcedReconnectMode()
+        disableForcedRecoveryMode()
     } else if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=minutesI) == false) {
         recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
         if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode ($recoveryMode) ACTIVATED!")
         state.forcedMinutes = minutes
         runIn(minutesI * 60, 'disableForcedRecoveryMode')
 
-        scheduleReconnectEvent(forcedMinutes=minutes)
+        scheduleRecoveryEvent(forcedMinutes=minutes)
     } else {
         log.warn("Forced recovery mode NOT activated since we already have a checkin event during the last $minutesI minute(s)!")
     }
@@ -1080,6 +1091,7 @@ void forceRecoveryMode(BigDecimal minutes) {
 
 void disableForcedRecoveryMode() {
     state.forcedMinutes = 0
+    unschedule('recoveryEvent')
     unschedule('reconnectEvent')
     if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode DEACTIVATED!")
 }
@@ -1151,7 +1163,7 @@ void updateDataFromSimpleDescriptorData(List<String> data) {
     sdi = null
 }
 
-void getInfo() {
+void getInfo(boolean ignoreMissing=false) {
     log.debug("Getting info for Zigbee device...")
     String endpointId = device.getEndpointId()
     endpointId = endpointId == null ? getDataValue("endpointId") : endpointId
@@ -1163,21 +1175,25 @@ void getInfo() {
     String application = getDataValue("application")
     String extraFingerPrint = ""
     boolean missing = false
+    String requestingFromDevice = ", requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint."
+    if(ignoreMissing==true) {
+        requestingFromDevice = ". Try again."
+    }
     if(manufacturer == null) {
         missing = true
-        log.warn("Manufacturer name is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+        log.warn("Manufacturer name is missing for the fingerprint$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     log.trace("Manufacturer: $manufacturer")
     if(model == null) {
         missing = true
-        log.warn("Model name is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+        log.warn("Model name is missing for the fingerprint$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
     }
     log.trace("Model: $model")
     if(application == null) {
-        log.info("NOT IMPORTANT: Application ID is missing for the fingerprint, requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0001))
+        log.info("NOT IMPORTANT: Application ID is missing for the fingerprint$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0001))
     } else {
         extraFingerPrint += ", application:\"$application\""
     }
@@ -1185,8 +1201,8 @@ void getInfo() {
     if(profileId == null || endpointId == null || inClusters == null || outClusters == null) {
         missing = true
         String endpointIdTemp = endpointId == null ? "01" : endpointId
-        log.warn("One or multiple pieces of data needed for the fingerprint is missing, requesting them from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint.")
-        sendZigbeeCommands(["he raw ${device.deviceNetworkId} 0 0 0x0004 {00 ${zigbee.swapOctets(device.deviceNetworkId)} $endpointIdTemp} {0x0000}"])
+        log.warn("One or multiple pieces of data needed for the fingerprint is missing$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(["he raw ${device.deviceNetworkId} 0 0 0x0004 {00 ${zigbee.swapOctets(device.deviceNetworkId)} $endpointIdTemp} {0x0000}"])
     }
     profileId = profileId == null ? "0104" : profileId
     if(missing == true) {
@@ -1302,6 +1318,7 @@ void configurePresence() {
 
 void stopSchedules() {
     unschedule()
+    log.info("Stopped ALL Device Schedules!")
 }
 
 void prepareCounters() {

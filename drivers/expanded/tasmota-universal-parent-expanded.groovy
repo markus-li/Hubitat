@@ -2178,6 +2178,7 @@ void configurePresence() {
 
 void stopSchedules() {
     unschedule()
+    log.info("Stopped ALL Device Schedules!")
 }
 
 void prepareCounters() {
