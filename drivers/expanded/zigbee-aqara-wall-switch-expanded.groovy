@@ -112,7 +112,7 @@ metadata {
         input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Slow)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Slow")
         // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Slow")
         // BEGIN:getDefaultMetadataPreferencesForDeviceTemperature()
-        input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]], displayDuringSetup: false)
+        input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "0", required: true, multiple: false, options:[["0":"System Default"], ["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]])
         input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
         // END:  getDefaultMetadataPreferencesForDeviceTemperature()
         input(name: "powerOffset", type: "decimal", title: styling_addTitleDiv("Power Offset"), description: styling_addDescriptionDiv("Power Measurement Offset in Watt (-5000 to 5000, default: 0)"), defaultValue: "0", range: "-5000..5000")
@@ -1893,10 +1893,19 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     }
     String degree = String.valueOf((char)(176))
     String tempUnit = "${degree}C"
-    if (tempUnitDisplayed == "2") {
+    String currentTempUnitDisplayed = tempUnitDisplayed
+    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
+        if(location.temperatureScale == "C") {
+            currentTempUnitDisplayed = "1"
+        } else {
+            currentTempUnitDisplayed = "2"
+        }
+    }
+
+    if (currentTempUnitDisplayed == "2") {
         value = celsiusToFahrenheit(value)
         tempUnit = "${degree}F"
-    } else if (tempUnitDisplayed == "3") {
+    } else if (currentTempUnitDisplayed == "3") {
         value = value + 273.15
         tempUnit = "${degree}K"
     }

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0711Tb
+ *  Version: v1.0.2.0717Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ void refresh() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0711Tb"
+    String version = "v1.0.2.0717Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -712,10 +712,19 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     }
     String degree = String.valueOf((char)(176))
     String tempUnit = "${degree}C"
-    if (tempUnitDisplayed == "2") {
+    String currentTempUnitDisplayed = tempUnitDisplayed
+    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
+        if(location.temperatureScale == "C") {
+            currentTempUnitDisplayed = "1"
+        } else {
+            currentTempUnitDisplayed = "2"
+        }
+    }
+
+    if (currentTempUnitDisplayed == "2") {
         value = celsiusToFahrenheit(value)
         tempUnit = "${degree}F"
-    } else if (tempUnitDisplayed == "3") {
+    } else if (currentTempUnitDisplayed == "3") {
         value = value + 273.15
         tempUnit = "${degree}K"
     }

@@ -90,7 +90,7 @@ metadata {
         input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
         // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
         // BEGIN:getDefaultMetadataPreferencesForTHMonitorAlternative1()
-        input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]], displayDuringSetup: false)
+        input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "0", required: true, multiple: false, options:[["0":"System Default"], ["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]])
         input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
         input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..2 = maximum number of decimal places, default: 1)<br/>NOTE: If the 2nd decimal is a 0 (eg. 24.70) it will show without the last decimal (eg. 24.7)."), options: ["0", "1", "2"], defaultValue: "1", displayDuringSetup: true, required: false)
         input(name: "humidityOffset", type: "decimal", title: styling_addTitleDiv("Humidity Offset"), description: styling_addDescriptionDiv("Adjust the humidity by this many percent."), displayDuringSetup: true, required: false, range: "*..*")
@@ -1582,10 +1582,19 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     }
     String degree = String.valueOf((char)(176))
     String tempUnit = "${degree}C"
-    if (tempUnitDisplayed == "2") {
+    String currentTempUnitDisplayed = tempUnitDisplayed
+    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
+        if(location.temperatureScale == "C") {
+            currentTempUnitDisplayed = "1"
+        } else {
+            currentTempUnitDisplayed = "2"
+        }
+    }
+
+    if (currentTempUnitDisplayed == "2") {
         value = celsiusToFahrenheit(value)
         tempUnit = "${degree}F"
-    } else if (tempUnitDisplayed == "3") {
+    } else if (currentTempUnitDisplayed == "3") {
         value = value + 273.15
         tempUnit = "${degree}K"
     }
