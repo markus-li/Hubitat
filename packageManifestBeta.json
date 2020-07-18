@@ -136,6 +136,15 @@
       "required": false
     },
     {
+      "id": "a18c3bcf-3862-5d17-948e-d8d2e09b68ae",
+      "internalId": 1732,
+      "name": "Tasmota - Universal Switch as Presence Sensor (Child)",
+      "betaVersion": "v1.0.4.0718Tb",
+      "namespace": "tasmota",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-presence-sensor-child-expanded.groovy",
+      "required": false
+    },
+    {
       "id": "a1e14e86-d04e-56f0-993b-a254b0a3e959",
       "internalId": 555,
       "name": "Tasmota - Universal Switch as Water Sensor (Child)",

@@ -354,6 +354,8 @@ def main():
             'specialDebugLabel': 'descriptionText' },
         {'id': 359, 'file': 'tasmota-universal-switch-as-contact-sensor-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
+        {'id': 1732, 'file': 'tasmota-universal-switch-as-presence-sensor-child.groovy', 
+            'specialDebugLabel': 'descriptionText' },
         {'id': 361, 'file': 'tasmota-universal-switch-as-motion-sensor-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         {'id': 555, 'file': 'tasmota-universal-switch-as-water-sensor-child.groovy', 
@@ -508,6 +510,7 @@ def main():
         
         # Currently working on:
         {'id': 1731}, # Xiaomi Smoke Detector
+        {'id': 1732}, # Tasmota universal Switch as Presence Sensor (child)
         
 
         {'id': 865}, {'id': 866}, # Universal Drivers RELEASE
