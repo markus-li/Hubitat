@@ -1,0 +1,19 @@
+{
+  "packageName": "Generic Outlet (with Presence)",
+  "minimumHEVersion": "2.1.9",
+  "author": "Markus",
+  "dateReleased": "2020-07-18",
+  "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-outlet-beta.json",
+  "apps": [],
+  "drivers": [
+    {
+      "id": "bb2ad2b6-d34f-5f5a-8b44-9e486a64ded0",
+      "internalId": 1635,
+      "name": "Zigbee - Generic Outlet (with Presence)",
+      "version": "v0.8.1.0718",
+      "namespace": "markusl",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-generic-outlet-expanded.groovy",
+      "required": true
+    }
+  ]
+}

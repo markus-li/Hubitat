@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0521T
+ *  Version: v1.0.3.0718T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ metadata {
         attribute   "driver", "string"
         // END:  getMinimumChildAttributes()
         command "stop"
+        command "setAsOpen"
+        command "setAsClosed"
     }
 
     preferences {
@@ -48,7 +50,9 @@ metadata {
         input(name: "debugLogging", type: "bool", title: styling_addTitleDiv("Enable debug logging"), description: "" , defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
         input(name: "infoLogging", type: "bool", title: styling_addTitleDiv("Enable info logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
         // END:  getDefaultMetadataPreferences()
-
+        input(name: "shutterCloseDuration", type: "decimal", title: styling_addTitleDiv("Shutter Close Duration"), description: styling_addDescriptionDiv("Time, in seconds, it takes to fully Close the curtain/shutter (default = 12.2)"), defaultValue: "12.2", range: "1..255")
+        input(name: "shutterOpenDuration", type: "decimal", title: styling_addTitleDiv("Shutter Open Duration"), description: styling_addDescriptionDiv("Time, in seconds, it takes to fully Open the curtain/shutter (default = 10.0)"), defaultValue: "10.0", range: "1..255")
+        input(name: "shutterMotorDelay", type: "decimal", title: styling_addTitleDiv("Shutter Motor Delay"), description: styling_addDescriptionDiv("Time, in seconds, it takes the motor to start moving once power is turned on (default = 5.5)"), defaultValue: "5.5", range: "0..12.75")
     }
 
     // BEGIN:getMetadataCustomizationMethods()
@@ -84,22 +88,49 @@ void parse(List<Map> description) {
                 }
             }
         } else if(it.name == "level") {
-            target = device.currentValue("target")
-            if(target != null && target != -1) {
-                logging("target: ${target}", 1)
-                String cState = device.currentValue("windowShade", true)
-                if((cState == 'opening' && it.value < target + 5) ||
-                    (cState == 'closing' && it.value > target - 5)) {
-                    stop()
-                }
+        
+        } else if(it.name == "shutter") {
+            
+            switch(it.value.Direction) {
+                case 0:
+                    logging("Stopped: $it.value", 100)
+                    Integer position = it.value.Position
+                    position = position < 0 ? 0 : position > 100 ? 100 : position
+                    if(position > 0 && position < 100) {
+                        logging('Curtain status: partially open', 100)
+                        sendEvent(name: "windowShade", value: "partially open", isStateChange: false)
+                        sendEvent(name: "switch", value: "on", isStateChange: false)
+                    } else if(position == 100) {
+                        logging('Curtain status: open', 100)
+                        sendEvent(name: "windowShade", value: "open", isStateChange: false)
+                        sendEvent(name: "switch", value: "on", isStateChange: false)
+                    } else if(position == 0) {
+                        logging('Curtain status: closed', 100)
+                        sendEvent(name: "windowShade", value: "closed", isStateChange: false)
+                        sendEvent(name: "switch", value: "off", isStateChange: false)
+                    }
+                    sendEvent(name: "position", value: position, isStateChange: false)
+                    sendEvent(name: "level", value: position, isStateChange: false)
+                    break
+                case 1:
+                    logging("Opening: $it.value", 100)
+                    sendEvent(name: "windowShade", value: "opening", isStateChange: false)
+                    sendEvent(name: "switch", value: "on", isStateChange: false)
+                    break
+                case -1:
+                    logging("Closing: $it.value", 100)
+                    sendEvent(name: "windowShade", value: "closing", isStateChange: false)
+                    sendEvent(name: "switch", value: "on", isStateChange: false)
+                    break
+                default:
+                    logging("Got Shutter Data: $it.value", 1)
             }
-            sendEvent(it)
+        
         } else if(it.name == "tuyaData") {
             String tdata = it.value
-            logging("Got Tuya Data: $tdata", 1)
-            if(tdata == '55AA00070005020400010214') {
+            //logging("Got Tuya Data: $tdata", 0)
+            if(false && tdata == '55AA00070005020400010214') {
                 BigDecimal position = device.currentValue("level", true)
-                sendEvent(name: "target", value: -1, isStateChange: true)
                 Integer margin = 11
                 if(position > margin && position < 100 - margin) {
                     logging('Curtain status: partially open', 100)
@@ -107,20 +138,18 @@ void parse(List<Map> description) {
                     sendEvent(name: "switch", value: "on", isStateChange: true)
                 } else if(position <= margin) {
                     logging('Curtain status: open', 100)
-                    setLevel(0)
                     sendEvent(name: "windowShade", value: "open", isStateChange: true)
                     sendEvent(name: "switch", value: "on", isStateChange: true)
                 } else if(position >= 100 - margin) {
                     logging('Curtain status: closed', 100)
-                    setLevel(100)
                     sendEvent(name: "windowShade", value: "closed", isStateChange: true)
                     sendEvent(name: "switch", value: "off", isStateChange: true)
                 }
-            } else if(tdata == '55AA00070005020400010012') {
+            } else if(false && tdata == '55AA00070005020400010012') {
                 logging('Curtain status: opening', 100)
                 sendEvent(name: "windowShade", value: "opening", isStateChange: true)
                 sendEvent(name: "switch", value: "on", isStateChange: true)
-            } else if(tdata == '55AA00070005020400010113') {
+            } else if(false && tdata == '55AA00070005020400010113') {
                 logging('Curtain status: closing', 100)
                 sendEvent(name: "windowShade", value: "closing", isStateChange: true)
                 sendEvent(name: "switch", value: "on", isStateChange: true)
@@ -128,7 +157,7 @@ void parse(List<Map> description) {
         } else if(it.name in ["switch"]) {
             logging("Ignored: " + it.descriptionText, 1)
         } else {
-            log.warn "Got '$it.name' attribute data, but doesn't know what to do with it! Did you choose the right device type?"
+            log.warn "Got '$it.name' attribute data with value $it.value, but doesn't know what to do with it! Did you choose the right device type?"
         }
     }
 }
@@ -139,6 +168,18 @@ void updated() {
     getDriverVersion()
     // END:  getChildComponentDefaultUpdatedContent()
     refresh()
+    BigDecimal shutterCloseDurationLocal = shutterCloseDuration == null ? 12.2 : shutterCloseDuration
+    shutterCloseDurationLocal = shutterCloseDurationLocal.setScale(1, BigDecimal.ROUND_HALF_UP)
+    parent?.sendCommand("ShutterCloseDuration", shutterCloseDurationLocal.toString(), callback="parse")
+
+    BigDecimal shutterOpenDurationLocal = shutterOpenDuration == null ? 10.0 : shutterOpenDuration
+    shutterOpenDurationLocal = shutterOpenDurationLocal.setScale(1, BigDecimal.ROUND_HALF_UP)
+    parent?.sendCommand("ShutterOpenDuration", shutterOpenDurationLocal.toString(), callback="parse")
+
+    BigDecimal shutterMotorDelayLocal = shutterMotorDelay == null ? 5.5 : shutterMotorDelay
+    shutterMotorDelayLocal = shutterMotorDelayLocal.setScale(1, BigDecimal.ROUND_HALF_UP)
+    parent?.sendCommand("shutterMotorDelay", shutterMotorDelayLocal.toString(), callback="parse")
+    
 }
 
 void installed() {
@@ -177,16 +218,8 @@ void stop() {
 }
 
 void setPosition(BigDecimal targetPosition) {
-    BigDecimal position = device.currentValue("level", true)
-    logging("setPosition(targetPosition=${targetPosition}) current: ${position}", 1)
-    if(targetPosition > position + 10) {
-        sendEvent(name: "target", value: targetPosition, isStateChange: true)
-        close()
-    } else if(targetPosition < position - 10) {
-        sendEvent(name: "target", value: targetPosition, isStateChange: true)
-        open()
-    }
-    parent?.componentSetPosition(this.device, position)
+    logging("setPosition(targetPosition=${targetPosition})", 1)
+    parent?.componentSetPosition(this.device, targetPosition)
     
 }
 
@@ -196,6 +229,14 @@ void setLevel(BigDecimal level) {
 
 void setLevel(BigDecimal level, BigDecimal duration) {
     setPosition(level)
+}
+
+void setAsClosed() {
+    parent?.sendCommand("backlog", "ShutterSetClose1; status 10;", callback="parse")
+}
+
+void setAsOpen() {
+    parent?.sendCommand("backlog", "ShutterSetOpen1; status 10;", callback="parse")
 }
 
 /**
@@ -210,7 +251,7 @@ void setLevel(BigDecimal level, BigDecimal duration) {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0521T"
+    String version = "v1.0.3.0718T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -230,7 +271,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      
@@ -250,13 +291,6 @@ void setLogsOffTask(boolean noLogWarning=false) {
         }
         runIn(1800, "logsOff")
     }
-}
-
-def generalInitialize() {
-    logging("generalInitialize()", 100)
-	unschedule("tasmota_updatePresence")
-    setLogsOffTask()
-    refresh()
 }
 
 void logsOff() {

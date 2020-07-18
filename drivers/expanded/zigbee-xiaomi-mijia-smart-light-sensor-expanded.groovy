@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0701
+ *  Version: v0.8.1.0718
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,6 +57,9 @@ metadata {
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
+        // BEGIN:getCommandsForZigbeePresence()
+        command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
+        // END:  getCommandsForZigbeePresence()
 
         fingerprint deviceJoinName: "Xiaomi Mijia Smart Light Sensor (GZCGQ01LM)", model: "lumi.sen_ill.mgl01", profileId: "0104", inClusters: "0000,0400,0003,0001", outClusters: "0003", manufacturer: "LUMI", endpointId: "01", deviceId: "0104"	
     }
@@ -70,12 +73,17 @@ metadata {
         input(name: "lastCheckinEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Date"), description: styling_addDescriptionDiv("Records Date events if enabled"), defaultValue: true)
         input(name: "lastCheckinEpochEnable", type: "bool", title: styling_addTitleDiv("Enable Last Checkin Epoch"), description: styling_addDescriptionDiv("Records Epoch events if enabled"), defaultValue: false)
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
+        input(name: "presenceWarningEnable", type: "bool", title: styling_addTitleDiv("Enable Presence Warning"), description: styling_addDescriptionDiv("Enables Presence Warnings in the Logs (default: true)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
+        // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
+        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Normal)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Normal")
+        // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
         // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
         input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
         input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
         // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
         input(name: "secondsMinLux", type: "number", title: styling_addTitleDiv("Minimum Update Time"), description: styling_addDescriptionDiv("Set the minimum number of seconds between Lux updates (5 to 3600, default: 10)"), defaultValue: "10", range: "5..3600")
+        input(name: "luxRes", type: "enum", title: styling_addTitleDiv("Lux Resolution"), description: styling_addDescriptionDiv("Lux sensor resolution (0..1 = maximum number of decimal places, default: 1)"), options: ["0", "1"], defaultValue: "1")
 	}
 }
 
@@ -111,6 +119,7 @@ ArrayList<String> refresh() {
 
 void initialize() {
     logging("initialize()", 100)
+    unschedule()
     refresh()
 }
 
@@ -224,18 +233,18 @@ ArrayList<String> parse(String description) {
     } else if(msgMap["cluster"] == "0400" && msgMap["attrId"] == "0000") {
         Integer rawValue = Integer.parseInt(msgMap['value'], 16)
         Integer variance = 190
-        
+        Integer luxResInt = luxRes == null ? 1 : Integer.parseInt(luxRes)
         BigDecimal lux = rawValue > 0 ? Math.pow(10, rawValue / 10000.0) - 1.0 : 0
         BigDecimal oldLux = device.currentValue('illuminance') == null ? null : device.currentValue('illuminance')
         Integer oldRaw = oldLux == null ? null : oldLux == 0 ? 0 : Math.log10(oldLux + 1) * 10000
-        lux = lux.setScale(1, BigDecimal.ROUND_HALF_UP)
-        if(oldLux != null) oldLux = oldLux.setScale(1, BigDecimal.ROUND_HALF_UP)
+        lux = lux.setScale(luxResInt, BigDecimal.ROUND_HALF_UP)
+        if(oldLux != null) oldLux = oldLux.setScale(luxResInt, BigDecimal.ROUND_HALF_UP)
         BigDecimal luxChange = null
         if(oldRaw == null) {
             logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRawold lux: $oldLux)", 1)
         } else {
             luxChange = lux - oldLux
-            luxChange = luxChange.setScale(1, BigDecimal.ROUND_HALF_UP)
+            luxChange = luxChange.setScale(luxResInt, BigDecimal.ROUND_HALF_UP)
             logging("Lux: $lux (raw: $rawValue, oldRaw: $oldRaw, diff: ${rawValue - oldRaw}, lower: ${oldRaw - variance}, upper: ${oldRaw + variance}, old lux: $oldLux)", 1)
         }
         
@@ -309,7 +318,7 @@ ArrayList<String> configureAdditional() {
 private String getDriverVersion() {
     comment = "Works with model GZCGQ01LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0701"
+    String version = "v0.8.1.0718"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -384,13 +393,6 @@ void setLogsOffTask(boolean noLogWarning=false) {
         }
         runIn(1800, "logsOff")
     }
-}
-
-def generalInitialize() {
-    logging("generalInitialize()", 100)
-	unschedule("tasmota_updatePresence")
-    setLogsOffTask()
-    refresh()
 }
 
 void logsOff() {
@@ -545,12 +547,16 @@ ArrayList<String> zigbeeReadAttribute(Integer endpoint, Integer cluster, Integer
 }
 
 ArrayList<String> zigbeeWriteLongAttribute(Integer cluster, Integer attributeId, Integer dataType, Long value, Map additionalParams = [:], int delay = 200) {
+    return zigbeeWriteLongAttribute(1, cluster, attributeId, dataType, value, additionalParams, delay)
+}
+
+ArrayList<String> zigbeeWriteLongAttribute(Integer endpoint, Integer cluster, Integer attributeId, Integer dataType, Long value, Map additionalParams = [:], int delay = 200) {
     logging("zigbeeWriteLongAttribute()", 1)
     String mfgCode = ""
     if(additionalParams.containsKey("mfgCode")) {
         mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
     }
-    String wattrArgs = "0x${device.deviceNetworkId} 0x01 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+    String wattrArgs = "0x${device.deviceNetworkId} $endpoint 0x${HexUtils.integerToHexString(cluster, 2)} " + 
                        "0x${HexUtils.integerToHexString(attributeId, 2)} " + 
                        "0x${HexUtils.integerToHexString(dataType, 1)} " + 
                        "{${Long.toHexString(value)}}" + 
@@ -656,16 +662,20 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         '07': 'unknown2',
         '08': 'unknown3',
         '09': 'unknown4',
-        '0A': 'unknown5',
-        '0B': 'unknown6',
+        '0A': 'routerid',
+        '0B': 'unknown5',
         '0C': 'unknown6',
         '6429': 'temperature',
         '6410': 'openClose',
         '6420': 'curtainPosition',
-        '65': 'humidity',
+        '6521': 'humidity',
+        '6510': 'switch2',
         '66': 'pressure',
+        '6E': 'unknown10',
+        '6F': 'unknown11',
         '95': 'consumption',
         '96': 'voltage',
+        '98': 'power',
         '9721': 'gestureCounter1',
         '9739': 'consumption',
         '9821': 'gestureCounter2',
@@ -673,7 +683,7 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         '99': 'gestureCounter3',
         '9A21': 'gestureCounter4',
         '9A20': 'unknown7',
-        '9A25': 'unknown8',
+        '9A25': 'accelerometerXYZ',
         '9B': 'unknown9',
     ]
     if(isFCC0 == true) {
@@ -703,7 +713,8 @@ Map parseXiaomiStruct(String xiaomiStruct, boolean isFCC0=false, boolean hasLeng
         } else if(tags.containsKey(cTag)) {
             cKey = tags[cTag]
         } else {
-            throw new Exception("The Xiaomi Struct used an unrecognized tag: 0x$cTag (type: 0x$cTypeStr)")
+            cKey = "unknown${cTag}${cTypeStr}"
+            log.warn("PLEASE REPORT TO DEV - The Xiaomi Struct used an unrecognized tag: 0x$cTag (type: 0x$cTypeStr) (struct: $xiaomiStruct)")
         }
         ret = zigbee_generic_convertStructValue(r, values, cType, cKey, cTag)
         r = ret[0]
@@ -921,8 +932,8 @@ Float parseSingleHexToFloat(String singleHex) {
 }
 
 Integer convertToSignedInt8(Integer signedByte) {
-    Integer sign = signedByte & (1 << 7);
-    return (signedByte & 0x7f) * (sign != 0 ? -1 : 1);
+    Integer sign = signedByte & (1 << 7)
+    return (signedByte & 0x7f) * (sign != 0 ? -1 : 1)
 }
 
 Integer parseIntReverseHex(String hexString) {
@@ -982,37 +993,222 @@ Integer kelvinToMired(Integer kelvin) {
     return t
 }
 
-void reconnectEvent() {
+Integer getMaximumMinutesBetweenEvents(BigDecimal forcedMinutes=null) {
+    Integer mbe = null
+    if(forcedMinutes == null && (state.forcedMinutes == null || state.forcedMinutes == 0)) {
+        mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    } else {
+        mbe = forcedMinutes != null ? forcedMinutes.intValue() : state.forcedMinutes.intValue()
+    }
+    return mbe
+}
+
+void reconnectEvent(BigDecimal forcedMinutes=null) {
+    recoveryEvent(forcedMinutes)
+}
+
+void recoveryEvent(BigDecimal forcedMinutes=null) {
     try {
-        reconnectEventDeviceSpecific()
+        recoveryEventDeviceSpecific()
     } catch(Exception e) {
-        logging("reconnectEvent()", 1)
+        logging("recoveryEvent()", 1)
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     checkPresence(displayWarnings=false)
-    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    Integer mbe = getMaximumMinutesBetweenEvents(forcedMinutes=forcedMinutes)
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
-        log.warn("Event interval normal, reconnect mode DEACTIVATED!")
+        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
+        unschedule('recoveryEvent')
         unschedule('reconnectEvent')
     }
 }
 
+void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
+    Random rnd = new Random()
+    switch(recoveryMode) {
+        case "Suicidal":
+            schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'recoveryEvent')
+            break
+        case "Insane":
+            schedule("${rnd.nextInt(30)}/30 * * * * ? *", 'recoveryEvent')
+            break
+        case "Slow":
+            schedule("${rnd.nextInt(59)} ${rnd.nextInt(3)}/3 * * * ? *", 'recoveryEvent')
+            break
+        case null:
+        case "Normal":
+        default:
+            schedule("${rnd.nextInt(59)} ${rnd.nextInt(2)}/2 * * * ? *", 'recoveryEvent')
+            break
+    }
+    recoveryEvent(forcedMinutes=forcedMinutes)
+}
+
 void checkEventInterval(boolean displayWarnings=true) {
     prepareCounters()
-    Integer mbe = MINUTES_BETWEEN_EVENTS == null ? 90 : MINUTES_BETWEEN_EVENTS
+    Integer mbe = getMaximumMinutesBetweenEvents()
     if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-        if(displayWarnings == true) log.warn("Event interval INCORRECT, reconnect mode ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        Random rnd = new Random()
-        schedule("${rnd.nextInt(15)}/15 * * * * ? *", 'reconnectEvent')
+        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+        scheduleRecoveryEvent()
     }
     sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
 void startCheckEventInterval() {
-    logging("startCheckEventInterval()", 100)
-    Random rnd = new Random()
-    schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)}/59 * * * ? *", 'checkEventInterval')
-    checkEventInterval(displayWarnings=true)
+    logging("startCheckEventInterval()", 1)
+    if(recoveryMode != "Disabled") {
+        logging("Recovery feature ENABLED", 100)
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)}/59 * * * ? *", 'checkEventInterval')
+        checkEventInterval(displayWarnings=true)
+    } else {
+        logging("Recovery feature DISABLED", 100)
+        unschedule('checkEventInterval')
+        unschedule('recoveryEvent')
+        unschedule('reconnectEvent')
+    }
+}
+
+void forceRecoveryMode(BigDecimal minutes) {
+    minutes = minutes == null || minutes < 0 ? 0 : minutes
+    Integer minutesI = minutes.intValue()
+    logging("forceRecoveryMode(minutes=$minutesI) ", 1)
+    if(minutesI == 0) {
+        disableForcedRecoveryMode()
+    } else if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=minutesI) == false) {
+        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode ($recoveryMode) ACTIVATED!")
+        state.forcedMinutes = minutes
+        runIn(minutesI * 60, 'disableForcedRecoveryMode')
+
+        scheduleRecoveryEvent(forcedMinutes=minutes)
+    } else {
+        log.warn("Forced recovery mode NOT activated since we already have a checkin event during the last $minutesI minute(s)!")
+    }
+}
+
+void disableForcedRecoveryMode() {
+    state.forcedMinutes = 0
+    unschedule('recoveryEvent')
+    unschedule('reconnectEvent')
+    if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Forced recovery mode DEACTIVATED!")
+}
+
+void updateManufacturer(String manfacturer) {
+    if(getDataValue("manufacturer") == null) {
+        updateDataValue("manufacturer", manfacturer)
+    }
+}
+
+void updateApplicationId(String application) {
+    if(getDataValue("application") == null) {
+        updateDataValue("application", application)
+    }
+}
+
+Map parseSimpleDescriptorData(List<String> data) {
+    Map<String,String> d = [:]
+    if(data[1] == "00") {
+        d["nwkAddrOfInterest"] = data[2..3].reverse().join()
+        Integer ll = Integer.parseInt(data[4], 16)
+        d["endpointId"] = data[5]
+        d["profileId"] = data[6..7].reverse().join()
+        d["applicationDevice"] = data[8..9].reverse().join()
+        d["applicationVersion"] = data[10]
+        Integer icn = Integer.parseInt(data[11], 16)
+        Integer pos = 12
+        Integer cPos = null
+        d["inClusters"] = ""
+        if(icn > 0) {
+            (1..icn).each() {b->
+                cPos = pos+((b-1)*2)
+                d["inClusters"] += data[cPos..cPos+1].reverse().join()
+                if(b < icn) {
+                    d["inClusters"] += ","
+                }
+            }
+        }
+        pos += icn*2
+        Integer ocn = Integer.parseInt(data[pos], 16)
+        pos += 1
+        d["outClusters"] = ""
+        if(ocn > 0) {
+            (1..ocn).each() {b->
+                cPos = pos+((b-1)*2)
+                d["outClusters"] += data[cPos..cPos+1].reverse().join()
+                if(b < ocn) {
+                    d["outClusters"] += ","
+                }
+            }
+        }
+        logging("d=$d, ll=$ll, icn=$icn, ocn=$ocn", 1)
+    } else {
+        log.warn("Incorrect Simple Descriptor Data received: $data")
+    }
+    return d
+}
+
+void updateDataFromSimpleDescriptorData(List<String> data) {
+    Map<String,String> sdi = parseSimpleDescriptorData(data)
+    if(sdi != [:]) {
+        updateDataValue("endpointId", sdi['endpointId'])
+        updateDataValue("profileId", sdi['profileId'])
+        updateDataValue("inClusters", sdi['inClusters'])
+        updateDataValue("outClusters", sdi['outClusters'])
+    } else {
+        log.warn("No VALID Simple Descriptor Data received!")
+    }
+    sdi = null
+}
+
+void getInfo(boolean ignoreMissing=false) {
+    log.debug("Getting info for Zigbee device...")
+    String endpointId = device.getEndpointId()
+    endpointId = endpointId == null ? getDataValue("endpointId") : endpointId
+    String profileId = getDataValue("profileId")
+    String inClusters = getDataValue("inClusters")
+    String outClusters = getDataValue("outClusters")
+    String model = getDataValue("model")
+    String manufacturer = getDataValue("manufacturer")
+    String application = getDataValue("application")
+    String extraFingerPrint = ""
+    boolean missing = false
+    String requestingFromDevice = ", requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint."
+    if(ignoreMissing==true) {
+        requestingFromDevice = ". Try again."
+    }
+    if(manufacturer == null) {
+        missing = true
+        log.warn("Manufacturer name is missing for the fingerprint$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
+    log.trace("Manufacturer: $manufacturer")
+    if(model == null) {
+        missing = true
+        log.warn("Model name is missing for the fingerprint$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+    }
+    log.trace("Model: $model")
+    if(application == null) {
+        log.info("NOT IMPORTANT: Application ID is missing for the fingerprint$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0001))
+    } else {
+        extraFingerPrint += ", application:\"$application\""
+    }
+    log.trace("Application: $application")
+    if(profileId == null || endpointId == null || inClusters == null || outClusters == null) {
+        missing = true
+        String endpointIdTemp = endpointId == null ? "01" : endpointId
+        log.warn("One or multiple pieces of data needed for the fingerprint is missing$requestingFromDevice")
+        if(ignoreMissing==false) sendZigbeeCommands(["he raw ${device.deviceNetworkId} 0 0 0x0004 {00 ${zigbee.swapOctets(device.deviceNetworkId)} $endpointIdTemp} {0x0000}"])
+    }
+    profileId = profileId == null ? "0104" : profileId
+    if(missing == true) {
+        log.info("INCOMPLETE - TRY AGAIN: fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+    } else {
+        log.info("fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+    }
 }
 // END:  getHelperFunctions('zigbee-generic')
 
@@ -1074,6 +1270,8 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('driver-default')
+String getDEGREE() { return String.valueOf((char)(176)) }
+
 void refresh(String cmd) {
     deviceCommand(cmd)
 }
@@ -1117,6 +1315,11 @@ void configurePresence() {
     }
 }
 
+void stopSchedules() {
+    unschedule()
+    log.info("Stopped ALL Device Schedules!")
+}
+
 void prepareCounters() {
     if(device.currentValue('restoredCounter') == null) sendEvent(name: "restoredCounter", value: 0, descriptionText: "Initialized to 0" )
     if(device.currentValue('notPresentCounter') == null) sendEvent(name: "notPresentCounter", value: 0, descriptionText: "Initialized to 0" )
@@ -1132,11 +1335,22 @@ boolean isValidDate(String dateFormat, String dateString) {
     return true
 }
 
+Integer retrieveMinimumMinutesToRepeat(Integer minimumMinutesToRepeat=55) {
+    Integer mmr = null
+    if(state.forcedMinutes == null || state.forcedMinutes == 0) {
+        mmr = minimumMinutesToRepeat
+    } else {
+        mmr = state.forcedMinutes - 1 < 1 ? 1 : state.forcedMinutes.intValue() - 1
+    }
+    return mmr
+}
+
 boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
     boolean r = false
+    Integer mmr = retrieveMinimumMinutesToRepeat(minimumMinutesToRepeat=minimumMinutesToRepeat)
     if (lastCheckinEnable == true || lastCheckinEnable == null) {
         String lastCheckinVal = device.currentValue('lastCheckin')
-        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (minimumMinutesToRepeat * 60 * 1000)) {
+        if(lastCheckinVal == null || isValidDate('yyyy-MM-dd HH:mm:ss', lastCheckinVal) == false || now() >= Date.parse('yyyy-MM-dd HH:mm:ss', lastCheckinVal).getTime() + (mmr * 60 * 1000)) {
             r = true
 		    sendEvent(name: "lastCheckin", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
             logging("Updated lastCheckin", 1)
@@ -1145,7 +1359,7 @@ boolean sendlastCheckinEvent(Integer minimumMinutesToRepeat=55) {
         }
 	}
     if (lastCheckinEpochEnable == true) {
-		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (minimumMinutesToRepeat * 60 * 1000)) {
+		if(device.currentValue('lastCheckinEpoch') == null || now() >= device.currentValue('lastCheckinEpoch').toLong() + (mmr * 60 * 1000)) {
             r = true
 		    sendEvent(name: "lastCheckinEpoch", value: now())
             logging("Updated lastCheckinEpoch", 1)
@@ -1182,7 +1396,7 @@ Long secondsSinceLastCheckinEvent() {
 boolean hasCorrectCheckinEvents(Integer maximumMinutesBetweenEvents=90, boolean displayWarnings=true) {
     Long secondsSinceLastCheckin = secondsSinceLastCheckinEvent()
     if(secondsSinceLastCheckin != null && secondsSinceLastCheckin > maximumMinutesBetweenEvents * 60) {
-        if(displayWarnings == true) log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
+        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("One or several EXPECTED checkin events have been missed! Something MIGHT be wrong with the mesh for this device. Minutes since last checkin: ${Math.round(secondsSinceLastCheckin / 60)} (maximum expected $maximumMinutesBetweenEvents)")
         return false
     }
     return true
@@ -1206,7 +1420,9 @@ boolean checkPresence(boolean displayWarnings=true) {
             Integer numNotPresent = device.currentValue('notPresentCounter')
             numNotPresent = numNotPresent == null ? 1 : numNotPresent + 1
             sendEvent(name: "notPresentCounter", value: numNotPresent )
-            log.warn("No event seen from the device for over 3 hours! Something is not right... (consecutive events: $numNotPresent)")
+            if(presenceWarningEnable == null || presenceWarningEnable == true) {
+                log.warn("No event seen from the device for over 3 hours! Something is not right... (consecutive events: $numNotPresent)")
+            }
         }
     }
     return isPresent

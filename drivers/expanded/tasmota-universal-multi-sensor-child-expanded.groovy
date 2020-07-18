@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0602T
+ *  Version: v1.0.3.0718T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,10 +55,12 @@ metadata {
         input(name: "hideMeasurementAdjustments", type: "bool", title: styling_addTitleDiv("Hide Measurement Adjustment Preferences"), description: "", defaultValue: false, displayDuringSetup: false, required: false)
         // BEGIN:getDefaultMetadataPreferencesForTHMonitor()
         input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees (in Celcius)."), displayDuringSetup: true, required: false, range: "*..*")
-        input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..3 = maximum number of decimal places, default: 1)<br/>NOTE: If the 3rd decimal is a 0 (eg. 24.720) it will show without the last decimal (eg. 24.72)."), options: ["0", "1", "2", "3"], defaultValue: "1", displayDuringSetup: true, required: false)
-        input(name: "tempUnitConversion", type: "enum", title: styling_addTitleDiv("Temperature Unit Conversion"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"none"], ["2":"Celsius to Fahrenheit"], ["3":"Fahrenheit to Celsius"]], displayDuringSetup: false)
+        input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..3 = maximum number of decimal places, default: 1)<br/>NOTE: If the 3rd decimal is a 0 (eg. 24.720) it will show without the last decimal (eg. 24.72)."), options: ["0", "1", "2", "3"], defaultValue: "1")
+        input(name: "tempUnitConversion", type: "enum", title: styling_addTitleDiv("Temperature Unit Conversion"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"none"], ["2":"Celsius to Fahrenheit"], ["3":"Fahrenheit to Celsius"]])
         input(name: "humidityOffset", type: "decimal", title: styling_addTitleDiv("Humidity Offset"), description: styling_addDescriptionDiv("Adjust the humidity by this many percent."), displayDuringSetup: true, required: false, range: "*..*")
+        input(name: "humidityRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: 1)"), options: ["0", "1"], defaultValue: "1")
         input(name: "pressureOffset", type: "decimal", title: styling_addTitleDiv("Pressure Offset"), description: styling_addDescriptionDiv("Adjust the pressure value by this much."), displayDuringSetup: true, required: false, range: "*..*")
+        input(name: "pressureRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: default)"), options: ["default", "0", "1", "2"], defaultValue: "default")
         input(name: "pressureUnitConversion", type: "enum", title: styling_addTitleDiv("Pressure Unit Conversion"), description: styling_addDescriptionDiv("(default: kPa)"), options: ["mbar", "kPa", "inHg", "mmHg", "atm"], defaultValue: "kPa")
         // END:  getDefaultMetadataPreferencesForTHMonitor()
     }
@@ -157,7 +159,7 @@ void refresh() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0602T"
+    String version = "v1.0.3.0718T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -177,7 +179,7 @@ boolean isDriver() {
     }
 }
 
-void deviceCommand(cmd) {
+void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
     cmd = jsonSlurper.parseText(cmd)
      
@@ -197,13 +199,6 @@ void setLogsOffTask(boolean noLogWarning=false) {
         }
         runIn(1800, "logsOff")
     }
-}
-
-def generalInitialize() {
-    logging("generalInitialize()", 100)
-	unschedule("tasmota_updatePresence")
-    setLogsOffTask()
-    refresh()
 }
 
 void logsOff() {
@@ -702,7 +697,7 @@ private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
     } else if (tempUnitConversion == "3") {
         value = fahrenheitToCelsius(value)
     }
-	if (tempOffset) {
+	if (tempOffset != null) {
 	   return (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
        return value.setScale(res, BigDecimal.ROUND_HALF_UP)
@@ -715,16 +710,25 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     if(tempRes != null && tempRes != '') {
         res = Integer.parseInt(tempRes)
     }
-    String degree = String.valueOf((char)(Integer.parseInt("00B0", 16)))
+    String degree = String.valueOf((char)(176))
     String tempUnit = "${degree}C"
-    if (tempUnitDisplayed == "2") {
+    String currentTempUnitDisplayed = tempUnitDisplayed
+    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
+        if(location.temperatureScale == "C") {
+            currentTempUnitDisplayed = "1"
+        } else {
+            currentTempUnitDisplayed = "2"
+        }
+    }
+
+    if (currentTempUnitDisplayed == "2") {
         value = celsiusToFahrenheit(value)
         tempUnit = "${degree}F"
-    } else if (tempUnitDisplayed == "3") {
+    } else if (currentTempUnitDisplayed == "3") {
         value = value + 273.15
         tempUnit = "${degree}K"
     }
-	if (tempOffset) {
+	if (tempOffset != null) {
 	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
 	} else {
        return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
@@ -732,19 +736,27 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
 }
 
 private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
+    Integer res = 1
+    if(humidityRes != null && humidityRes != '') {
+        res = Integer.parseInt(humidityRes)
+    }
     if (humidityOffset) {
-	   return (value + new BigDecimal(humidityOffset)).setScale(1, BigDecimal.ROUND_HALF_UP)
+	   return (value + new BigDecimal(humidityOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(1, BigDecimal.ROUND_HALF_UP)
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
     }
 }
 
 private BigDecimal sensor_data_getAdjustedPressure(BigDecimal value, Integer decimals=2) {
+    Integer res = decimals
+    if(pressureRes != null && pressureRes != '' && pressureRes != 'default') {
+        res = Integer.parseInt(pressureRes)
+    }
     if (pressureOffset) {
-	   return (value + new BigDecimal(pressureOffset)).setScale(decimals, BigDecimal.ROUND_HALF_UP)
+	   return (value + new BigDecimal(pressureOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(decimals, BigDecimal.ROUND_HALF_UP)
-    }   
+       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
+    }
 }
 
 private BigDecimal sensor_data_convertPressure(BigDecimal pressureInkPa) {

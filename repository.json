@@ -17,6 +17,41 @@
       "description": "Works with model SJCGQ11LM."
     },
     {
+      "name": "Generic Device Toolbox",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-device-toolbox.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-device-toolbox-beta.json",
+      "description": "Used to clean device data and get Zigbee device fingerprints"
+    },
+    {
+      "name": "Generic Dimmer (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-dimmer.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-dimmer-beta.json",
+      "description": "Works with Generic Dimmers (only tested with the Nue Dimmer, might need changes for other devices. Please report your fingerprints and progress.)"
+    },
+    {
+      "name": "Generic Outlet (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-outlet.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-outlet-beta.json",
+      "description": "Works with Generic Outlets (please report your fingerprints)"
+    },
+    {
+      "name": "Generic Repeater (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-repeater.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-repeater-beta.json",
+      "description": "Works with most repeater-only devices (Xbee with Send Type set to Bind)"
+    },
+    {
+      "name": "Generic Switch (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-switch.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-switch-beta.json",
+      "description": "Works with Generic Switches (this includes many multi-relay ones, like Nue. Please report your fingerprints)"
+    },
+    {
       "name": "Sonoff Button",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-button.json",
@@ -43,6 +78,13 @@
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-temperature-humidity-sensor.json",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-temperature-humidity-sensor-beta.json",
       "description": "Works with model SNZB-02."
+    },
+    {
+      "name": "Tuya Valve",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-tuya-valve.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-tuya-valve-beta.json",
+      "description": "Works with Tuya Valves."
     },
     {
       "name": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
