@@ -9,7 +9,7 @@
       "id": "2e28d401-0875-549c-81a2-67967e2caf15",
       "internalId": 1634,
       "name": "Zigbee - Generic Repeater (with Presence)",
-      "betaVersion": "v0.7.1.0717b",
+      "betaVersion": "v0.8.2.0718b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-repeater-expanded.groovy",
       "required": true

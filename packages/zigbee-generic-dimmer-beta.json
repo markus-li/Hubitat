@@ -9,7 +9,7 @@
       "id": "12f1312f-d81f-51c6-8182-e4bf953043a6",
       "internalId": 1730,
       "name": "Zigbee - Generic Dimmer (with Presence)",
-      "betaVersion": "v0.7.1.0718b",
+      "betaVersion": "v0.8.2.0718b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-dimmer-expanded.groovy",
       "required": true
