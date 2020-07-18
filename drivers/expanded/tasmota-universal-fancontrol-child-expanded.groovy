@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.2.0711Tb
+ *  Version: v1.0.4.0718Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ void setSpeed(String value) {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.2.0711Tb"
+    String version = "v1.0.4.0718Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

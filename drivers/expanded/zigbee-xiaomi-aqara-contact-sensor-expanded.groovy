@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0717b
+ *  Version: v0.8.2.0718b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -364,7 +364,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models MCCGQ01LM & MCCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0717b"
+    String version = "v0.8.2.0718b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

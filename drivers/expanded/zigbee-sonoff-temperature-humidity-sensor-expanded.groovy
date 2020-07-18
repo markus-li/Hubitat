@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.5.0.0718b
+ *  Version: v0.6.2.0718b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -323,7 +323,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with model SNZB-02."
     if(comment != "") state.comment = comment
-    String version = "v0.5.0.0718b"
+    String version = "v0.6.2.0718b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

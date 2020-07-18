@@ -137,17 +137,17 @@ def main():
     log.debug(hhs_2.login())
     log.debug(hhs_3.login())
 
-    default_version = "v1.0.2.MMDDTb"
-    default_zigbee_version = "v0.7.1.MMDDb"
-    default_zigbee_version_sonoff = "v0.5.0.MMDDb"
+    default_version = "v1.0.4.MMDDTb"
+    default_zigbee_version = "v0.8.2.MMDDb"
+    default_zigbee_version_sonoff = "v0.6.2.MMDDb"
     version_suffix = "b"
     checksum_file_suffix = None
     remove_comments = True
     is_beta = True
     if(branch_name == 'release'):
-        default_version = "v1.0.2.MMDDT"
-        default_zigbee_version = "v0.7.1.MMDD"
-        default_zigbee_version_sonoff = "v0.5.0.MMDD"
+        default_version = "v1.0.3.MMDDT"
+        default_zigbee_version = "v0.8.1.MMDD"
+        default_zigbee_version_sonoff = "v0.6.1.MMDD"
         version_suffix = ""
         checksum_file_suffix = "release"
         is_beta = False

@@ -9,7 +9,7 @@
       "id": "92a20946-d680-5f98-9aee-d58e7203ce6c",
       "internalId": 1602,
       "name": "Zigbee - Sonoff Contact Sensor",
-      "betaVersion": "v0.5.0.0718b",
+      "betaVersion": "v0.6.2.0718b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-contact-sensor-expanded.groovy",
       "required": true
