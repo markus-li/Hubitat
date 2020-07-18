@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.5.0.0718b
+ *  Version: v0.7.1.0718b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,45 +28,41 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Sonoff Temperature & Humidity Sensor", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-temperature-humidity-sensor-expanded.groovy") {
+	definition (name: "Zigbee - Generic Dimmer (with Presence)", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-dimmer-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
         capability "Initialize"
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
-        capability "Battery"
-        capability "TemperatureMeasurement"
-        capability "RelativeHumidityMeasurement"
-        capability "PressureMeasurement"
-        
+        capability "HealthCheck"
+        capability "Actuator"
+        capability "Switch"
+        capability "Light"
+        capability "SwitchLevel"
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
         // END:  getDefaultMetadataAttributes()
+
         // BEGIN:getMetadataAttributesForLastCheckin()
         attribute "lastCheckin", "Date"
         attribute "lastCheckinEpoch", "number"
         attribute "notPresentCounter", "number"
         attribute "restoredCounter", "number"
         // END:  getMetadataAttributesForLastCheckin()
-        // BEGIN:getZigbeeBatteryMetadataAttributes()
-        attribute "batteryLastReplaced", "String"
-        // END:  getZigbeeBatteryMetadataAttributes()
 
-        // BEGIN:getZigbeeBatteryCommands()
-        command "resetBatteryReplacedDate"
-        // END:  getZigbeeBatteryCommands()
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
         // BEGIN:getCommandsForZigbeePresence()
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
-
-        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0402,0405,0001", outClusters:"0003", model:"TH01", manufacturer:"eWeLink", application:"04"
-
-        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0001,0402,0405", outClusters:"0019", model:"TS0201", manufacturer:"_TZ2000_hjsgdkfl", application:"43"
-        
+        // BEGIN:getZigbeeGenericDeviceCommands()
+        command "stopSchedules"
+        command "getInfo"
+        // END:  getZigbeeGenericDeviceCommands()
+        command "deviceMaxLevel"
+        command "deviceMinLevel"
     }
 
     preferences {
@@ -80,32 +76,19 @@ metadata {
         input(name: "presenceEnable", type: "bool", title: styling_addTitleDiv("Enable Presence"), description: styling_addDescriptionDiv("Enables Presence to indicate if the device has sent data within the last 3 hours (REQUIRES at least one of the Checkin options to be enabled)"), defaultValue: true)
         input(name: "presenceWarningEnable", type: "bool", title: styling_addTitleDiv("Enable Presence Warning"), description: styling_addDescriptionDiv("Enables Presence Warnings in the Logs (default: true)"), defaultValue: true)
         // END:  getMetadataPreferencesForLastCheckin()
-        // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
-        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Normal)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Normal")
-        // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
-        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
-        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
-        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
-        // BEGIN:getDefaultMetadataPreferencesForTHMonitorAlternative1()
-        input(name: "tempUnitDisplayed", type: "enum", title: styling_addTitleDiv("Displayed Temperature Unit"), description: "", defaultValue: "0", required: true, multiple: false, options:[["0":"System Default"], ["1":"Celsius"], ["2":"Fahrenheit"], ["3":"Kelvin"]])
-        input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees."), displayDuringSetup: true, required: false, range: "*..*")
-        input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..2 = maximum number of decimal places, default: 1)<br/>NOTE: If the 2nd decimal is a 0 (eg. 24.70) it will show without the last decimal (eg. 24.7)."), options: ["0", "1", "2"], defaultValue: "1", displayDuringSetup: true, required: false)
-        input(name: "humidityOffset", type: "decimal", title: styling_addTitleDiv("Humidity Offset"), description: styling_addDescriptionDiv("Adjust the humidity by this many percent."), displayDuringSetup: true, required: false, range: "*..*")
-        input(name: "humidityRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: 1)"), options: ["0", "1"], defaultValue: "1")
-        if(getDeviceDataByName('hasPressure') == "True") {
-            input(name: "pressureUnitConversion", type: "enum", title: styling_addTitleDiv("Displayed Pressure Unit"), description: styling_addDescriptionDiv("(default: kPa)"), options: ["mbar", "kPa", "inHg", "mmHg", "atm"], defaultValue: "kPa")
-            input(name: "pressureRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: default)"), options: ["default", "0", "1", "2"], defaultValue: "default")
-            input(name: "pressureOffset", type: "decimal", title: styling_addTitleDiv("Pressure Offset"), description: styling_addDescriptionDiv("Adjust the pressure value by this much."), displayDuringSetup: true, required: false, range: "*..*")
-        }
-        // END:  getDefaultMetadataPreferencesForTHMonitorAlternative1()
+        // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Slow")
+        input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Slow)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Slow")
+        // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Slow")
+        input(name: "enablePing", type: "bool", title: styling_addTitleDiv("Enable Automatic Ping"), description: styling_addDescriptionDiv("Sends an, infrequent, ping to the device if needed for knowing if Present (default: enabled)"), defaultValue: true)
+        input(name: "minLevel", type: "decimal", title: styling_addTitleDiv("Level (minimum)"), description: styling_addDescriptionDiv("Minimum dimming level to send before sending 0, below this level it will be reported as 0. (default: 2)"), defaultValue: "2", range: "0..50")
+        input(name: "maxLevel", type: "decimal", title: styling_addTitleDiv("Level (maximum)"), description: styling_addDescriptionDiv("Maximum dimming level to send, at this level and above the level will be reported as 100. (default: 97)"), defaultValue: "97", range: "51..100")
 	}
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Sonoff Temperature & Humidity Sensor', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-temperature-humidity-sensor-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Generic Dimmer (with Presence)', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-dimmer-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -119,58 +102,65 @@ ArrayList<String> refresh() {
     getDriverVersion()
     configurePresence()
     startCheckEventInterval()
-    resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
     
-    String model = setCleanModelName(newModelToSet=null, acceptedModels=[
-        "TH01",
-        "TS0201"
-    ])
-    
+    setCleanModelName(newModelToSet=null, acceptedModels=null)
+
+    if(enablePing == null || enablePing == true) {
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(59)} ${rnd.nextInt(29)}/29 * * * ? *", 'ping')
+        ping()
+    }
+
+    String endpoint = device.getEndpointId()
+    endpoint = endpoint == null ? "01" : endpoint
+
     ArrayList<String> cmd = []
-    
+    cmd += zigbee.readAttribute(0x0000, 0x0005)
+    cmd += zigbee.readAttribute(0x0006, 0x0000)
+    cmd += zigbee.readAttribute(0x0008, 0x0000)
+
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0008 {${device.zigbeeId}} {}", "delay 200",]
+
+    cmd += ["zdo send ${device.deviceNetworkId} 0x$endpoint 0x01", "delay 200"]
     logging("refresh cmd: $cmd", 1)
-    return cmd
+
+    sendZigbeeCommands(cmd)
 }
 
-void initialize() {
+void ping() {
+    if(enablePing == false) {
+        unschedule('ping')
+    } else if(hasCorrectCheckinEvents(25, false) == false){
+        logging("ping()", 100)
+        /* If additional Ping types are needed, please contact the Developer */
+        List<String> cmd = []
+        cmd += zigbee.readAttribute(CLUSTER_BASIC, 0x0004)
+        
+        cmd.each() {
+            if(it.startsWith("delay") == false) {
+                logging(it, 1)
+            }
+        }
+        sendZigbeeCommands(cmd)
+    }
+}
+
+def initialize() {
     logging("initialize()", 100)
     unschedule()
     refresh()
-    configureDevice()
 }
 
 void installed() {
     logging("installed()", 100)
     refresh()
-    configureDevice()
-}
-
-void configureDevice() {
-    Integer endpointId = 1
-    ArrayList<String> cmd = []
-    cmd += zigbee.readAttribute(0x0000, [0x0001, 0x0004, 0x0005, 0x0006])
-    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0402 {${device.zigbeeId}} {}", "delay 50"]
-    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0405 {${device.zigbeeId}} {}", "delay 50"]
-    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0001 {${device.zigbeeId}} {}", "delay 50"]
-    cmd += ["he cr 0x${device.deviceNetworkId} ${endpointId} 0x0001 0 0x10 0 0xE10 {}", "delay 50"]
-    cmd += zigbee.configureReporting(0x0402, 0x0000, 0x29, 60, 3600, 20, [:], 50)
-    cmd += zigbee.configureReporting(0x0405, 0x0000, 0x29, 60, 3600, 200, [:], 50)
-
-    cmd += zigbee.readAttribute(0x0001, [0x0020, 0x0021])
-    cmd += zigbeeReadAttribute(0x0402, 0x0000)
-    cmd += zigbeeReadAttribute(0x0405, 0x0000)
-    
-    sendZigbeeCommands(cmd)
 }
 
 void updated() {
     logging("updated()", 100)
     refresh()
-}
-
-Integer getMINUTES_BETWEEN_EVENTS() {
-    return 140
 }
 
 ArrayList<String> parse(String description) {
@@ -232,64 +222,80 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
-    
-    //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
 
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_0001":
-            //logging("Cluster 0000 - description:${description} | parseMap:${msgMap}", 0)
-
+            logging("Application ID Received", 100)
+            updateApplicationId(msgMap['value'])
             break
         case "0000_0004":
-            logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
+            logging("Manufacturer Name Received - description:${description} | parseMap:${msgMap}", 100)
+            logging("Manufacturer Name Received", 1)
+            if(sendlastCheckinEvent(minimumMinutesToRepeat=25) == true) {
+                logging("Sending request to read attribute 0x0005 from cluster 0x0000...", 1)
+                sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+            }
+            updateManufacturer(msgMap['value'])
+            break
+        case "0000_0005":
+            logging("Model Name Received - description:${description} | parseMap:${msgMap}", 100)
+            logging("Model Name Received", 1)
+            setCleanModelName(newModelToSet=msgMap["value"])
+            break
+        case "0006_0000":
+            logging("On/Off Button press - description:${description} | parseMap:${msgMap}", 100)
+            sendOnOffEvent(Integer.parseInt(msgMap['endpoint'], 16), Integer.parseInt(msgMap['value'], 16) == 1)
+            sendlastCheckinEvent(minimumMinutesToRepeat=25)
+            break
+        case "0008_0000":
+            logging("Dimmer - description:${description} | parseMap:${msgMap}", 100)
+            Integer cLevel = Math.round(msgMap['valueParsed'] / 2.55)
+            cLevel = cLevel >= deviceMaxLevel() ? 100 : (cLevel < deviceMinLevel() ? 0 : cLevel)
+            sendEvent(name:"level", value: cLevel)
+
+            sendlastCheckinEvent(minimumMinutesToRepeat=25)
             
-            break
-        case "0001_0020":
-        case "0001_0021":
-            logging("Battery data - description:${description} | parseMap:${msgMap}", 100)
-            zigbee_sonoff_parseBatteryData(msgMap)
-            break
-        case "0402_0000":
-            logging("SONOFF TEMPERATURE EVENT - description:${description} | parseMap:${msgMap}", 100)
-            zigbee_sensor_parseSendTemperatureEvent(msgMap['valueParsed'])
-
-            break
-        case "0405_0000":
-            logging("SONOFF HUMIDITY EVENT - description:${description} | parseMap:${msgMap}", 100)
-            zigbee_sensor_parseSendHumidityEvent(msgMap['valueParsed'])
-
             break
         default:
             switch(msgMap["clusterId"]) {
-                case "0001":
-                    //logging("Broadcast catchall - description:${description} | parseMap:${msgMap}", 0)
-                    
+                case "0006":
+                    logging("ON/OFF CATCHALL CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
+                    sendOnOffEvent(Integer.parseInt(msgMap['sourceEndpoint'], 16), Integer.parseInt(msgMap['data'][0], 16) == 1)
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
                     break
                 case "0013":
-                    //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
-                    
-                    configureDevice()
-
-                    break
-                case "0402":
-                    logging("Configuration Accepted for cluster 0x0402", 100)
-                    break
-                case "0405":
-                    logging("Configuration Accepted for cluster 0x0405", 100)
+                    logging("MULTISTATE CLUSTER EVENT", 1)
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
                     break
                 case "8021":
-                    //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
+                    logging("BIND RESPONSE CLUSTER EVENT", 1)
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
+                    break
+                case "8001":
+                    logging("GENERAL CLUSTER EVENT", 1)
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
+                    break
+                case "8004":
+                    updateDataFromSimpleDescriptorData(msgMap["data"])
+                    break
+                case "8005":
+                    logging("Endpoint Discovery Cluster Event- description:${description} | parseMap:${msgMap}", 100)
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
+
+                    break
+                    
+                case "8021":
+                case "8032":
+                case "8038":
+                    logging("GENERAL CATCHALL (0x${msgMap["clusterId"]}", 1)
                     break
                 default:
-                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    sendlastCheckinEvent(minimumMinutesToRepeat=25)
+                    logging("Unhandled Event IGNORE THIS - description:${description} | msgMap:${msgMap}", 100)
+                    break
             }
             break
     }
-
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=140) == false) {
-        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
-    }
-    sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
@@ -298,14 +304,62 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
-void recoveryEventDeviceSpecific() {
-    logging("recoveryEventDeviceSpecific() T&H", 1)
-    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+void sendOnOffEvent(Integer endpoint, boolean state) {
+    logging("sendOnOffEvent(endpoint=$endpoint, state=$state)", 1)
+    
+    if(state == false) {
+        sendEvent(name:"switch", value: "off", isStateChange: false, descriptionText: "Switch was turned off")
+    } else {
+        sendEvent(name:"switch", value: "on", isStateChange: false, descriptionText: "Switch was turned on")
+    }
 }
+
+Integer deviceMinLevel() {
+    Integer cLevel = minLevel == null ? 2 : minLevel.intValue()
+    return cLevel
+}
+
+Integer deviceMaxLevel() {
+    Integer cLevel = maxLevel == null ? 97 : maxLevel.intValue()
+    return cLevel
+}
+
+/**
+ *  --------- COMPONENT METHODS ---------
+ */
 
 /**
  *  --------- WRITE ATTRIBUTE METHODS ---------
  */
+void onOffCommand(Integer command) {
+    logging("onOffCommand(command=$command)", 1)
+    List<String> cmd = []
+    cmd += zigbeeCommand(0x0006, command)
+	sendZigbeeCommands(cmd)
+}
+
+void on() {
+    logging("on()", 1)
+    onOffCommand(0x01)
+}
+
+void off() {
+    logging("off()", 1)
+	onOffCommand(0x00)
+}
+
+void setLevel(level) {
+    logging("setLevel(level: ${level})", 1)
+    setLevel(level, 0)
+}
+
+void setLevel(level, duration) {
+    logging("setLevel(level: ${level})", 1)
+    if(level == null) {level = 0}
+    if(level < deviceMinLevel()) level = 0
+    if(level >= deviceMaxLevel()) level = deviceMaxLevel()
+    sendZigbeeCommands(zigbee.setLevel(level))
+}
 
 /**
  *   --------- READ ATTRIBUTE METHODS ---------
@@ -321,9 +375,9 @@ void recoveryEventDeviceSpecific() {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with model SNZB-02."
+    comment = "Works with Generic Dimmers (only tested with the Nue Dimmer, might need changes for other devices. Please report your fingerprints and progress.)"
     if(comment != "") state.comment = comment
-    String version = "v0.5.0.0718b"
+    String version = "v0.7.1.0718b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1217,106 +1271,6 @@ void getInfo(boolean ignoreMissing=false) {
 }
 // END:  getHelperFunctions('zigbee-generic')
 
-// BEGIN:getHelperFunctions('zigbee-sonoff')
-void zigbee_sonoff_parseBatteryData(Map msgMap) {
-    BigDecimal bat = null
-    if(msgMap["attrId"] == "0021") {
-        bat = msgMap['valueParsed'] / 2.0
-    } else if(msgMap.containsKey("additionalAttrs") == true) {
-        msgMap["additionalAttrs"].each() {
-            if(it.containsKey("attrId") == true && it['attrId'] == "0021") {
-                bat = Integer.parseInt(it['value'], 16) / 2.0
-            }
-        }
-    }
-    if(bat != null) {
-        bat = bat.setScale(1, BigDecimal.ROUND_HALF_UP)
-        sendEvent(name:"battery", value: bat , unit: "%", isStateChange: false)
-    }
-}
-// END:  getHelperFunctions('zigbee-sonoff')
-
-// BEGIN:getHelperFunctions('zigbee-sensor')
-void zigbee_sensor_parseSendTemperatureEvent(Integer rawValue, BigDecimal variance = 0.2, Integer minAllowed=-50, Integer maxAllowed=100) {
-    
-    List adjustedTemp = sensor_data_getAdjustedTempAlternative(rawValue / 100.0 )
-    String tempUnit = adjustedTemp[0]
-    BigDecimal t = adjustedTemp[1]
-    BigDecimal tRaw = adjustedTemp[2]
-    
-    if(tRaw >= -50 && tRaw < 100) {
-        BigDecimal oldT = device.currentValue('temperature') == null ? null : device.currentValue('temperature')
-        if(oldT != null) oldT = oldT.setScale(1, BigDecimal.ROUND_HALF_UP)
-        BigDecimal tChange = null
-        if(oldT == null) {
-            logging("Temperature: $t $tempUnit", 1)
-        } else {
-            tChange = Math.abs(t - oldT)
-            tChange = tChange.setScale(1, BigDecimal.ROUND_HALF_UP)
-            logging("Temperature: $t $tempUnit (old temp: $oldT, change: $tChange)", 1)
-        }
-        
-        if(oldT == null || tChange > variance) {
-            logging("Sending temperature event (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 100)
-            sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
-        } else {
-            logging("SKIPPING temperature event since the change wasn't large enough (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 1)
-        }
-    } else {
-        log.warn "Incorrect temperature received from the sensor ($tRaw), it is probably time to change batteries!"
-    }
-}
-
-void zigbee_sensor_parseSendPressureEvent(Map msgMap) {
-    Integer rawValue = msgMap['valueParsed']
-    BigDecimal variance = 0.0
-    if(msgMap["attrId"] == "0020") {
-        rawValue = rawValue / 1000.0
-    }
-    BigDecimal p = sensor_data_convertPressure(rawValue)
-    BigDecimal oldP = device.currentValue('pressure') == null ? null : device.currentValue('pressure')
-    if(oldP != null) oldP = oldP.setScale(2, BigDecimal.ROUND_HALF_UP)
-    BigDecimal pChange = null
-    if(oldP == null) {
-        logging("Pressure: $p", 1)
-    } else {
-        pChange = Math.abs(p - oldP)
-        pChange = pChange.setScale(2, BigDecimal.ROUND_HALF_UP)
-        logging("Pressure: $p (old pressure: $oldP, change: $pChange)", 1)
-    }
-    String pUnit = pressureUnitConversion == null ? "kPa" : pressureUnitConversion
-    if(oldP == null || pChange > variance) {
-        logging("Sending pressure event (Pressure: $p, old pressure: $oldP, change: $pChange)", 100)
-        sendEvent(name:"pressure", value: p, unit: "$pUnit", isStateChange: true)
-    } else {
-        logging("SKIPPING pressure event since the change wasn't large enough (Pressure: $p, old pressure: $oldP, change: $pChange)", 1)
-    }
-}
-
-void zigbee_sensor_parseSendHumidityEvent(Integer rawValue, BigDecimal variance = 0.02) {
-    BigDecimal h = sensor_data_getAdjustedHumidity(rawValue / 100.0)
-    BigDecimal oldH = device.currentValue('humidity') == null ? null : device.currentValue('humidity')
-    if(oldH != null) oldH = oldH.setScale(2, BigDecimal.ROUND_HALF_UP)
-    BigDecimal hChange = null
-    if(h <= 100) {
-        if(oldH == null) {
-            logging("Humidity: $h %", 1)
-        } else {
-            hChange = Math.abs(h - oldH)
-            hChange = hChange.setScale(2, BigDecimal.ROUND_HALF_UP)
-            logging("Humidity: $h% (old humidity: $oldH%, change: $hChange%)", 1)
-        }
-        
-        if(oldH == null || hChange > variance) {
-            logging("Sending humidity event (Humidity: $h%, old humidity: $oldH%, change: $hChange%)", 100)
-            sendEvent(name:"humidity", value: h, unit: "%", isStateChange: true)
-        } else {
-            logging("SKIPPING humidity event since the change wasn't large enough (Humidity: $h%, old humidity: $oldH%, change: $hChange%)", 1)
-        }
-    }
-}
-// END:  getHelperFunctions('zigbee-sensor')
-
 // BEGIN:getHelperFunctions('styling')
 String styling_addTitleDiv(title) {
     return '<div class="preference-title">' + title + '</div>'
@@ -1553,100 +1507,3 @@ void resetRestoredCounter() {
     sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')
-
-// BEGIN:getHelperFunctions('sensor-data')
-private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
-    Integer res = 1
-    if(tempRes != null && tempRes != '') {
-        res = Integer.parseInt(tempRes)
-    }
-    if (tempUnitConversion == "2") {
-        value = celsiusToFahrenheit(value)
-    } else if (tempUnitConversion == "3") {
-        value = fahrenheitToCelsius(value)
-    }
-	if (tempOffset != null) {
-	   return (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
-	} else {
-       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
-    }
-}
-
-private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
-    Integer res = 1
-    BigDecimal rawValue = value
-    if(tempRes != null && tempRes != '') {
-        res = Integer.parseInt(tempRes)
-    }
-    String degree = String.valueOf((char)(176))
-    String tempUnit = "${degree}C"
-    String currentTempUnitDisplayed = tempUnitDisplayed
-    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
-        if(location.temperatureScale == "C") {
-            currentTempUnitDisplayed = "1"
-        } else {
-            currentTempUnitDisplayed = "2"
-        }
-    }
-
-    if (currentTempUnitDisplayed == "2") {
-        value = celsiusToFahrenheit(value)
-        tempUnit = "${degree}F"
-    } else if (currentTempUnitDisplayed == "3") {
-        value = value + 273.15
-        tempUnit = "${degree}K"
-    }
-	if (tempOffset != null) {
-	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
-	} else {
-       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
-    }
-}
-
-private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
-    Integer res = 1
-    if(humidityRes != null && humidityRes != '') {
-        res = Integer.parseInt(humidityRes)
-    }
-    if (humidityOffset) {
-	   return (value + new BigDecimal(humidityOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
-	} else {
-       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
-    }
-}
-
-private BigDecimal sensor_data_getAdjustedPressure(BigDecimal value, Integer decimals=2) {
-    Integer res = decimals
-    if(pressureRes != null && pressureRes != '' && pressureRes != 'default') {
-        res = Integer.parseInt(pressureRes)
-    }
-    if (pressureOffset) {
-	   return (value + new BigDecimal(pressureOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
-	} else {
-       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
-    }
-}
-
-private BigDecimal sensor_data_convertPressure(BigDecimal pressureInkPa) {
-    BigDecimal pressure = pressureInkPa
-    switch(pressureUnitConversion) {
-        case null:
-        case "kPa":
-			pressure = sensor_data_getAdjustedPressure(pressure / 10)
-			break
-		case "inHg":
-			pressure = sensor_data_getAdjustedPressure(pressure * 0.0295299)
-			break
-		case "mmHg":
-            pressure = sensor_data_getAdjustedPressure(pressure * 0.75006157)
-			break
-        case "atm":
-			pressure = sensor_data_getAdjustedPressure(pressure / 1013.25, 5)
-			break
-        default:
-            pressure = sensor_data_getAdjustedPressure(pressure, 1)
-            break
-    }
-    return pressure
-}
-// END:  getHelperFunctions('sensor-data')

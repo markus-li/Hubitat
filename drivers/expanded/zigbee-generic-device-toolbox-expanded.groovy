@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.7.1.0717b
+ *  Version: v0.7.1.0718b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Zigbee - Generic Repair", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-repair-expanded.groovy") {
+	definition (name: "Zigbee - Generic Device Toolbox", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-device-toolbox-expanded.groovy") {
         
         capability "Refresh"
         // BEGIN:getDefaultMetadataAttributes()
@@ -68,7 +68,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Generic Repair', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-repair-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - Generic Device Toolbox', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-device-toolbox-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -318,7 +318,7 @@ void getRouteTable() {
 private String getDriverVersion() {
     comment = "Used to clean device data and get Zigbee device fingerprints"
     if(comment != "") state.comment = comment
-    String version = "v0.7.1.0717b"
+    String version = "v0.7.1.0718b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

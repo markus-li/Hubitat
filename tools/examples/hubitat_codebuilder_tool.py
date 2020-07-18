@@ -407,6 +407,8 @@ def main():
          'comment': 'Works with model DJT11LM.', 'publish': False },
         {'id': 1667, 'id_2': 493, 'id_3': 0, 'file': 'zigbee-aqara-cube.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model MFKZQ01LM.', 'publish': False },
+        {'id': 1731, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-xiaomi-smoke-detector.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with model JTYJ-GD01LM/BW.', 'publish': False },
         
         # Zigbee - Not ready for release
         {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
@@ -424,17 +426,19 @@ def main():
 
         # Zigbee - Tuya
         {'id': 1633, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-tuya-valve.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with Tuya Valves.', 'publish': False },
+         'comment': 'Works with Tuya Valves.', 'publish': True },
 
         # Zigbee - Generic
         {'id': 1634, 'id_2': 428, 'file': 'zigbee-generic-repeater.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with most repeater-only devices (Xbee with Send Type set to Bind)', 'publish': False },
+         'comment': 'Works with most repeater-only devices (Xbee with Send Type set to Bind)', 'publish': True },
         {'id': 1635, 'id_2': 460, 'file': 'zigbee-generic-outlet.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with Generic Outlets (please report your fingerprints)', 'publish': False },
+         'comment': 'Works with Generic Outlets (please report your fingerprints)', 'publish': True },
         {'id': 1666, 'id_2': 492, 'file': 'zigbee-generic-switch.groovy', 'version': default_zigbee_version,
-         'comment': 'Works with Generic Switches (this includes many multi-relay ones, like Nue. Please report your fingerprints)', 'publish': False },
-        {'id': 1698, 'id_2': 494, 'file': 'zigbee-generic-repair.groovy', 'version': default_zigbee_version,
-         'comment': 'Used to clean device data and get Zigbee device fingerprints', 'publish': False },
+         'comment': 'Works with Generic Switches (this includes many multi-relay ones, like Nue. Please report your fingerprints)', 'publish': True },
+        {'id': 1698, 'id_2': 494, 'file': 'zigbee-generic-device-toolbox.groovy', 'version': default_zigbee_version,
+         'comment': 'Used to clean device data and get Zigbee device fingerprints', 'publish': True },
+        {'id': 1730, 'id_2': 0, 'file': 'zigbee-generic-dimmer.groovy', 'version': default_zigbee_version,
+         'comment': 'Works with Generic Dimmers (only tested with the Nue Dimmer, might need changes for other devices. Please report your fingerprints and progress.)', 'publish': True },
         
         # Virtual
         {'id': 962, 'file': 'javascript-injection-driver.groovy', 'version': 'v0.1.0.MMDDb' },
@@ -501,6 +505,11 @@ def main():
     # As long as we have an id, we can just supply that here instead of the whole config...
     # 651 left over from RF Link Child
     driver_files_active = [
+        
+        # Currently working on:
+        {'id': 1731}, # Xiaomi Smoke Detector
+        
+
         {'id': 865}, {'id': 866}, # Universal Drivers RELEASE
         #{'id': 866},
         {'id': 359}, # Switch as Contact Sensor Child
@@ -541,6 +550,7 @@ def main():
         {'id': 1635}, # Zigbee Outlet
         {'id': 1666}, # Zigbee Switch
         {'id': 1698}, # Zigbee Repair
+        {'id': 1730}, # Zigbee Dimmer
         
         # Zigbee - Sonoff
         {'id': 1601}, # Sonoff Button

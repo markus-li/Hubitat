@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.5.0.0717b
+ *  Version: v0.5.0.0718b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ metadata {
         // BEGIN:getCommandsForZigbeePresence()
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
-
-        command "parse", [[name:"Description*", type: "STRING", description: "description"]]
 
         fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0001", outClusters:"0006,0003", model:"WB01", manufacturer:"eWeLink", application:"04"
 	}
@@ -468,7 +466,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with model SNZB-01."
     if(comment != "") state.comment = comment
-    String version = "v0.5.0.0717b"
+    String version = "v0.5.0.0718b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

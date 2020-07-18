@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.5.0.0717b
+ *  Version: v0.5.0.0718b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,8 +63,6 @@ metadata {
         // END:  getCommandsForZigbeePresence()
         command "resetToActive"
         command "resetToInactive"
-
-        command "parse", [[name:"Description*", type: "STRING", description: "description"]]
 
         fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0500,0001", outClusters:"0003", model:"MS01", manufacturer:"eWeLink", application:"03"
     }
@@ -232,9 +230,6 @@ ArrayList<String> parse(String description) {
                 zigbee_sonoff_parseBatteryData(msgMap)
                 
                 break
-            case "0000_0004":
-                logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
-                break
             case "0500_0001":
                 logging("Cluster 0500 attribute 0001 - description:${description} | parseMap:${msgMap}", 100)
                 break
@@ -260,7 +255,7 @@ ArrayList<String> parse(String description) {
                         break
                     default:
                         if(description.startsWith("enroll request") == true) {
-
+                            sendZigbeeCommands(zigbee.enrollResponse())
                         } else {
                             log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
                         }
@@ -326,7 +321,7 @@ void resetToInactive() {
 private String getDriverVersion() {
     comment = "Works with model SNZB-03."
     if(comment != "") state.comment = comment
-    String version = "v0.5.0.0717b"
+    String version = "v0.5.0.0718b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
