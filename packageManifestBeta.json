@@ -2,7 +2,7 @@
   "packageName": "Tasmota for Hubitat Elevation",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-18",
+  "dateReleased": "2020-07-19",
   "documentationLink": "https://github.com/markus-li/Hubitat/wiki",
   "communityLink": "https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322?u=markus",
   "apps": [
@@ -22,7 +22,7 @@
       "id": "daf8333a-3b78-5ad0-af46-188e1cdd32ba",
       "internalId": 865,
       "name": "Tasmota - Universal Parent",
-      "betaVersion": "v1.0.4.0718Tb",
+      "betaVersion": "v1.0.4.0719Tb",
       "namespace": "tasmota",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-parent-expanded.groovy",
       "required": true
@@ -103,7 +103,7 @@
       "id": "51d9ab13-0d73-59b8-a7e8-8859a093539d",
       "internalId": 866,
       "name": "Tasmota - Universal Multi Sensor (Child)",
-      "betaVersion": "v1.0.4.0718Tb",
+      "betaVersion": "v1.0.4.0719Tb",
       "namespace": "tasmota",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-multi-sensor-child-expanded.groovy",
       "required": true

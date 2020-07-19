@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.2.0718b
+ *  Version: v0.6.2.0719b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -323,7 +323,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with model SNZB-02."
     if(comment != "") state.comment = comment
-    String version = "v0.6.2.0718b"
+    String version = "v0.6.2.0719b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1555,20 +1555,29 @@ void resetRestoredCounter() {
 // END:  getHelperFunctions('driver-default')
 
 // BEGIN:getHelperFunctions('sensor-data')
-private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
+private sensor_data_getAdjustedTemp(BigDecimal value, boolean returnUnit=false) {
     Integer res = 1
+    String degree = String.valueOf((char)(176))
+    String tempUnit = "${degree}C"
     if(tempRes != null && tempRes != '') {
         res = Integer.parseInt(tempRes)
     }
     if (tempUnitConversion == "2") {
         value = celsiusToFahrenheit(value)
+        tempUnit = "${degree}F"
     } else if (tempUnitConversion == "3") {
         value = fahrenheitToCelsius(value)
     }
+    BigDecimal r = null
 	if (tempOffset != null) {
-	   return (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
+	   r = (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
+       r = value.setScale(res, BigDecimal.ROUND_HALF_UP)
+    }
+    if(returnUnit == false) {
+        return r
+    } else {
+        return [tempUnit, r]
     }
 }
 

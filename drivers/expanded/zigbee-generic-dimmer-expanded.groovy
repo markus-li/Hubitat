@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0718b
+ *  Version: v0.8.2.0719b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,8 +61,10 @@ metadata {
         command "stopSchedules"
         command "getInfo"
         // END:  getZigbeeGenericDeviceCommands()
-        command "deviceMaxLevel"
-        command "deviceMinLevel"
+
+        fingerprint deviceJoinName:"Aurora Dimmer", model:"WallDimmerMaster", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008", outClusters:"0019", manufacturer:"Aurora"
+
+        fingerprint model:"LXN56-DS27LX1.1", manufacturer:"3A Smart Home DE", profileId:"C05E", endpointId:"01", inClusters:"0000,0004,0003,0006,0008,0005,1000", outClusters:"0019", application:"01"
     }
 
     preferences {
@@ -316,11 +318,13 @@ void sendOnOffEvent(Integer endpoint, boolean state) {
 
 Integer deviceMinLevel() {
     Integer cLevel = minLevel == null ? 2 : minLevel.intValue()
+    logging("deviceMinLevel() = $cLevel", 1)
     return cLevel
 }
 
 Integer deviceMaxLevel() {
     Integer cLevel = maxLevel == null ? 97 : maxLevel.intValue()
+    logging("deviceMaxLevel() = $cLevel", 1)
     return cLevel
 }
 
@@ -354,10 +358,11 @@ void setLevel(level) {
 }
 
 void setLevel(level, duration) {
-    logging("setLevel(level: ${level})", 1)
+    
     if(level == null) {level = 0}
     if(level < deviceMinLevel()) level = 0
     if(level >= deviceMaxLevel()) level = deviceMaxLevel()
+    logging("setLevel(level: ${level}, adjusted level: $level)", 1)
     sendZigbeeCommands(zigbee.setLevel(level))
 }
 
@@ -377,7 +382,7 @@ void setLevel(level, duration) {
 private String getDriverVersion() {
     comment = "Works with Generic Dimmers (only tested with the Nue Dimmer, might need changes for other devices. Please report your fingerprints and progress.)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0718b"
+    String version = "v0.8.2.0719b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

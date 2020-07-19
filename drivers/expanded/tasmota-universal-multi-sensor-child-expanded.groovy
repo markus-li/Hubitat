@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0718Tb
+ *  Version: v1.0.4.0719Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ metadata {
         attribute   "driver", "string"
         // END:  getMinimumChildAttributes()
 
+        attribute  "dewPoint", "number"
+        attribute  "gas", "number"
         attribute  "distance", "string"
         attribute  "pressureWithUnit", "string"
 
@@ -87,35 +89,41 @@ String getDeviceInfoByName(infoName) {
 /* These functions are unique to each driver */
 void parse(List<Map> description) {
     description.each {
-        if(it.name in ["illuminance", "motion", "water", "distance"]) {
-            logging(it.descriptionText, 100)
-            sendEvent(it)
-        } else if(it.name == "temperature") {
-            String c = String.valueOf((char)(Integer.parseInt("00B0", 16)))
-            if (tempUnitConversion == "2") {
-                it.unit = "${c}F"
-            } else if (tempUnitConversion == "3") {
-                it.unit  = "${c}C"
-            }
-            it.value =  sensor_data_getAdjustedTemp(new BigDecimal(it.value))
-            logging(it.descriptionText, 100)
-            sendEvent(it)
-        } else if(it.name == "humidity") {
-            it.value = sensor_data_getAdjustedHumidity(new BigDecimal(it.value))
-            logging(it.descriptionText, 100)
-            sendEvent(it)
-        } else if(it.name == "pressure") {
-            it.value = sensor_data_convertPressure(new BigDecimal(it.value))
-            if(pressureUnitConversion != null) {
-                it.unit = pressureUnitConversion
-            } else {
-                it.unit = "kPa"
-            }
-            logging(it.descriptionText, 100)
-            sendEvent(it)
-            sendEvent(name: "pressureWithUnit", value: "$it.value $it.unit", isStateChange: false)
-        } else {
-            log.warn "Got '$it.name' attribute data, but doesn't know what to do with it! Did you choose the right device type?"
+        switch(it.name) {
+            case "illuminance":
+            case "motion":
+            case "water": 
+            case "distance":
+            case "gas":
+                logging(it.descriptionText, 100)
+                sendEvent(it)
+                break
+            case "temperature": 
+            case "dewPoint": 
+                List res =  sensor_data_getAdjustedTemp(new BigDecimal(it.value), true)
+                it.unit = res[0]
+                it.value = res[1]
+                logging(it.descriptionText, 100)
+                sendEvent(it)
+                break
+            case "humidity":
+                it.value = sensor_data_getAdjustedHumidity(new BigDecimal(it.value))
+                logging(it.descriptionText, 100)
+                sendEvent(it)
+                break
+            case "pressure":
+                it.value = sensor_data_convertPressure(new BigDecimal(it.value))
+                if(pressureUnitConversion != null) {
+                    it.unit = pressureUnitConversion
+                } else {
+                    it.unit = "kPa"
+                }
+                logging(it.descriptionText, 100)
+                sendEvent(it)
+                sendEvent(name: "pressureWithUnit", value: "$it.value $it.unit", isStateChange: false)
+                break
+            default:
+                log.warn "Got '$it.name' attribute data, but doesn't know what to do with it! Did you choose the right device type?"
         }
     }
 }
@@ -159,7 +167,7 @@ void refresh() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.4.0718Tb"
+    String version = "v1.0.4.0719Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -687,20 +695,29 @@ String styling_getDefaultCSS(boolean includeTags=true) {
 // END:  getHelperFunctions('styling')
 
 // BEGIN:getHelperFunctions('sensor-data')
-private BigDecimal sensor_data_getAdjustedTemp(BigDecimal value) {
+private sensor_data_getAdjustedTemp(BigDecimal value, boolean returnUnit=false) {
     Integer res = 1
+    String degree = String.valueOf((char)(176))
+    String tempUnit = "${degree}C"
     if(tempRes != null && tempRes != '') {
         res = Integer.parseInt(tempRes)
     }
     if (tempUnitConversion == "2") {
         value = celsiusToFahrenheit(value)
+        tempUnit = "${degree}F"
     } else if (tempUnitConversion == "3") {
         value = fahrenheitToCelsius(value)
     }
+    BigDecimal r = null
 	if (tempOffset != null) {
-	   return (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
+	   r = (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
 	} else {
-       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
+       r = value.setScale(res, BigDecimal.ROUND_HALF_UP)
+    }
+    if(returnUnit == false) {
+        return r
+    } else {
+        return [tempUnit, r]
     }
 }
 

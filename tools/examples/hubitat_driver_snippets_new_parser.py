@@ -339,7 +339,7 @@ for ( r in result ) {
 for ( r in result ) {
     if(r.value instanceof Map && (r.value.containsKey("Temperature") || 
         r.value.containsKey("Humidity") || r.value.containsKey("Pressure") ||
-        r.value.containsKey("Distance"))) {
+        r.value.containsKey("Distance") || r.value.containsKey("Illuminance"))) {
         if (r.value.containsKey("Humidity")) {
             logging("Humidity: RH $r.value.Humidity%", 99)
             missingChild = callChildParseByTypeId(r.key, [[name: "humidity", value: r.value.Humidity, unit: "%"]], missingChild)
@@ -350,6 +350,12 @@ for ( r in result ) {
             String c = String.valueOf((char)(Integer.parseInt("00B0", 16)));
             missingChild = callChildParseByTypeId(r.key, [[name: "temperature", value: r.value.Temperature, unit: "$c${location.temperatureScale}"]], missingChild)
         }
+        if (r.value.containsKey("DewPoint")) {
+            //Probably need this line below
+            logging("DewPoint: $r.value.DewPoint", 99)
+            String c = String.valueOf((char)(Integer.parseInt("00B0", 16)));
+            missingChild = callChildParseByTypeId(r.key, [[name: "dewPoint", value: r.value.DewPoint, unit: "$c${location.temperatureScale}"]], missingChild)
+        }
         if (r.value.containsKey("Pressure")) {
             logging("Pressure: $r.value.Pressure", 99)
             String pressureUnit = "mbar"
@@ -357,11 +363,22 @@ for ( r in result ) {
             // Since there is no Pressure tile yet, we need an attribute with the unit as well... But that is NOT the responsibility of the Parent
             //missingChild = callChildParseByTypeId(r.key, [[name: "pressureWithUnit", value: "$r.value.Pressure $pressureUnit"]], missingChild)
         }
+        if (r.value.containsKey("Gas")) {
+            logging("Pressure: $r.value.Gas", 99)
+            String gasUnit = "ohm"
+            missingChild = callChildParseByTypeId(r.key, [[name: "gas", value: r.value.Gas, unit: gasUnit]], missingChild)
+        }
         if (r.value.containsKey("Distance")) {
             logging("Distance: $r.value.Distance cm", 99)
             def realDistance = Math.round((r.value.Distance as Double) * 100) / 100
             //sendEvent(name: "distance", value: "${realDistance}", unit: "cm")
             missingChild = callChildParseByTypeId(r.key, [[name: "distance", value: String.format("%.2f cm", realDistance), unit: "cm"]], missingChild)
+        }
+        if (r.value.containsKey("Illuminance")) {
+            logging("Illuminance: $r.value.Illuminance cm", 99)
+            def realIlluminance = Math.round((r.value.Distance as Double) * 100) / 100
+            //sendEvent(name: "illuminance", value: "${realIlluminance}", unit: "lux")
+            missingChild = callChildParseByTypeId(r.key, [[name: "illuminance", value: realIlluminance, unit: "lux"]], missingChild)
         }
     }
 }
