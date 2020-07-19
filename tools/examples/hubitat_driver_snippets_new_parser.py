@@ -376,8 +376,8 @@ for ( r in result ) {
             missingChild = callChildParseByTypeId(r.key, [[name: "distance", value: String.format("%.2f cm", realDistance), unit: "cm"]], missingChild)
         }
         if (r.value.containsKey("Illuminance")) {
-            logging("Illuminance: $r.value.Illuminance cm", 99)
-            def realIlluminance = Math.round((r.value.Distance as Double) * 100) / 100
+            logging("Illuminance: $r.value.Illuminance lux", 99)
+            def realIlluminance = Math.round((r.value.Illuminance as Double) * 100) / 100
             //sendEvent(name: "illuminance", value: "${realIlluminance}", unit: "lux")
             missingChild = callChildParseByTypeId(r.key, [[name: "illuminance", value: realIlluminance, unit: "lux"]], missingChild)
         }
