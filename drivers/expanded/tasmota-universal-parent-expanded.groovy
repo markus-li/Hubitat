@@ -1145,7 +1145,8 @@ boolean parseResult(Map result, boolean missingChild) {
     for ( r in result ) {
         if(r.value instanceof Map && (r.value.containsKey("Temperature") ||
             r.value.containsKey("Humidity") || r.value.containsKey("Pressure") ||
-            r.value.containsKey("Distance") || r.value.containsKey("Illuminance"))) {
+            r.value.containsKey("Distance") || r.value.containsKey("Illuminance") ||
+            r.value.containsKey("Gas") || r.value.containsKey("DewPoint"))) {
             if (r.value.containsKey("Humidity")) {
                 logging("Humidity: RH $r.value.Humidity%", 99)
                 missingChild = callChildParseByTypeId(r.key, [[name: "humidity", value: r.value.Humidity, unit: "%"]], missingChild)
