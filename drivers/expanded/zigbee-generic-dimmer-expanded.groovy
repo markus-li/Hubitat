@@ -63,6 +63,7 @@ metadata {
         // END:  getZigbeeGenericDeviceCommands()
 
         fingerprint deviceJoinName:"Aurora Dimmer", model:"WallDimmerMaster", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008", outClusters:"0019", manufacturer:"Aurora"
+        fingerprint deviceJoinName:"Aurora Dimmer", model:"Wall Dimmer Master", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008", outClusters:"0019", manufacturer:"Aurora"
 
         fingerprint model:"LXN56-DS27LX1.1", manufacturer:"3A Smart Home DE", profileId:"C05E", endpointId:"01", inClusters:"0000,0004,0003,0006,0008,0005,1000", outClusters:"0019", application:"01"
     }
@@ -1382,7 +1383,9 @@ void configurePresence() {
     if(presenceEnable == null || presenceEnable == true) {
         Random rnd = new Random()
         schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
+        checkPresence(false)
     } else {
+        sendEvent(name: "presence", value: "not present", descriptionText: "Presence Checking Disabled" )
         unschedule('checkPresence')
     }
 }

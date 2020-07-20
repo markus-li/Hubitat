@@ -77,7 +77,7 @@ metadata {
         // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Slow")
         input(name: "pingType", type: "enum", title: styling_addTitleDiv("Ping Type"), 
             description: styling_addDescriptionDiv("Try the other types if the default doesn't generate events in the log. For Xbee use Bind. (default = Read Attribute)"),
-            options: ["Read Attribute", "Bind"], defaultValue: "Read Attribute")
+            options: ["Disabled", "Read Attribute", "Bind"], defaultValue: "Read Attribute")
 	}
 }
 
@@ -102,9 +102,11 @@ ArrayList<String> refresh() {
     
     setCleanModelName(newModelToSet=null, acceptedModels=null)
 
-    Random rnd = new Random()
-    schedule("${rnd.nextInt(59)} ${rnd.nextInt(29)}/29 * * * ? *", 'ping')
-    ping()
+    if(pingType != "Disabled") {
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(59)} ${rnd.nextInt(29)}/29 * * * ? *", 'ping')
+        ping()
+    }
 
     ArrayList<String> cmd = []
     cmd += zigbee.readAttribute(0x000, 0x0005)
@@ -117,6 +119,9 @@ void ping() {
     /* If additional Ping types are needed, please contact the Developer */
     List<String> cmd = []
     switch(pingType) {
+        case "Disabled":
+            unschedule("ping")
+            break
         case "Bind":
             cmd += ["zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0000 {${device.zigbeeId}} {}", "delay 200",]
             cmd += ["zdo send ${device.deviceNetworkId} 0x01 0x01", "delay 200"]
@@ -1292,7 +1297,9 @@ void configurePresence() {
     if(presenceEnable == null || presenceEnable == true) {
         Random rnd = new Random()
         schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
+        checkPresence(false)
     } else {
+        sendEvent(name: "presence", value: "not present", descriptionText: "Presence Checking Disabled" )
         unschedule('checkPresence')
     }
 }
