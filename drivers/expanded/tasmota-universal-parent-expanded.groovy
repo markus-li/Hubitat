@@ -1182,7 +1182,7 @@ boolean parseResult(Map result, boolean missingChild) {
             }
             if (r.value.containsKey("Illuminance")) {
                 logging("Illuminance: $r.value.Illuminance lux", 99)
-                def realIlluminance = Math.round((r.value.Illuminance as Double) * 100) / 100
+                def realIlluminance = Math.round((r.value.Illuminance as Double) * 10) / 10
     
                 missingChild = callChildParseByTypeId(r.key, [[name: "illuminance", value: realIlluminance, unit: "lux"]], missingChild)
             }
