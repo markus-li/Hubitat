@@ -225,8 +225,6 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
-    sendlastCheckinEvent(minimumMinutesToRepeat=55)
-
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_FF01":
         case "0000_FF02":
@@ -277,6 +275,11 @@ ArrayList<String> parse(String description) {
             }
             break
     }
+
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
+    sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
