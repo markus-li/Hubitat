@@ -131,6 +131,7 @@ ArrayList<String> refresh() {
     
     getDriverVersion()
     configurePresence()
+    startCheckEventInterval()
     resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
     
@@ -225,8 +226,6 @@ ArrayList<String> parse(String description) {
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
 
-    sendlastCheckinEvent(minimumMinutesToRepeat=55)
-
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_FF01":
         case "0000_FF02":
@@ -277,6 +276,11 @@ ArrayList<String> parse(String description) {
             }
             break
     }
+
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
+    }
+    sendlastCheckinEvent(minimumMinutesToRepeat=30)
     
     // BEGIN:getGenericZigbeeParseFooter(loglevel=0)
     //logging("PARSE END-----------------------", 0)
@@ -1559,7 +1563,9 @@ void configurePresence() {
     if(presenceEnable == null || presenceEnable == true) {
         Random rnd = new Random()
         schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
+        checkPresence(false)
     } else {
+        sendEvent(name: "presence", value: "not present", descriptionText: "Presence Checking Disabled" )
         unschedule('checkPresence')
     }
 }

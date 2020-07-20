@@ -1340,7 +1340,9 @@ void configurePresence() {
     if(presenceEnable == null || presenceEnable == true) {
         Random rnd = new Random()
         schedule("${rnd.nextInt(59)} ${rnd.nextInt(59)} 1/3 * * ? *", 'checkPresence')
+        checkPresence(false)
     } else {
+        sendEvent(name: "presence", value: "not present", descriptionText: "Presence Checking Disabled" )
         unschedule('checkPresence')
     }
 }
