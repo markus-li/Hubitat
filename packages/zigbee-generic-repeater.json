@@ -2,7 +2,7 @@
   "packageName": "Generic Repeater (with Presence)",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-18",
+  "dateReleased": "2020-07-20",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-repeater-beta.json",
   "apps": [],
   "drivers": [
@@ -10,7 +10,7 @@
       "id": "2e28d401-0875-549c-81a2-67967e2caf15",
       "internalId": 1634,
       "name": "Zigbee - Generic Repeater (with Presence)",
-      "version": "v0.8.1.0718",
+      "version": "v0.8.1.0720",
       "namespace": "markusl",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-generic-repeater-expanded.groovy",
       "required": true

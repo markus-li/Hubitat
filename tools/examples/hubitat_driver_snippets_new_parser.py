@@ -377,7 +377,7 @@ for ( r in result ) {
         }
         if (r.value.containsKey("Illuminance")) {
             logging("Illuminance: $r.value.Illuminance lux", 99)
-            def realIlluminance = Math.round((r.value.Illuminance as Double) * 10) / 10
+            def realIlluminance = Math.round(r.value.Illuminance as Double)
             //sendEvent(name: "illuminance", value: "${realIlluminance}", unit: "lux")
             missingChild = callChildParseByTypeId(r.key, [[name: "illuminance", value: realIlluminance, unit: "lux"]], missingChild)
         }

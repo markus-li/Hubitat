@@ -58,6 +58,7 @@ metadata {
         command "getInfo"
         // END:  getZigbeeGenericDeviceCommands()
         
+        fingerprint model:"TRADFRI Signal Repeater", manufacturer:"IKEA of Sweden", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0009,0B05,1000", outClusters:"0019,0020,1000", application:"21"
     }
 
     preferences {
@@ -348,9 +349,9 @@ boolean isDriver() {
 
 void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
-    cmd = jsonSlurper.parseText(cmd)
+    def cmds = jsonSlurper.parseText(cmd)
      
-    r = this."${cmd['cmd']}"(*cmd['args'])
+    r = this."${cmds['cmd']}"(*cmds['args'])
      
     updateDataValue('appReturn', JsonOutput.toJson(r))
 }
