@@ -131,6 +131,7 @@ ArrayList<String> refresh() {
     
     getDriverVersion()
     configurePresence()
+    startCheckEventInterval()
     resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
     
