@@ -2,14 +2,14 @@
   "packageName": "Generic Switch (with Presence)",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-18",
+  "dateReleased": "2020-07-20",
   "apps": [],
   "drivers": [
     {
       "id": "1a35514a-3a07-5cc2-a588-7758cd182214",
       "internalId": 1666,
       "name": "Zigbee - Generic Switch (with Presence)",
-      "betaVersion": "v0.8.2.0718b",
+      "betaVersion": "v0.8.2.0720b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-switch-expanded.groovy",
       "required": true

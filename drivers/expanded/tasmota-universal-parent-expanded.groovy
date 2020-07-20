@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0718T
+ *  Version: v1.0.3.0720T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1145,7 +1145,8 @@ boolean parseResult(Map result, boolean missingChild) {
     for ( r in result ) {
         if(r.value instanceof Map && (r.value.containsKey("Temperature") ||
             r.value.containsKey("Humidity") || r.value.containsKey("Pressure") ||
-            r.value.containsKey("Distance"))) {
+            r.value.containsKey("Distance") || r.value.containsKey("Illuminance") ||
+            r.value.containsKey("Gas") || r.value.containsKey("DewPoint"))) {
             if (r.value.containsKey("Humidity")) {
                 logging("Humidity: RH $r.value.Humidity%", 99)
                 missingChild = callChildParseByTypeId(r.key, [[name: "humidity", value: r.value.Humidity, unit: "%"]], missingChild)
@@ -1156,17 +1157,34 @@ boolean parseResult(Map result, boolean missingChild) {
                 String c = String.valueOf((char)(Integer.parseInt("00B0", 16)));
                 missingChild = callChildParseByTypeId(r.key, [[name: "temperature", value: r.value.Temperature, unit: "$c${location.temperatureScale}"]], missingChild)
             }
+            if (r.value.containsKey("DewPoint")) {
+    
+                logging("DewPoint: $r.value.DewPoint", 99)
+                String c = String.valueOf((char)(Integer.parseInt("00B0", 16)));
+                missingChild = callChildParseByTypeId(r.key, [[name: "dewPoint", value: r.value.DewPoint, unit: "$c${location.temperatureScale}"]], missingChild)
+            }
             if (r.value.containsKey("Pressure")) {
                 logging("Pressure: $r.value.Pressure", 99)
                 String pressureUnit = "mbar"
                 missingChild = callChildParseByTypeId(r.key, [[name: "pressure", value: r.value.Pressure, unit: pressureUnit]], missingChild)
     
             }
+            if (r.value.containsKey("Gas")) {
+                logging("Pressure: $r.value.Gas", 99)
+                String gasUnit = "ohm"
+                missingChild = callChildParseByTypeId(r.key, [[name: "gas", value: r.value.Gas, unit: gasUnit]], missingChild)
+            }
             if (r.value.containsKey("Distance")) {
                 logging("Distance: $r.value.Distance cm", 99)
                 def realDistance = Math.round((r.value.Distance as Double) * 100) / 100
     
                 missingChild = callChildParseByTypeId(r.key, [[name: "distance", value: String.format("%.2f cm", realDistance), unit: "cm"]], missingChild)
+            }
+            if (r.value.containsKey("Illuminance")) {
+                logging("Illuminance: $r.value.Illuminance lux", 99)
+                def realIlluminance = Math.round((r.value.Illuminance as Double) * 10) / 10
+    
+                missingChild = callChildParseByTypeId(r.key, [[name: "illuminance", value: realIlluminance, unit: "lux"]], missingChild)
             }
         }
     }
@@ -1556,7 +1574,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.3.0718T"
+    String version = "v1.0.3.0720T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

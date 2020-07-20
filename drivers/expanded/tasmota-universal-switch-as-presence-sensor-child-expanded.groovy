@@ -27,26 +27,14 @@ import java.security.MessageDigest
 // END:  getDefaultImports()
 
 metadata {
-    definition (name: "Tasmota - Universal Multi Sensor (Child)", namespace: "tasmota", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-multi-sensor-child-expanded.groovy") {
+    definition (name: "Tasmota - Universal Switch as Presence Sensor (Child)", namespace: "tasmota", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-switch-as-presence-sensor-child-expanded.groovy") {
         capability "Sensor"
-        capability "TemperatureMeasurement"
-        capability "RelativeHumidityMeasurement"
-        capability "PressureMeasurement"
-        capability "IlluminanceMeasurement"
-        capability "MotionSensor"
-        capability "WaterSensor"
-
+        capability "PresenceSensor"
         capability "Refresh"
 
         // BEGIN:getMinimumChildAttributes()
         attribute   "driver", "string"
         // END:  getMinimumChildAttributes()
-
-        attribute  "dewPoint", "number"
-        attribute  "gas", "number"
-        attribute  "distance", "string"
-        attribute  "pressureWithUnit", "string"
-
     }
 
     preferences {
@@ -54,17 +42,7 @@ metadata {
         input(name: "debugLogging", type: "bool", title: styling_addTitleDiv("Enable debug logging"), description: "" , defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
         input(name: "infoLogging", type: "bool", title: styling_addTitleDiv("Enable info logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
         // END:  getDefaultMetadataPreferences()
-        input(name: "hideMeasurementAdjustments", type: "bool", title: styling_addTitleDiv("Hide Measurement Adjustment Preferences"), description: "", defaultValue: false, displayDuringSetup: false, required: false)
-        // BEGIN:getDefaultMetadataPreferencesForTHMonitor()
-        input(name: "tempOffset", type: "decimal", title: styling_addTitleDiv("Temperature Offset"), description: styling_addDescriptionDiv("Adjust the temperature by this many degrees (in Celcius)."), displayDuringSetup: true, required: false, range: "*..*")
-        input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..3 = maximum number of decimal places, default: 1)<br/>NOTE: If the 3rd decimal is a 0 (eg. 24.720) it will show without the last decimal (eg. 24.72)."), options: ["0", "1", "2", "3"], defaultValue: "1")
-        input(name: "tempUnitConversion", type: "enum", title: styling_addTitleDiv("Temperature Unit Conversion"), description: "", defaultValue: "1", required: true, multiple: false, options:[["1":"none"], ["2":"Celsius to Fahrenheit"], ["3":"Fahrenheit to Celsius"]])
-        input(name: "humidityOffset", type: "decimal", title: styling_addTitleDiv("Humidity Offset"), description: styling_addDescriptionDiv("Adjust the humidity by this many percent."), displayDuringSetup: true, required: false, range: "*..*")
-        input(name: "humidityRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: 1)"), options: ["0", "1"], defaultValue: "1")
-        input(name: "pressureOffset", type: "decimal", title: styling_addTitleDiv("Pressure Offset"), description: styling_addDescriptionDiv("Adjust the pressure value by this much."), displayDuringSetup: true, required: false, range: "*..*")
-        input(name: "pressureRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: default)"), options: ["default", "0", "1", "2"], defaultValue: "default")
-        input(name: "pressureUnitConversion", type: "enum", title: styling_addTitleDiv("Pressure Unit Conversion"), description: styling_addDescriptionDiv("(default: kPa)"), options: ["mbar", "kPa", "inHg", "mmHg", "atm"], defaultValue: "kPa")
-        // END:  getDefaultMetadataPreferencesForTHMonitor()
+
     }
 
     // BEGIN:getMetadataCustomizationMethods()
@@ -80,7 +58,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Tasmota - Universal Multi Sensor (Child)', 'namespace': 'tasmota', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-multi-sensor-child-expanded.groovy']
+    Map deviceInfo = ['name': 'Tasmota - Universal Switch as Presence Sensor (Child)', 'namespace': 'tasmota', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-switch-as-presence-sensor-child-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -89,41 +67,13 @@ String getDeviceInfoByName(infoName) {
 /* These functions are unique to each driver */
 void parse(List<Map> description) {
     description.each {
-        switch(it.name) {
-            case "illuminance":
-            case "motion":
-            case "water": 
-            case "distance":
-            case "gas":
-                logging(it.descriptionText, 100)
-                sendEvent(it)
-                break
-            case "temperature": 
-            case "dewPoint": 
-                List res =  sensor_data_getAdjustedTemp(new BigDecimal(it.value), true)
-                it.unit = res[0]
-                it.value = res[1]
-                logging(it.descriptionText, 100)
-                sendEvent(it)
-                break
-            case "humidity":
-                it.value = sensor_data_getAdjustedHumidity(new BigDecimal(it.value))
-                logging(it.descriptionText, 100)
-                sendEvent(it)
-                break
-            case "pressure":
-                it.value = sensor_data_convertPressure(new BigDecimal(it.value))
-                if(pressureUnitConversion != null) {
-                    it.unit = pressureUnitConversion
-                } else {
-                    it.unit = "kPa"
-                }
-                logging(it.descriptionText, 100)
-                sendEvent(it)
-                sendEvent(name: "pressureWithUnit", value: "$it.value $it.unit", isStateChange: false)
-                break
-            default:
-                log.warn "Got '$it.name' attribute data, but doesn't know what to do with it! Did you choose the right device type?"
+        if (it.name in ["switch"]) {
+            it.name = "presence"
+            it.value = (it.value == "on" ? "present" : "not present")
+            logging(it.descriptionText, 100)
+            sendEvent(it)
+        } else {
+            log.warn "Got '$it.name' attribute data, but doesn't know what to do with it! Did you choose the right device type?"
         }
     }
 }
@@ -149,10 +99,6 @@ void refresh() {
     metaConfig = setDatasToHide(['metaConfig', 'isComponent', 'preferences', 'label', 'name'], metaConfig=metaConfig)
     // END:  getChildComponentMetaConfigCommands()
     parent?.componentRefresh(this.device)
-    if(hideMeasurementAdjustments == true) {
-        metaConfig = setPreferencesToHide(["tempOffset", "tempRes", "tempUnitConversion",
-                                           "humidityOffset", "pressureOffset", "pressureUnitConversion"], metaConfig=metaConfig)
-    }
 }
 
 /**
@@ -693,112 +639,6 @@ String styling_getDefaultCSS(boolean includeTags=true) {
     }
 }
 // END:  getHelperFunctions('styling')
-
-// BEGIN:getHelperFunctions('sensor-data')
-private sensor_data_getAdjustedTemp(BigDecimal value, boolean returnUnit=false) {
-    Integer res = 1
-    String degree = String.valueOf((char)(176))
-    String tempUnit = "${degree}C"
-    if(tempRes != null && tempRes != '') {
-        res = Integer.parseInt(tempRes)
-    }
-    if (tempUnitConversion == "2") {
-        value = celsiusToFahrenheit(value)
-        tempUnit = "${degree}F"
-    } else if (tempUnitConversion == "3") {
-        value = fahrenheitToCelsius(value)
-    }
-    BigDecimal r = null
-	if (tempOffset != null) {
-	   r = (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
-	} else {
-       r = value.setScale(res, BigDecimal.ROUND_HALF_UP)
-    }
-    if(returnUnit == false) {
-        return r
-    } else {
-        return [tempUnit, r]
-    }
-}
-
-private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
-    Integer res = 1
-    BigDecimal rawValue = value
-    if(tempRes != null && tempRes != '') {
-        res = Integer.parseInt(tempRes)
-    }
-    String degree = String.valueOf((char)(176))
-    String tempUnit = "${degree}C"
-    String currentTempUnitDisplayed = tempUnitDisplayed
-    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
-        if(location.temperatureScale == "C") {
-            currentTempUnitDisplayed = "1"
-        } else {
-            currentTempUnitDisplayed = "2"
-        }
-    }
-
-    if (currentTempUnitDisplayed == "2") {
-        value = celsiusToFahrenheit(value)
-        tempUnit = "${degree}F"
-    } else if (currentTempUnitDisplayed == "3") {
-        value = value + 273.15
-        tempUnit = "${degree}K"
-    }
-	if (tempOffset != null) {
-	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
-	} else {
-       return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
-    }
-}
-
-private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
-    Integer res = 1
-    if(humidityRes != null && humidityRes != '') {
-        res = Integer.parseInt(humidityRes)
-    }
-    if (humidityOffset) {
-	   return (value + new BigDecimal(humidityOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
-	} else {
-       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
-    }
-}
-
-private BigDecimal sensor_data_getAdjustedPressure(BigDecimal value, Integer decimals=2) {
-    Integer res = decimals
-    if(pressureRes != null && pressureRes != '' && pressureRes != 'default') {
-        res = Integer.parseInt(pressureRes)
-    }
-    if (pressureOffset) {
-	   return (value + new BigDecimal(pressureOffset)).setScale(res, BigDecimal.ROUND_HALF_UP)
-	} else {
-       return value.setScale(res, BigDecimal.ROUND_HALF_UP)
-    }
-}
-
-private BigDecimal sensor_data_convertPressure(BigDecimal pressureInkPa) {
-    BigDecimal pressure = pressureInkPa
-    switch(pressureUnitConversion) {
-        case null:
-        case "kPa":
-			pressure = sensor_data_getAdjustedPressure(pressure / 10)
-			break
-		case "inHg":
-			pressure = sensor_data_getAdjustedPressure(pressure * 0.0295299)
-			break
-		case "mmHg":
-            pressure = sensor_data_getAdjustedPressure(pressure * 0.75006157)
-			break
-        case "atm":
-			pressure = sensor_data_getAdjustedPressure(pressure / 1013.25, 5)
-			break
-        default:
-            pressure = sensor_data_getAdjustedPressure(pressure, 1)
-            break
-    }
-    return pressure
-}
-// END:  getHelperFunctions('sensor-data')
 
 // BEGIN:getLoggingFunction(specialDebugLevel=True)
 private boolean logging(message, level) {

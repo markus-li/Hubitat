@@ -2,7 +2,7 @@
   "packageName": "Generic Dimmer (with Presence)",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-18",
+  "dateReleased": "2020-07-20",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-dimmer-beta.json",
   "apps": [],
   "drivers": [
@@ -10,7 +10,7 @@
       "id": "12f1312f-d81f-51c6-8182-e4bf953043a6",
       "internalId": 1730,
       "name": "Zigbee - Generic Dimmer (with Presence)",
-      "version": "v0.8.1.0718",
+      "version": "v0.8.1.0720",
       "namespace": "markusl",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-generic-dimmer-expanded.groovy",
       "required": true

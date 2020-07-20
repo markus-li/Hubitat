@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0718
+ *  Version: v0.8.1.0720
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -702,7 +702,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0718"
+    String version = "v0.8.1.0720"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -972,7 +972,7 @@ void sendZigbeeCommands(ArrayList<String> cmd) {
 String setCleanModelName(String newModelToSet=null, List<String> acceptedModels=null) {
     String model = newModelToSet != null ? newModelToSet : getDeviceDataByName('model')
     model = model == null ? "null" : model
-    String newModel = model.replaceAll("[^A-Za-z0-9.\\-_]", "")
+    String newModel = model.replaceAll("[^A-Za-z0-9.\\-_ ]", "")
     boolean found = false
     if(acceptedModels != null) {
         acceptedModels.each {
@@ -1540,13 +1540,14 @@ void updateDataFromSimpleDescriptorData(List<String> data) {
         updateDataValue("profileId", sdi['profileId'])
         updateDataValue("inClusters", sdi['inClusters'])
         updateDataValue("outClusters", sdi['outClusters'])
+        getInfo(true, sdi)
     } else {
         log.warn("No VALID Simple Descriptor Data received!")
     }
     sdi = null
 }
 
-void getInfo(boolean ignoreMissing=false) {
+void getInfo(boolean ignoreMissing=false, Map<String,String> sdi = [:]) {
     log.debug("Getting info for Zigbee device...")
     String endpointId = device.getEndpointId()
     endpointId = endpointId == null ? getDataValue("endpointId") : endpointId
@@ -1556,6 +1557,13 @@ void getInfo(boolean ignoreMissing=false) {
     String model = getDataValue("model")
     String manufacturer = getDataValue("manufacturer")
     String application = getDataValue("application")
+    if(sdi != [:]) {
+        endpointId = endpointId == null ? sdi['endpointId'] : endpointId
+        profileId = profileId == null ? sdi['profileId'] : profileId
+        inClusters = inClusters == null ? sdi['inClusters'] : inClusters
+        outClusters = outClusters == null ? sdi['outClusters'] : outClusters
+        sdi = null
+    }
     String extraFingerPrint = ""
     boolean missing = false
     String requestingFromDevice = ", requesting it from the device. If it is a sleepy device you may have to wake it up and run this command again. Run this command again to get the new fingerprint."
@@ -1589,9 +1597,9 @@ void getInfo(boolean ignoreMissing=false) {
     }
     profileId = profileId == null ? "0104" : profileId
     if(missing == true) {
-        log.info("INCOMPLETE - TRY AGAIN: fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+        log.info("INCOMPLETE - DO NOT SUBMIT THIS - TRY AGAIN: fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
     } else {
-        log.info("fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
+        log.info("COPY AND PASTE THIS ROW TO THE DEVELOPER: fingerprint model:\"$model\", manufacturer:\"$manufacturer\", profileId:\"$profileId\", endpointId:\"$endpointId\", inClusters:\"$inClusters\", outClusters:\"$outClusters\"" + extraFingerPrint)
     }
 }
 // END:  getHelperFunctions('zigbee-generic')
