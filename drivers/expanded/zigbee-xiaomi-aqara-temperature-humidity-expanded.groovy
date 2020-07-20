@@ -387,9 +387,9 @@ boolean isDriver() {
 
 void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
-    cmd = jsonSlurper.parseText(cmd)
+    def cmds = jsonSlurper.parseText(cmd)
      
-    r = this."${cmd['cmd']}"(*cmd['args'])
+    r = this."${cmds['cmd']}"(*cmds['args'])
      
     updateDataValue('appReturn', JsonOutput.toJson(r))
 }

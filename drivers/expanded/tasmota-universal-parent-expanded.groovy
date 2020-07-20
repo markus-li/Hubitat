@@ -1182,7 +1182,7 @@ boolean parseResult(Map result, boolean missingChild) {
             }
             if (r.value.containsKey("Illuminance")) {
                 logging("Illuminance: $r.value.Illuminance lux", 99)
-                def realIlluminance = Math.round((r.value.Illuminance as Double) * 10) / 10
+                def realIlluminance = Math.round(r.value.Illuminance as Double)
     
                 missingChild = callChildParseByTypeId(r.key, [[name: "illuminance", value: realIlluminance, unit: "lux"]], missingChild)
             }
@@ -1643,9 +1643,9 @@ boolean isDriver() {
 
 void deviceCommand(String cmd) {
     def jsonSlurper = new JsonSlurper()
-    cmd = jsonSlurper.parseText(cmd)
+    def cmds = jsonSlurper.parseText(cmd)
      
-    r = this."${cmd['cmd']}"(*cmd['args'])
+    r = this."${cmds['cmd']}"(*cmds['args'])
      
     updateDataValue('appReturn', JsonOutput.toJson(r))
 }
