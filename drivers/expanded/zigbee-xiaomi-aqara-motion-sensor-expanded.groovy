@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0720b
+ *  Version: v0.8.2.0729b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ metadata {
         input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
         // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
         input(name: "resetTimeSetting", type: "number", title: styling_addTitleDiv("Reset Motion Timer"), description: styling_addDescriptionDiv("After X number of seconds, reset motion to inactive (1 to 3600, default: 61)"), defaultValue: "61", range: "1..3600")
+        input(name: "illuminanceAsMotion", type: "bool", title: styling_addTitleDiv("Use Illuminance as Motion"), description: styling_addDescriptionDiv("When enabled the Illuminance event is used to trigger motion instead of the actual Motion event (Normally this should not be enabled)"), defaultValue: false)
 	}
 }
 
@@ -256,10 +257,15 @@ ArrayList<String> parse(String description) {
             Integer lux = Integer.parseInt(msgMap['value'], 16)
             logging("Lux: $lux", 1)
             sendEvent(name:"illuminance", value: lux, unit: "lux", isStateChange: false)
+            if(illuminanceAsMotion == true) {
+                sendMotionEvent()
+            }
             break
         case "0406_0000":
             logging("XIAOMI/AQARA MOTION EVENT - description:${description} | parseMap:${msgMap}", 100)
-            sendMotionEvent()
+            if(illuminanceAsMotion != true) {
+                sendMotionEvent()
+            }
 
             break
         default:
@@ -342,7 +348,7 @@ void resetToInactive() {
 private String getDriverVersion() {
     comment = "Works with models RTCGQ01LM & RTCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0720b"
+    String version = "v0.8.2.0729b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1069,14 +1075,19 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 }
 
 void checkEventInterval(boolean displayWarnings=true) {
-    prepareCounters()
-    Integer mbe = getMaximumMinutesBetweenEvents()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        scheduleRecoveryEvent()
+    logging("recoveryMode: $recoveryMode", 100)
+    if(recoveryMode == "Disabled") {
+        unschedule('checkEventInterval')
+    } else {
+        prepareCounters()
+        Integer mbe = getMaximumMinutesBetweenEvents()
+        if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
+            recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+            if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+            scheduleRecoveryEvent()
+        }
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
-    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
 void startCheckEventInterval() {
