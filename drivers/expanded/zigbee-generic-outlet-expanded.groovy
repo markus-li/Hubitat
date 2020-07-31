@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0720b
+ *  Version: v0.8.2.0730b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,6 +68,9 @@ metadata {
         fingerprint deviceJoinName:"Sylvania Outlet", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0B05,FC01,FC08", outClusters:"0003,0019", model:"PLUG", manufacturer:"LEDVANCE"
 
         fingerprint deviceJoinName:"Sylvania Outlet", profileId:"C05E", endpointId:"03", inClusters:"1000,0000,0003,0004,0005,0006,0B04,FC0F", outClusters:"0019", model:"Plug 01", manufacturer:"OSRAM"
+
+        fingerprint model:"SP 222", manufacturer:"innr", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008,0B05,1000,FC82", outClusters:"000A,0019", application:"10"
+
     }
 
     preferences {
@@ -323,7 +326,7 @@ ArrayList<String> off() {
 private String getDriverVersion() {
     comment = "Works with Generic Outlets (please report your fingerprints)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0720b"
+    String version = "v0.8.2.0730b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -535,6 +538,23 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
      
+    return cmd
+}
+
+ArrayList<String> zigbeeWriteAttribute(Integer endpoint, Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
+    logging("zigbeeWriteAttribute()", 1)
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String wattrArgs = "0x${device.deviceNetworkId} $endpoint 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(attributeId, 2)} " + 
+                       "0x${HexUtils.integerToHexString(dataType, 1)} " + 
+                       "{${HexUtils.integerToHexString(value, 1)}}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he wattr $wattrArgs", "delay $delay"]
+    
+    logging("zigbeeWriteAttribute cmd=$cmd", 1)
     return cmd
 }
 
@@ -1050,14 +1070,19 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 }
 
 void checkEventInterval(boolean displayWarnings=true) {
-    prepareCounters()
-    Integer mbe = getMaximumMinutesBetweenEvents()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        scheduleRecoveryEvent()
+    logging("recoveryMode: $recoveryMode", 1)
+    if(recoveryMode == "Disabled") {
+        unschedule('checkEventInterval')
+    } else {
+        prepareCounters()
+        Integer mbe = getMaximumMinutesBetweenEvents()
+        if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
+            recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+            if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+            scheduleRecoveryEvent()
+        }
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
-    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
 void startCheckEventInterval() {

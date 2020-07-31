@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0720Tb
+ *  Version: v1.0.4.0731Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1382,9 +1382,19 @@ boolean callChildParseByTypeId(String deviceTypeId, List<Map> event, boolean mis
         cd.parse(event)
     } else {
         log.warn("callChildParseByTypeId() can't FIND the device type ${deviceTypeId}! (childId: ${"$device.id-$deviceTypeId"}) Did you delete something?")
+        if(state.installing != "1") {
+            logging("Initiating child device installation...", 100)
+            state.installing = "1"
+            runIn(120, "clearInstalling")
+            tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
+        }
         missingChild = true
     }
     return missingChild
+}
+
+void clearInstalling() {
+    state.installing = "0"
 }
 
 void childParse(com.hubitat.app.DeviceWrapper cd, event) {
@@ -1574,7 +1584,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.4.0720Tb"
+    String version = "v1.0.4.0731Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2516,7 +2526,7 @@ void tasmota_refreshChildrenAgain() {
 
 Map tasmota_refresh(Map metaConfig=null) {
 	logging("tasmota_refresh(metaConfig=$metaConfig)", 100)
-    state.clear()
+    state = [:]
 
     tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
     getDriverVersion()
@@ -2591,7 +2601,7 @@ Map tasmota_parseDescriptionAsMap(description) {
 }
 
 void tasmota_getAction(String uri, String callback="parse") { 
-     
+    logging("Using tasmota_getAction for '${uri}'...", 1)
     tasmota_httpGetAction(uri, callback=callback)
 }
 

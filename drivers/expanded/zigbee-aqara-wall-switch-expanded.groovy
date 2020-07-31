@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0728b
+ *  Version: v0.8.2.0730b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -745,7 +745,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0728b"
+    String version = "v0.8.2.0730b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -957,6 +957,23 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
      
+    return cmd
+}
+
+ArrayList<String> zigbeeWriteAttribute(Integer endpoint, Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
+    logging("zigbeeWriteAttribute()", 1)
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String wattrArgs = "0x${device.deviceNetworkId} $endpoint 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(attributeId, 2)} " + 
+                       "0x${HexUtils.integerToHexString(dataType, 1)} " + 
+                       "{${HexUtils.integerToHexString(value, 1)}}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he wattr $wattrArgs", "delay $delay"]
+    
+    logging("zigbeeWriteAttribute cmd=$cmd", 1)
     return cmd
 }
 
@@ -1472,7 +1489,7 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 }
 
 void checkEventInterval(boolean displayWarnings=true) {
-    logging("recoveryMode: $recoveryMode", 100)
+    logging("recoveryMode: $recoveryMode", 1)
     if(recoveryMode == "Disabled") {
         unschedule('checkEventInterval')
     } else {

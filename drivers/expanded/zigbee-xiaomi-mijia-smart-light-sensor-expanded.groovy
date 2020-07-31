@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0720b
+ *  Version: v0.8.2.0730b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -286,10 +286,10 @@ ArrayList<String> configureAdditional() {
     Integer msDelay = 50
     Integer variance = 300
     ArrayList<String> cmd = [
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0000 {${device.zigbeeId}} {}", "delay $msDelay",
+		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay $msDelay",
+        "zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0000 {${device.zigbeeId}} {}", "delay $msDelay",
         "zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0001 {${device.zigbeeId}} {}", "delay $msDelay",
 		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0003 {${device.zigbeeId}} {}", "delay $msDelay",
-		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0400 {${device.zigbeeId}} {}", "delay $msDelay",
 		"zdo send ${device.deviceNetworkId} 0x01 0x01", "delay $msDelay"
     ]
     cmd += zigbee.configureReporting(0x0400, 0x0000, 0x21, (secondsMinLux == null ? 10 : secondsMinLux).intValue(), 3600, variance, [:], msDelay)
@@ -318,7 +318,7 @@ ArrayList<String> configureAdditional() {
 private String getDriverVersion() {
     comment = "Works with model GZCGQ01LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0720b"
+    String version = "v0.8.2.0730b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -530,6 +530,23 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
      
+    return cmd
+}
+
+ArrayList<String> zigbeeWriteAttribute(Integer endpoint, Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
+    logging("zigbeeWriteAttribute()", 1)
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String wattrArgs = "0x${device.deviceNetworkId} $endpoint 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(attributeId, 2)} " + 
+                       "0x${HexUtils.integerToHexString(dataType, 1)} " + 
+                       "{${HexUtils.integerToHexString(value, 1)}}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he wattr $wattrArgs", "delay $delay"]
+    
+    logging("zigbeeWriteAttribute cmd=$cmd", 1)
     return cmd
 }
 
@@ -1045,14 +1062,19 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 }
 
 void checkEventInterval(boolean displayWarnings=true) {
-    prepareCounters()
-    Integer mbe = getMaximumMinutesBetweenEvents()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        scheduleRecoveryEvent()
+    logging("recoveryMode: $recoveryMode", 1)
+    if(recoveryMode == "Disabled") {
+        unschedule('checkEventInterval')
+    } else {
+        prepareCounters()
+        Integer mbe = getMaximumMinutesBetweenEvents()
+        if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
+            recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+            if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+            scheduleRecoveryEvent()
+        }
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
-    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
 void startCheckEventInterval() {

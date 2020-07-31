@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0720b
+ *  Version: v0.8.2.0731b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ metadata {
         // BEGIN:getZigbeeBatteryMetadataAttributes()
         attribute "batteryLastReplaced", "String"
         // END:  getZigbeeBatteryMetadataAttributes()
+        attribute "lastWet", "String"
+        attribute "lastDry", "String"
 
         // BEGIN:getZigbeeBatteryCommands()
         command "resetBatteryReplacedDate"
@@ -65,6 +67,7 @@ metadata {
 
         fingerprint deviceJoinName: "Aqara Water Leak Sensor (SJCGQ11LM)", model: "lumi.sensor_motion", profileId: "0104", endpointId: "01", inClusters: "0000,0003,0001", outClusters: "0019", manufacturer: "LUMI"
         fingerprint deviceJoinName: "Aqara Water Leak Sensor (SJCGQ11LM)", model: "lumi.sensor_wleak.aq1", profileId: "0104", endpointId: "01", inClusters: "0000,0003,0001", outClusters: "0019", manufacturer: "LUMI"
+        fingerprint deviceJoinName: "Aqara Water Leak Sensor (SJCGQ11LM)", model: "lumi.sensor_wleak.aq1", endpointId: "01", application: "04"
 
     }
 
@@ -86,6 +89,7 @@ metadata {
         input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
         input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
         // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
+        input(name: "logWetDryDatetime", type: "bool", title: styling_addTitleDiv("Log Wet/Dry Time"), description: styling_addDescriptionDiv("Logs the date and time of when the last Wet/Dry event occured (default: false)"), defaultValue: false)
 	}
 }
 
@@ -206,8 +210,14 @@ ArrayList<String> parse(String description) {
         logging("ZONE event - description:${description} | parseMap:${msgMap}", 1)
         if(msgMap["statusInt"] == 1) {
             sendEvent(name:"water", value: "wet", descriptionText: "Water leak detected!", isStateChange: true)
+            if(logWetDryDatetime == true) {
+                sendEvent(name: "lastWet", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+            }
         } else {
             sendEvent(name:"water", value: "dry", descriptionText: "Sensor is dry", isStateChange: true)
+            if(logWetDryDatetime == true) {
+                sendEvent(name: "lastDry", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+            }
         }
     } else if(msgMap["cluster"] == "0000" && msgMap["attrId"] == "0004") {
         logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
@@ -250,10 +260,16 @@ ArrayList<String> parse(String description) {
 
 void setAsDry() {
     sendEvent(name:"water", value: "dry", descriptionText: "Manually set to Dry", isStateChange: true)
+    if(logWetDryDatetime == true) {
+        sendEvent(name: "lastDry", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+    }
 }
 
 void setAsWet() {
     sendEvent(name:"water", value: "wet", descriptionText: "Manually set to Wet", isStateChange: true)
+    if(logWetDryDatetime == true) {
+        sendEvent(name: "lastWet", value: new Date().format('yyyy-MM-dd HH:mm:ss'))
+    }
 }
 
 /**
@@ -276,7 +292,7 @@ void setAsWet() {
 private String getDriverVersion() {
     comment = "Works with model SJCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0720b"
+    String version = "v0.8.2.0731b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -488,6 +504,23 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
      
+    return cmd
+}
+
+ArrayList<String> zigbeeWriteAttribute(Integer endpoint, Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
+    logging("zigbeeWriteAttribute()", 1)
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String wattrArgs = "0x${device.deviceNetworkId} $endpoint 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(attributeId, 2)} " + 
+                       "0x${HexUtils.integerToHexString(dataType, 1)} " + 
+                       "{${HexUtils.integerToHexString(value, 1)}}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he wattr $wattrArgs", "delay $delay"]
+    
+    logging("zigbeeWriteAttribute cmd=$cmd", 1)
     return cmd
 }
 
@@ -1003,14 +1036,19 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 }
 
 void checkEventInterval(boolean displayWarnings=true) {
-    prepareCounters()
-    Integer mbe = getMaximumMinutesBetweenEvents()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        scheduleRecoveryEvent()
+    logging("recoveryMode: $recoveryMode", 1)
+    if(recoveryMode == "Disabled") {
+        unschedule('checkEventInterval')
+    } else {
+        prepareCounters()
+        Integer mbe = getMaximumMinutesBetweenEvents()
+        if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
+            recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+            if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+            scheduleRecoveryEvent()
+        }
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
-    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
 void startCheckEventInterval() {

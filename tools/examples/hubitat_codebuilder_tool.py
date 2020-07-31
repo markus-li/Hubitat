@@ -411,7 +411,9 @@ def main():
          'comment': 'Works with model MFKZQ01LM.', 'publish': False },
         {'id': 1731, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-xiaomi-smoke-detector.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model JTYJ-GD01LM/BW.', 'publish': False },
-        
+        {'id': 1762, 'file': 'tasmota-universal-switch-as-garage-door-child.groovy', 
+            'specialDebugLabel': 'descriptionText' },
+
         # Zigbee - Not ready for release
         {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)', 'publish': False },
@@ -512,6 +514,7 @@ def main():
         {'id': 1731}, # Xiaomi Smoke Detector
         {'id': 1732}, # Tasmota universal Switch as Presence Sensor (child)
         
+        {'id': 1762}, # Tasmota Universal Gara Door Child
 
         {'id': 865}, {'id': 866}, # Universal Drivers RELEASE
         #{'id': 866},
