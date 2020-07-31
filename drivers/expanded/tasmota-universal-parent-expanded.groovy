@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0731Tb
+ *  Version: v1.0.4.0801Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -846,6 +846,12 @@ void parse(String description) {
     if(missingChild == true) {
         log.warn "Missing a child device, run the Refresh command from the device page!"
     
+        if(state.installing != "1") {
+            logging("Initiating child device installation...", 100)
+            state.installing = "1"
+            runIn(120, "clearInstalling")
+            tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
+        }
     }
     if (device.currentValue("ip") == null) {
         String curIP = getDataValue("ip")
@@ -1382,12 +1388,6 @@ boolean callChildParseByTypeId(String deviceTypeId, List<Map> event, boolean mis
         cd.parse(event)
     } else {
         log.warn("callChildParseByTypeId() can't FIND the device type ${deviceTypeId}! (childId: ${"$device.id-$deviceTypeId"}) Did you delete something?")
-        if(state.installing != "1") {
-            logging("Initiating child device installation...", 100)
-            state.installing = "1"
-            runIn(120, "clearInstalling")
-            tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
-        }
         missingChild = true
     }
     return missingChild
@@ -1584,7 +1584,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.4.0731Tb"
+    String version = "v1.0.4.0801Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2773,6 +2773,7 @@ String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
 
 String tasmota_getMinimizedDriverName(String driverName) {
     logging("tasmota_getMinimizedDriverName(driverName=$driverName)", 1)
+    if(driverName == null) driverName = "Device"
     if(driverName.toLowerCase().endsWith(' (child)')) {
         driverName = driverName.substring(0, driverName.length()-8)
     } else if(driverName.toLowerCase().endsWith(' child')) {

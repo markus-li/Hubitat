@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0731Tb
+ *  Version: v1.0.4.0801Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -632,7 +632,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.4.0731Tb"
+    String version = "v1.0.4.0801Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -2224,6 +2224,7 @@ String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
 
 String tasmota_getMinimizedDriverName(String driverName) {
     logging("tasmota_getMinimizedDriverName(driverName=$driverName)", 1)
+    if(driverName == null) driverName = "Device"
     if(driverName.toLowerCase().endsWith(' (child)')) {
         driverName = driverName.substring(0, driverName.length()-8)
     } else if(driverName.toLowerCase().endsWith(' child')) {

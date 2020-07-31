@@ -60,6 +60,12 @@ if(missingChild == true) {
     // Until a safe and non-resource hungry way can be created to do this automatically, a log message will
     // have to be enough.
     //refresh()
+    if(state.installing != "1") {
+        logging("Initiating child device installation...", 100)
+        state.installing = "1"
+        runIn(120, "clearInstalling")
+        tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
+    }
 }
 if (device.currentValue("ip") == null) {
     String curIP = getDataValue("ip")
