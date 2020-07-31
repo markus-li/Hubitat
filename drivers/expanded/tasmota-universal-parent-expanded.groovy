@@ -1056,8 +1056,8 @@ boolean parseResult(Map result, boolean missingChild) {
         logging("Template: $n",50)
         sendEvent(name: "templateData", value: "${n}", isStateChange: false)
     }
-    if (log99 == true && result.containsKey("RestartReason")) {
-        logging("RestartReason: $result.RestartReason",99)
+    if (result.containsKey("RestartReason")) {
+        log.warn("RestartReason: $result.RestartReason")
     }
     if (result.containsKey("TuyaMCU")) {
         logging("TuyaMCU: $result.TuyaMCU",99)
