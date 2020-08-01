@@ -1416,8 +1416,8 @@ void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
     refresh()
 }
 
-void componentOn(com.hubitat.app.DeviceWrapper cd) {
-    String actionType = getDeviceActionType(cd.deviceNetworkId)
+void componentOn(String deviceNetworkId) {
+    String actionType = getDeviceActionType(deviceNetworkId)
     if(invertPowerNumber == true) {
         if(actionType == "POWER1") { 
             actionType = "POWER2"
@@ -1425,12 +1425,16 @@ void componentOn(com.hubitat.app.DeviceWrapper cd) {
             actionType = "POWER1"
         }
     }
-    logging("componentOn(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
+    logging("componentOn(deviceNetworkId=${deviceNetworkId}), actionType=$actionType", 1)
     tasmota_getAction(tasmota_getCommandString("$actionType", "1"))
 }
 
-void componentOff(com.hubitat.app.DeviceWrapper cd) {
-    String actionType = getDeviceActionType(cd.deviceNetworkId)
+void componentOn(com.hubitat.app.DeviceWrapper cd) {
+    componentOn(cd.deviceNetworkId)
+}
+
+void componentOff(String deviceNetworkId) {
+    String actionType = getDeviceActionType(deviceNetworkId)
     if(invertPowerNumber == true) {
         if(actionType == "POWER1") { 
             actionType = "POWER2"
@@ -1438,8 +1442,12 @@ void componentOff(com.hubitat.app.DeviceWrapper cd) {
             actionType = "POWER1"
         }
     }
-    logging("componentOff(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
+    logging("componentOff(deviceNetworkId=${deviceNetworkId}), actionType=$actionType", 1)
     tasmota_getAction(tasmota_getCommandString("$actionType", "0"))
+}
+
+void componentOff(com.hubitat.app.DeviceWrapper cd) {
+    componentOff(cd.deviceNetworkId)
 }
 
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {

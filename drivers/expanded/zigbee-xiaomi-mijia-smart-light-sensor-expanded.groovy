@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0730b
+ *  Version: v0.8.2.0801b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -292,6 +292,7 @@ ArrayList<String> configureAdditional() {
 		"zdo bind ${device.deviceNetworkId} 0x01 0x01 0x0003 {${device.zigbeeId}} {}", "delay $msDelay",
 		"zdo send ${device.deviceNetworkId} 0x01 0x01", "delay $msDelay"
     ]
+    logging("Minimum Update Time: ${(secondsMinLux == null ? 10 : secondsMinLux).intValue()}", 100)
     cmd += zigbee.configureReporting(0x0400, 0x0000, 0x21, (secondsMinLux == null ? 10 : secondsMinLux).intValue(), 3600, variance, [:], msDelay)
     cmd += zigbee.configureReporting(0x0001, 0x0020, 0x20, 3600, 3600, null, [:], msDelay)
     
@@ -318,7 +319,7 @@ ArrayList<String> configureAdditional() {
 private String getDriverVersion() {
     comment = "Works with model GZCGQ01LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0730b"
+    String version = "v0.8.2.0801b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

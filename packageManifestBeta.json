@@ -130,7 +130,7 @@
       "id": "fa8f8684-c4fc-5179-9c34-3e4f9b6fba8e",
       "internalId": 1762,
       "name": "Tasmota - Universal Switch as Garage Door (Child)",
-      "betaVersion": "v1.0.4.0731Tb",
+      "betaVersion": "v1.0.4.0801Tb",
       "namespace": "tasmota",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-garage-door-child-expanded.groovy",
       "required": false

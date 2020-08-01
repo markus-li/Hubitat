@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0731Tb
+ *  Version: v1.0.4.0801Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ void open() {
     String door = device.currentValue("door", true)
     if(door != "open" && door != "opening") {
         if(reportOpeningClosing == true) sendEvent(name: "door", value: "opening")
-        parent?.componentOn(this.device.tokenize("-")[0] + "-POWER1")
+        parent?.componentOn(this.device.deviceNetworkId.tokenize("-")[0] + "-POWER1")
     }
 }
 
@@ -127,7 +127,7 @@ void close() {
     String door = device.currentValue("door", true)
     if(door != "closed" && door != "closing") {
         if(reportOpeningClosing == true) sendEvent(name: "door", value: "closing")
-        parent?.componentOn(this.device.tokenize("-")[0] + "-POWER1")
+        parent?.componentOn(this.device.deviceNetworkId.tokenize("-")[0] + "-POWER1")
     }
 }
 
@@ -143,7 +143,7 @@ void close() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.4.0731Tb"
+    String version = "v1.0.4.0801Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
