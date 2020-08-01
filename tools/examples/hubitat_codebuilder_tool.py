@@ -360,6 +360,8 @@ def main():
             'specialDebugLabel': 'descriptionText' },
         {'id': 555, 'file': 'tasmota-universal-switch-as-water-sensor-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
+        {'id': 1762, 'file': 'tasmota-universal-switch-as-garage-door-child.groovy', 
+            'specialDebugLabel': 'descriptionText' },
         {'id': 581, 'id_2': 333, 'file': 'tasmota-universal-plug-outlet-child.groovy', 
             'specialDebugLabel': 'descriptionText' },
         {'id': 582, 'id_2': 329, 'file': 'tasmota-universal-bulb-light-child.groovy', 
@@ -411,8 +413,7 @@ def main():
          'comment': 'Works with model MFKZQ01LM.', 'publish': False },
         {'id': 1731, 'id_2': 0, 'id_3': 0, 'file': 'zigbee-xiaomi-smoke-detector.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model JTYJ-GD01LM/BW.', 'publish': False },
-        {'id': 1762, 'file': 'tasmota-universal-switch-as-garage-door-child.groovy', 
-            'specialDebugLabel': 'descriptionText' },
+        
 
         # Zigbee - Not ready for release
         {'id': 1538, 'id_2': 0, 'file': 'zigbee-aqara-wall-switch.groovy', 'version': default_zigbee_version,
@@ -713,7 +714,6 @@ def main():
             newD['name'] = newD['name'][10:]
             #log.debug('d_info 2: {}'.format(d_info))
 
-            # TODO: Build the Zigbee packages
             t4he_pkg.addDriver(d['name'], newD['version'], newD['namespace'], 
                 base_raw_repo_url + newD['file'], newD['required'], newD['id'], id=None)
 
