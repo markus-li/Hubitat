@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0720T
+ *  Version: v1.0.3.0801T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -846,6 +846,12 @@ void parse(String description) {
     if(missingChild == true) {
         log.warn "Missing a child device, run the Refresh command from the device page!"
     
+        if(state.installing != "1") {
+            logging("Initiating child device installation...", 100)
+            state.installing = "1"
+            runIn(120, "clearInstalling")
+            tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
+        }
     }
     if (device.currentValue("ip") == null) {
         String curIP = getDataValue("ip")
@@ -1056,8 +1062,8 @@ boolean parseResult(Map result, boolean missingChild) {
         logging("Template: $n",50)
         sendEvent(name: "templateData", value: "${n}", isStateChange: false)
     }
-    if (log99 == true && result.containsKey("RestartReason")) {
-        logging("RestartReason: $result.RestartReason",99)
+    if (result.containsKey("RestartReason")) {
+        log.warn("RestartReason: $result.RestartReason")
     }
     if (result.containsKey("TuyaMCU")) {
         logging("TuyaMCU: $result.TuyaMCU",99)
@@ -1387,6 +1393,10 @@ boolean callChildParseByTypeId(String deviceTypeId, List<Map> event, boolean mis
     return missingChild
 }
 
+void clearInstalling() {
+    state.installing = "0"
+}
+
 void childParse(com.hubitat.app.DeviceWrapper cd, event) {
     try {
         getChildDevice(cd.deviceNetworkId).parse(event)
@@ -1406,8 +1416,8 @@ void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
     refresh()
 }
 
-void componentOn(com.hubitat.app.DeviceWrapper cd) {
-    String actionType = getDeviceActionType(cd.deviceNetworkId)
+void componentOn(String deviceNetworkId) {
+    String actionType = getDeviceActionType(deviceNetworkId)
     if(invertPowerNumber == true) {
         if(actionType == "POWER1") { 
             actionType = "POWER2"
@@ -1415,12 +1425,16 @@ void componentOn(com.hubitat.app.DeviceWrapper cd) {
             actionType = "POWER1"
         }
     }
-    logging("componentOn(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
+    logging("componentOn(deviceNetworkId=${deviceNetworkId}), actionType=$actionType", 1)
     tasmota_getAction(tasmota_getCommandString("$actionType", "1"))
 }
 
-void componentOff(com.hubitat.app.DeviceWrapper cd) {
-    String actionType = getDeviceActionType(cd.deviceNetworkId)
+void componentOn(com.hubitat.app.DeviceWrapper cd) {
+    componentOn(cd.deviceNetworkId)
+}
+
+void componentOff(String deviceNetworkId) {
+    String actionType = getDeviceActionType(deviceNetworkId)
     if(invertPowerNumber == true) {
         if(actionType == "POWER1") { 
             actionType = "POWER2"
@@ -1428,8 +1442,12 @@ void componentOff(com.hubitat.app.DeviceWrapper cd) {
             actionType = "POWER1"
         }
     }
-    logging("componentOff(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
+    logging("componentOff(deviceNetworkId=${deviceNetworkId}), actionType=$actionType", 1)
     tasmota_getAction(tasmota_getCommandString("$actionType", "0"))
+}
+
+void componentOff(com.hubitat.app.DeviceWrapper cd) {
+    componentOff(cd.deviceNetworkId)
 }
 
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
@@ -1574,7 +1592,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.3.0720T"
+    String version = "v1.0.3.0801T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2516,7 +2534,7 @@ void tasmota_refreshChildrenAgain() {
 
 Map tasmota_refresh(Map metaConfig=null) {
 	logging("tasmota_refresh(metaConfig=$metaConfig)", 100)
-    state.clear()
+    state = [:]
 
     tasmota_getAction(tasmota_getCommandString("Status", "0"), callback="tasmota_parseConfigureChildDevices")
     getDriverVersion()
@@ -2591,7 +2609,7 @@ Map tasmota_parseDescriptionAsMap(description) {
 }
 
 void tasmota_getAction(String uri, String callback="parse") { 
-     
+    logging("Using tasmota_getAction for '${uri}'...", 1)
     tasmota_httpGetAction(uri, callback=callback)
 }
 
@@ -2763,6 +2781,7 @@ String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
 
 String tasmota_getMinimizedDriverName(String driverName) {
     logging("tasmota_getMinimizedDriverName(driverName=$driverName)", 1)
+    if(driverName == null) driverName = "Device"
     if(driverName.toLowerCase().endsWith(' (child)')) {
         driverName = driverName.substring(0, driverName.length()-8)
     } else if(driverName.toLowerCase().endsWith(' child')) {

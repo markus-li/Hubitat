@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0720
+ *  Version: v0.8.1.0801
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -94,6 +94,8 @@ metadata {
         fingerprint profileId:"0104", endpointId:"02", inClusters:"0000,0003,0004,0005,0006,0012,FCC0", model:"lumi.switch.b2lacn02", manufacturer:"LUMI"
 
         fingerprint profileId:"0104", endpointId:"02", inClusters:"0000,0003,0004,0005,0006,0012,FCC0", model:"lumi.switch.l3acn3", manufacturer:"LUMI"
+
+        fingerprint model:"lumi.switch.b2laus01", manufacturer:"LUMI", profileId:"0104", endpointId:"02", inClusters:"0000,0003,0004,0005,0006", outClusters:"", application:"16"
         
         }
 
@@ -196,6 +198,11 @@ Integer refresh(boolean connectButtons=false) {
             physicalButtons = 3
             buttonCombos = 3
             break
+        case "lumi.switch.b2laus01":
+            sendEvent(name:"numberOfButtons", value: 4, isStateChange: false, descriptionText: "Aqara US Switch (WS-USC02) detected: set to 4 buttons (physical 2)")
+            physicalButtons = 2
+            buttonCombos = 2
+            break
         default:
             sendEvent(name:"numberOfButtons", value: 0, isStateChange: false, descriptionText: "UNKNOWN Button detected: set to 1 button")
             updateDataValue("physicalButtons", "0")
@@ -269,7 +276,8 @@ String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
         "lumi.switch.b1nacn02",
         "lumi.switch.b2nacn02",
         "lumi.switch.b3nacn02",
-        "lumi.relay.c2acn01"
+        "lumi.relay.c2acn01",
+        "lumi.switch.b2laus01"
     ])
 }
 
@@ -341,6 +349,7 @@ boolean isKnownModel(String model=null) {
         case "lumi.switch.b2lacn02":
         case "lumi.switch.l3acn3":
         case "lumi.relay.c2acn01":
+        case "lumi.switch.b2laus01":
             return true
             break
         default:
@@ -736,7 +745,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0720"
+    String version = "v0.8.1.0801"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -948,6 +957,23 @@ ArrayList<String> zigbeeWriteAttribute(Integer cluster, Integer attributeId, Int
     ArrayList<String> cmd = zigbee.writeAttribute(cluster, attributeId, dataType, value, additionalParams, delay)
     cmd[0] = cmd[0].replace('0xnull', '0x01')
      
+    return cmd
+}
+
+ArrayList<String> zigbeeWriteAttribute(Integer endpoint, Integer cluster, Integer attributeId, Integer dataType, Integer value, Map additionalParams = [:], int delay = 200) {
+    logging("zigbeeWriteAttribute()", 1)
+    String mfgCode = ""
+    if(additionalParams.containsKey("mfgCode")) {
+        mfgCode = " {${HexUtils.integerToHexString(HexUtils.hexStringToInt(additionalParams.get("mfgCode")), 2)}}"
+    }
+    String wattrArgs = "0x${device.deviceNetworkId} $endpoint 0x${HexUtils.integerToHexString(cluster, 2)} " + 
+                       "0x${HexUtils.integerToHexString(attributeId, 2)} " + 
+                       "0x${HexUtils.integerToHexString(dataType, 1)} " + 
+                       "{${HexUtils.integerToHexString(value, 1)}}" + 
+                       "$mfgCode"
+    ArrayList<String> cmd = ["he wattr $wattrArgs", "delay $delay"]
+    
+    logging("zigbeeWriteAttribute cmd=$cmd", 1)
     return cmd
 }
 
@@ -1463,14 +1489,19 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 }
 
 void checkEventInterval(boolean displayWarnings=true) {
-    prepareCounters()
-    Integer mbe = getMaximumMinutesBetweenEvents()
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-        recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-        if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-        scheduleRecoveryEvent()
+    logging("recoveryMode: $recoveryMode", 1)
+    if(recoveryMode == "Disabled") {
+        unschedule('checkEventInterval')
+    } else {
+        prepareCounters()
+        Integer mbe = getMaximumMinutesBetweenEvents()
+        if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
+            recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+            if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+            scheduleRecoveryEvent()
+        }
+        sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
-    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
 }
 
 void startCheckEventInterval() {

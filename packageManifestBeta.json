@@ -2,7 +2,7 @@
   "packageName": "Tasmota for Hubitat Elevation",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-07-20",
+  "dateReleased": "2020-08-01",
   "documentationLink": "https://github.com/markus-li/Hubitat/wiki",
   "communityLink": "https://community.hubitat.com/t/release-tasmota-for-he-auto-detecting-tasmota-drivers-tasmota-firmware-7-x-8-x-for-he-for-use-with-tuya-sonoff-and-other-esp-devices/39322?u=markus",
   "apps": [
@@ -10,7 +10,7 @@
       "id": "a1ac29fa-f00a-5e58-822a-472f71bf3c1d",
       "internalId": 289,
       "name": "Tasmota Device Manager",
-      "betaVersion": "v1.0.4.0720Tb",
+      "betaVersion": "v1.0.4.0801Tb",
       "namespace": "tasmota",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/apps/expanded/tasmota-device-manager-expanded.groovy",
       "required": true,
@@ -22,7 +22,7 @@
       "id": "daf8333a-3b78-5ad0-af46-188e1cdd32ba",
       "internalId": 865,
       "name": "Tasmota - Universal Parent",
-      "betaVersion": "v1.0.4.0720Tb",
+      "betaVersion": "v1.0.4.0801Tb",
       "namespace": "tasmota",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-parent-expanded.groovy",
       "required": true
@@ -124,6 +124,15 @@
       "betaVersion": "v1.0.4.0720Tb",
       "namespace": "tasmota",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-contact-sensor-child-expanded.groovy",
+      "required": false
+    },
+    {
+      "id": "fa8f8684-c4fc-5179-9c34-3e4f9b6fba8e",
+      "internalId": 1762,
+      "name": "Tasmota - Universal Switch as Garage Door (Child)",
+      "betaVersion": "v1.0.4.0801Tb",
+      "namespace": "tasmota",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-garage-door-child-expanded.groovy",
       "required": false
     },
     {
