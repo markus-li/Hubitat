@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0801Tb
+ *  Version: v1.0.4.0802Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -95,6 +95,18 @@ TreeMap getDeviceConfigurations() {
          template: '{"NAME":"CESmartHLA-WF7","GPIO":[0,56,0,17,134,132,0,0,131,57,21,0,0],"FLAG":0,"BASE":18}',
          installCommands: [],
          deviceLink: 'https://templates.blakadder.com/ce_smart_home_LA-WF7.html'],
+
+        [typeId: 'mirebella-genio-i002741-light',
+         name: 'Mirabella Genio I002741 RGB+CCT Light',
+         template: '{"NAME":"GenioDLightRGB","GPIO":[0,0,0,0,38,37,0,0,41,39,40,0,0],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/mirabella_genio_I002741.html'],
+
+        [typeId: 'mirebella-genio-i002742-light',
+         name: 'Mirabella Genio I002742 CCT Light',
+         template: '{"NAME":"GenioDLightCCT","GPIO":[0,0,0,0,0,0,0,0,47,0,37,0,0],"FLAG":0,"BASE":48}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/mirabella_genio_I002742.html'],
 
         [typeId: 'awp02l-n-plug',
          name: 'AWP02L-N Plug',
@@ -632,7 +644,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.4.0801Tb"
+    String version = "v1.0.4.0802Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
