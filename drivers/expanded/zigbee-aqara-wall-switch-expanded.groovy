@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0730b
+ *  Version: v0.8.2.0803b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -119,6 +119,9 @@ metadata {
         // END:  getDefaultMetadataPreferencesForDeviceTemperature()
         input(name: "powerOffset", type: "decimal", title: styling_addTitleDiv("Power Offset"), description: styling_addDescriptionDiv("Power Measurement Offset in Watt (-5000 to 5000, default: 0)"), defaultValue: "0", range: "-5000..5000")
         input(name: "powerMinimum", type: "decimal", title: styling_addTitleDiv("Power Minimum"), description: styling_addDescriptionDiv("Power Measurement Minimum in Watt, less than this amount is considered 0 (applied AFTER offset), default: 0)"), defaultValue: "0", range: "0..5000")
+        input(name: "pingType", type: "enum", title: styling_addTitleDiv("Ping Type"), 
+            description: styling_addDescriptionDiv("Try this if response times are slow, it MIGHT help. (default = Disabled)"),
+            options: ["Disabled", "Read Attribute"], defaultValue: "Disabled")
 	}
 }
 
@@ -223,6 +226,12 @@ Integer refresh(boolean connectButtons=false) {
             break
     }
 
+    if(pingType == "Read Attribute") {
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(59)} ${rnd.nextInt(29)}/29 * * * ? *", 'ping')
+        ping()
+    }
+
     cmd += zigbee.readAttribute(0x000, 0x0005)
     logging("refresh cmd: $cmd", 1)
     sendZigbeeCommands(cmd)
@@ -240,6 +249,24 @@ void installed() {
     logging("installed()", 100)
     Integer physicalButtons = refresh(connectButtons=true)
     configureDevice(physicalButtons)
+}
+
+void ping() {
+    logging("ping()", 100)
+    /* If additional Ping types are needed, please contact the Developer */
+    List<String> cmd = []
+    switch(pingType) {
+        case "Read Attribute":
+            cmd += zigbee.readAttribute(CLUSTER_BASIC, 0x0004)
+            break
+        case null:
+        case "Disabled":
+        default:
+            unschedule("ping")
+            break
+    }
+    
+    sendZigbeeCommands(cmd)
 }
 
 void configureDevice(Integer physicalButtons) {
@@ -745,7 +772,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0730b"
+    String version = "v0.8.2.0803b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
