@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0802Tb
+ *  Version: v1.0.4.0804Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -311,6 +311,13 @@ TreeMap getDeviceConfigurations() {
         installCommands: [["TuyaMCU", "11,1"], ["TuyaMCU", "12,2"], 
                           ["TuyaMCU", "13,3"], ["TuyaMCU", "14,4"]],
         deviceLink: ''],
+
+        [typeId: 'feit-electric-dimmer',
+        name: 'Feit Electric Dimmer',
+        module: 54,
+        installCommands: [["TuyaMCU", "11,1"], ["TuyaMCU", "21,2"], 
+                          ["DimmerRange", "10,1000"]],
+        deviceLink: 'https://templates.blakadder.com/feit_electric-DIM-WIFI.html'],
 
         [typeId: 'sonoff-powr2', 
         name: 'Sonoff POW R2',
@@ -644,7 +651,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.4.0802Tb"
+    String version = "v1.0.4.0804Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
