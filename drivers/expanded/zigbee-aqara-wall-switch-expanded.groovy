@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0803b
+ *  Version: v0.8.2.0804b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ Integer refresh(boolean connectButtons=false) {
             physicalButtons = 1
             break
         case "lumi.ctrl_neutral2":
-            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara Switch (QBKG03LM) detected: set to 6 buttons (physical 2)")
+            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (QBKG03LM) detected: set to 5 buttons (physical 2)")
             physicalButtons = 2
             buttonCombos = 1
             break
@@ -772,7 +772,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0803b"
+    String version = "v0.8.2.0804b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1991,6 +1991,25 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
 	} else {
        return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
     }
+}
+
+private BigDecimal currentTemperatureInCelciusAlternative() {
+    String currentTempUnitDisplayed = tempUnitDisplayed
+    BigDecimal currentTemp = device.currentValue('temperature')
+    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
+        if(location.temperatureScale == "C") {
+            currentTempUnitDisplayed = "1"
+        } else {
+            currentTempUnitDisplayed = "2"
+        }
+    }
+
+    if (currentTempUnitDisplayed == "2") {
+        currentTemp = fahrenheitToCelsius(currentTemp)
+    } else if (currentTempUnitDisplayed == "3") {
+        currentTemp = currentTemp - 273.15
+    }
+    return currentTemp
 }
 
 private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {

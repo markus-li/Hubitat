@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0730b
+ *  Version: v0.8.2.0804b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,6 +70,8 @@ metadata {
         fingerprint deviceJoinName:"Sylvania Outlet", profileId:"C05E", endpointId:"03", inClusters:"1000,0000,0003,0004,0005,0006,0B04,FC0F", outClusters:"0019", model:"Plug 01", manufacturer:"OSRAM"
 
         fingerprint model:"SP 222", manufacturer:"innr", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008,0B05,1000,FC82", outClusters:"000A,0019", application:"10"
+
+        fingerprint model:"outlet", manufacturer:"Samjin", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0009,0B04,0B05", outClusters:"0003,0019", application:"11"
 
     }
 
@@ -326,7 +328,7 @@ ArrayList<String> off() {
 private String getDriverVersion() {
     comment = "Works with Generic Outlets (please report your fingerprints)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0730b"
+    String version = "v0.8.2.0804b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
