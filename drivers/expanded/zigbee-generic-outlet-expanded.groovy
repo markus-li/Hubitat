@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0804b
+ *  Version: v0.8.2.0806b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,6 +64,8 @@ metadata {
         fingerprint deviceJoinName:"IKEA Tradfri Power Outlet", model:"TRADFRI control outlet", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008,1000,FC7C", outClusters:"0005,0019,0020,1000", manufacturer:"IKEA of Sweden"
 
         fingerprint deviceJoinName:"Iris 3210-L Plug", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0B04,0B05,FC03", outClusters:"0019", model:"3210-L", manufacturer:"CentraLite"
+
+        fingerprint model:"3320-L", manufacturer:"CentraLite", profileId:"0104", endpointId:"01", inClusters:"0000,0001,0003,0020,0402,0500,0B05", outClusters:"0019"
 
         fingerprint deviceJoinName:"Sylvania Outlet", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0B05,FC01,FC08", outClusters:"0003,0019", model:"PLUG", manufacturer:"LEDVANCE"
 
@@ -130,6 +132,7 @@ ArrayList<String> refresh() {
 
 void ping() {
     if(enablePing == false) {
+        logging("ping() is DISABLED in Preferences", 100)
         unschedule('ping')
     } else if(hasCorrectCheckinEvents(25, false) == false){
         logging("ping()", 100)
@@ -143,6 +146,8 @@ void ping() {
             }
         }
         sendZigbeeCommands(cmd)
+    } else {
+        logging("SKIPPING ping() since there has been events received during the last 25 minutes...", 100)
     }
 }
 
@@ -328,7 +333,7 @@ ArrayList<String> off() {
 private String getDriverVersion() {
     comment = "Works with Generic Outlets (please report your fingerprints)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0804b"
+    String version = "v0.8.2.0806b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

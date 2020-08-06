@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0730b
+ *  Version: v0.8.2.0806b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -134,6 +134,7 @@ ArrayList<String> refresh() {
 
 void ping() {
     if(enablePing == false) {
+        logging("ping() is DISABLED in Preferences", 100)
         unschedule('ping')
     } else if(hasCorrectCheckinEvents(25, false) == false){
         logging("ping()", 100)
@@ -147,6 +148,8 @@ void ping() {
             }
         }
         sendZigbeeCommands(cmd)
+    } else {
+        logging("SKIPPING ping() since there has been events received during the last 25 minutes...", 100)
     }
 }
 
@@ -383,7 +386,7 @@ void setLevel(level, duration) {
 private String getDriverVersion() {
     comment = "Works with Generic Dimmers (only tested with the Nue Dimmer, might need changes for other devices. Please report your fingerprints and progress.)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0730b"
+    String version = "v0.8.2.0806b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
