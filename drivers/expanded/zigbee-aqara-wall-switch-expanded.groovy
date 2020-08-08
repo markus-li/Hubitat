@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0804b
+ *  Version: v0.8.2.0809b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -772,7 +772,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0804b"
+    String version = "v0.8.2.0809b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1993,9 +1993,9 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     }
 }
 
-private BigDecimal currentTemperatureInCelciusAlternative() {
+private BigDecimal currentTemperatureInCelsiusAlternative(BigDecimal providedCurrentTemp = null) {
     String currentTempUnitDisplayed = tempUnitDisplayed
-    BigDecimal currentTemp = device.currentValue('temperature')
+    BigDecimal currentTemp = providedCurrentTemp != null ? providedCurrentTemp : device.currentValue('temperature')
     if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
         if(location.temperatureScale == "C") {
             currentTempUnitDisplayed = "1"
@@ -2010,6 +2010,18 @@ private BigDecimal currentTemperatureInCelciusAlternative() {
         currentTemp = currentTemp - 273.15
     }
     return currentTemp
+}
+
+void sendAbsoluteHumidityEvent(BigDecimal deviceTempInCelsius, BigDecimal relativeHumidity) {
+    if(relativeHumidity != null && deviceTempInCelsius != null) {
+        BigDecimal numerator = (6.112 * Math.exp((17.67 * deviceTempInCelsius) / (deviceTempInCelsius + 243.5)) * relativeHumidity * 2.1674) 
+        BigDecimal denominator = deviceTempInCelsius + 273.15 
+        BigDecimal absHumidity = numerator / denominator
+        String cubeChar = String.valueOf((char)(179))
+        absHumidity = absHumidity.setScale(1, BigDecimal.ROUND_HALF_UP)
+        logging("Sending Absolute Humidity event (Absolute Humidity: ${absHumidity}g/m${cubeChar})", 100)
+        sendEvent( name: "absoluteHumidity", value: absHumidity, unit: "g/m${cubeChar}", descriptionText: "Absolute Humidity Is ${absHumidity} g/m${cubeChar}" )
+    }
 }
 
 private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.2.0804b
+ *  Version: v0.6.2.0809b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -325,7 +325,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with model SNZB-02."
     if(comment != "") state.comment = comment
-    String version = "v0.6.2.0804b"
+    String version = "v0.6.2.0809b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1291,6 +1291,9 @@ void zigbee_sensor_parseSendTemperatureEvent(Integer rawValue, BigDecimal varian
         if(oldT == null || tChange > variance) {
             logging("Sending temperature event (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 100)
             sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
+            if(reportAbsoluteHumidity == true) {
+                sendAbsoluteHumidityEvent(currentTemperatureInCelsiusAlternative(t), device.currentValue('humidity'));
+            }
         } else {
             logging("SKIPPING temperature event since the change wasn't large enough (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 1)
         }
@@ -1327,7 +1330,7 @@ void zigbee_sensor_parseSendPressureEvent(Map msgMap) {
 
 void zigbee_sensor_parseSendHumidityEvent(Integer rawValue, BigDecimal variance = 0.02) {
     BigDecimal h = sensor_data_getAdjustedHumidity(rawValue / 100.0)
-    BigDecimal oldH = device.currentValue('humidity') == null ? null : device.currentValue('humidity')
+    BigDecimal oldH = device.currentValue('humidity')
     if(oldH != null) oldH = oldH.setScale(2, BigDecimal.ROUND_HALF_UP)
     BigDecimal hChange = null
     if(h <= 100) {
@@ -1343,13 +1346,7 @@ void zigbee_sensor_parseSendHumidityEvent(Integer rawValue, BigDecimal variance 
             logging("Sending humidity event (Humidity: $h%, old humidity: $oldH%, change: $hChange%)", 100)
             sendEvent(name:"humidity", value: h, unit: "%", isStateChange: true)
             if(reportAbsoluteHumidity == true) {
-                BigDecimal deviceTemp = currentTemperatureInCelciusAlternative()
-                BigDecimal numerator = (6.112 * Math.exp((17.67 * deviceTemp) / (deviceTemp + 243.5)) * h * 2.1674) 
-                BigDecimal denominator = deviceTemp + 273.15 
-                BigDecimal absHumidity = numerator / denominator
-                absHumidity = absHumidity.setScale(1, BigDecimal.ROUND_HALF_UP)
-                logging("Sending Absolute Humidity event (Absolute Humidity: ${absHumidity}g/m³)", 100)
-                sendEvent( name: "absoluteHumidity", value: absHumidity, unit: "g/m³", descriptionText: "Absolute Humidity Is ${absHumidity} g/m³" )
+                sendAbsoluteHumidityEvent(currentTemperatureInCelsiusAlternative(), h)
             }
         } else {
             logging("SKIPPING humidity event since the change wasn't large enough (Humidity: $h%, old humidity: $oldH%, change: $hChange%)", 1)
@@ -1655,9 +1652,9 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
     }
 }
 
-private BigDecimal currentTemperatureInCelciusAlternative() {
+private BigDecimal currentTemperatureInCelsiusAlternative(BigDecimal providedCurrentTemp = null) {
     String currentTempUnitDisplayed = tempUnitDisplayed
-    BigDecimal currentTemp = device.currentValue('temperature')
+    BigDecimal currentTemp = providedCurrentTemp != null ? providedCurrentTemp : device.currentValue('temperature')
     if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
         if(location.temperatureScale == "C") {
             currentTempUnitDisplayed = "1"
@@ -1672,6 +1669,18 @@ private BigDecimal currentTemperatureInCelciusAlternative() {
         currentTemp = currentTemp - 273.15
     }
     return currentTemp
+}
+
+void sendAbsoluteHumidityEvent(BigDecimal deviceTempInCelsius, BigDecimal relativeHumidity) {
+    if(relativeHumidity != null && deviceTempInCelsius != null) {
+        BigDecimal numerator = (6.112 * Math.exp((17.67 * deviceTempInCelsius) / (deviceTempInCelsius + 243.5)) * relativeHumidity * 2.1674) 
+        BigDecimal denominator = deviceTempInCelsius + 273.15 
+        BigDecimal absHumidity = numerator / denominator
+        String cubeChar = String.valueOf((char)(179))
+        absHumidity = absHumidity.setScale(1, BigDecimal.ROUND_HALF_UP)
+        logging("Sending Absolute Humidity event (Absolute Humidity: ${absHumidity}g/m${cubeChar})", 100)
+        sendEvent( name: "absoluteHumidity", value: absHumidity, unit: "g/m${cubeChar}", descriptionText: "Absolute Humidity Is ${absHumidity} g/m${cubeChar}" )
+    }
 }
 
 private BigDecimal sensor_data_getAdjustedHumidity(BigDecimal value) {
