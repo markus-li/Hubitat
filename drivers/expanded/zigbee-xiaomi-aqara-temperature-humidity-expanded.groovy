@@ -272,7 +272,10 @@ ArrayList<String> parse(String description) {
                 zigbee_sensor_parseSendHumidityEvent(msgMap["value"]["humidity"], 1.00)
             }
             if(msgMap["value"].containsKey("pressure")) {
-                zigbee_sensor_parseSendPressureEvent(msgMap["value"]["pressure"])
+                zigbee_sensor_parseSendPressureEvent([
+                    "attrId": "0000",
+                    "valueParsed": msgMap["value"]["pressure"]
+                ])
             }
 
             logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
