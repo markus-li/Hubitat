@@ -274,7 +274,7 @@ ArrayList<String> parse(String description) {
             if(msgMap["value"].containsKey("pressure")) {
                 zigbee_sensor_parseSendPressureEvent([
                     "attrId": "0000",
-                    "valueParsed": msgMap["value"]["pressure"]
+                    "valueParsed": msgMap["value"]["pressure"] / 100.0
                 ])
             }
 
