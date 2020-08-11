@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0809b
+ *  Version: v0.8.2.0811b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -265,9 +265,19 @@ ArrayList<String> parse(String description) {
             if(msgMap["value"].containsKey("battery")) {
                 parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
             }
+            if(msgMap["value"].containsKey("temperature")) {
+                zigbee_sensor_parseSendTemperatureEvent(msgMap["value"]["temperature"])
+            }
+            if(msgMap["value"].containsKey("humidity")) {
+                zigbee_sensor_parseSendHumidityEvent(msgMap["value"]["humidity"], 1.00)
+            }
+            if(msgMap["value"].containsKey("pressure")) {
+                zigbee_sensor_parseSendPressureEvent(msgMap["value"]["pressure"])
+            }
+
             logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
             sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))        
-
+            
             break
         default:
             switch(msgMap["clusterId"]) {
@@ -332,7 +342,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0809b"
+    String version = "v0.8.2.0811b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1292,7 +1302,7 @@ void zigbee_sensor_parseSendTemperatureEvent(Integer rawValue, BigDecimal varian
 
 void zigbee_sensor_parseSendPressureEvent(Map msgMap) {
     Integer rawValue = msgMap['valueParsed']
-    BigDecimal variance = 0.0
+    BigDecimal variance = 0.1
     if(msgMap["attrId"] == "0020") {
         rawValue = rawValue / 1000.0
     }

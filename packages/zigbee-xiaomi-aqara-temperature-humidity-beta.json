@@ -2,14 +2,14 @@
   "packageName": "Xiaomi/Aqara Temperature & Humidity Sensor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-08-09",
+  "dateReleased": "2020-08-11",
   "apps": [],
   "drivers": [
     {
       "id": "e928bd0e-4166-5b63-a0b0-90efbb1e7026",
       "internalId": 1345,
       "name": "Zigbee - Xiaomi/Aqara Temperature & Humidity Sensor",
-      "betaVersion": "v0.8.2.0809b",
+      "betaVersion": "v0.8.2.0811b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-aqara-temperature-humidity-expanded.groovy",
       "required": true
