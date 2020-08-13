@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0801
+ *  Version: v0.8.1.0814
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ metadata {
         // BEGIN:getZigbeeBatteryMetadataAttributes()
         attribute "batteryLastReplaced", "String"
         // END:  getZigbeeBatteryMetadataAttributes()
+        attribute "absoluteHumidity", "number"
 
         // BEGIN:getZigbeeBatteryCommands()
         command "resetBatteryReplacedDate"
@@ -96,6 +97,7 @@ metadata {
         input(name: "tempRes", type: "enum", title: styling_addTitleDiv("Temperature Resolution"), description: styling_addDescriptionDiv("Temperature sensor resolution (0..2 = maximum number of decimal places, default: 1)<br/>NOTE: If the 2nd decimal is a 0 (eg. 24.70) it will show without the last decimal (eg. 24.7)."), options: ["0", "1", "2"], defaultValue: "1", displayDuringSetup: true, required: false)
         input(name: "humidityOffset", type: "decimal", title: styling_addTitleDiv("Humidity Offset"), description: styling_addDescriptionDiv("Adjust the humidity by this many percent."), displayDuringSetup: true, required: false, range: "*..*")
         input(name: "humidityRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: 1)"), options: ["0", "1"], defaultValue: "1")
+        input(name: "reportAbsoluteHumidity", type: "bool", title: styling_addTitleDiv("Report Absolute Humidity"), description: styling_addDescriptionDiv("Also report Absolute Humidity. Default = Disabled"), defaultValue: false)
         if(getDeviceDataByName('hasPressure') == "True") {
             input(name: "pressureUnitConversion", type: "enum", title: styling_addTitleDiv("Displayed Pressure Unit"), description: styling_addDescriptionDiv("(default: kPa)"), options: ["mbar", "kPa", "inHg", "mmHg", "atm"], defaultValue: "kPa")
             input(name: "pressureRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: default)"), options: ["default", "0", "1", "2"], defaultValue: "default")
@@ -263,9 +265,22 @@ ArrayList<String> parse(String description) {
             if(msgMap["value"].containsKey("battery")) {
                 parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
             }
+            if(msgMap["value"].containsKey("temperature")) {
+                zigbee_sensor_parseSendTemperatureEvent(msgMap["value"]["temperature"])
+            }
+            if(msgMap["value"].containsKey("humidity")) {
+                zigbee_sensor_parseSendHumidityEvent(msgMap["value"]["humidity"], 1.00)
+            }
+            if(msgMap["value"].containsKey("pressure")) {
+                zigbee_sensor_parseSendPressureEvent([
+                    "attrId": "0000",
+                    "valueParsed": msgMap["value"]["pressure"] / 100.0
+                ])
+            }
+
             logging("Sending request to cluster 0x0000 for attribute 0x0005 (response to attrId: 0x${msgMap["attrId"]}) 1", 1)
             sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))        
-
+            
             break
         default:
             switch(msgMap["clusterId"]) {
@@ -330,7 +345,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0801"
+    String version = "v0.8.1.0814"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1037,6 +1052,11 @@ void reconnectEvent(BigDecimal forcedMinutes=null) {
 }
 
 void recoveryEvent(BigDecimal forcedMinutes=null) {
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        log.warn("Stopping Recovery feature due to Platform bug in 2.2.3!")
+        unschedule('recoveryEvent')
+        unschedule('reconnectEvent')
+    } else {
     try {
         recoveryEventDeviceSpecific()
     } catch(Exception e) {
@@ -1049,6 +1069,7 @@ void recoveryEvent(BigDecimal forcedMinutes=null) {
         if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
         unschedule('recoveryEvent')
         unschedule('reconnectEvent')
+    }
     }
 }
 
@@ -1075,6 +1096,10 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 
 void checkEventInterval(boolean displayWarnings=true) {
     logging("recoveryMode: $recoveryMode", 1)
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        recoveryMode = "Disabled";
+        log.warn("Disabling the Recovery feature due to Platform bug in 2.2.3!")
+    }
     if(recoveryMode == "Disabled") {
         unschedule('checkEventInterval')
     } else {
@@ -1277,6 +1302,9 @@ void zigbee_sensor_parseSendTemperatureEvent(Integer rawValue, BigDecimal varian
         if(oldT == null || tChange > variance) {
             logging("Sending temperature event (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 100)
             sendEvent(name:"temperature", value: t, unit: "$tempUnit", isStateChange: true)
+            if(reportAbsoluteHumidity == true) {
+                sendAbsoluteHumidityEvent(currentTemperatureInCelsiusAlternative(t), device.currentValue('humidity'));
+            }
         } else {
             logging("SKIPPING temperature event since the change wasn't large enough (Temperature: $t $tempUnit, old temp: $oldT, change: $tChange)", 1)
         }
@@ -1287,7 +1315,7 @@ void zigbee_sensor_parseSendTemperatureEvent(Integer rawValue, BigDecimal varian
 
 void zigbee_sensor_parseSendPressureEvent(Map msgMap) {
     Integer rawValue = msgMap['valueParsed']
-    BigDecimal variance = 0.0
+    BigDecimal variance = 0.1
     if(msgMap["attrId"] == "0020") {
         rawValue = rawValue / 1000.0
     }
@@ -1313,7 +1341,7 @@ void zigbee_sensor_parseSendPressureEvent(Map msgMap) {
 
 void zigbee_sensor_parseSendHumidityEvent(Integer rawValue, BigDecimal variance = 0.02) {
     BigDecimal h = sensor_data_getAdjustedHumidity(rawValue / 100.0)
-    BigDecimal oldH = device.currentValue('humidity') == null ? null : device.currentValue('humidity')
+    BigDecimal oldH = device.currentValue('humidity')
     if(oldH != null) oldH = oldH.setScale(2, BigDecimal.ROUND_HALF_UP)
     BigDecimal hChange = null
     if(h <= 100) {
@@ -1328,6 +1356,9 @@ void zigbee_sensor_parseSendHumidityEvent(Integer rawValue, BigDecimal variance 
         if(oldH == null || hChange > variance) {
             logging("Sending humidity event (Humidity: $h%, old humidity: $oldH%, change: $hChange%)", 100)
             sendEvent(name:"humidity", value: h, unit: "%", isStateChange: true)
+            if(reportAbsoluteHumidity == true) {
+                sendAbsoluteHumidityEvent(currentTemperatureInCelsiusAlternative(), h)
+            }
         } else {
             logging("SKIPPING humidity event since the change wasn't large enough (Humidity: $h%, old humidity: $oldH%, change: $hChange%)", 1)
         }
@@ -1629,6 +1660,37 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
 	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
 	} else {
        return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
+    }
+}
+
+private BigDecimal currentTemperatureInCelsiusAlternative(BigDecimal providedCurrentTemp = null) {
+    String currentTempUnitDisplayed = tempUnitDisplayed
+    BigDecimal currentTemp = providedCurrentTemp != null ? providedCurrentTemp : device.currentValue('temperature')
+    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
+        if(location.temperatureScale == "C") {
+            currentTempUnitDisplayed = "1"
+        } else {
+            currentTempUnitDisplayed = "2"
+        }
+    }
+
+    if (currentTempUnitDisplayed == "2") {
+        currentTemp = fahrenheitToCelsius(currentTemp)
+    } else if (currentTempUnitDisplayed == "3") {
+        currentTemp = currentTemp - 273.15
+    }
+    return currentTemp
+}
+
+void sendAbsoluteHumidityEvent(BigDecimal deviceTempInCelsius, BigDecimal relativeHumidity) {
+    if(relativeHumidity != null && deviceTempInCelsius != null) {
+        BigDecimal numerator = (6.112 * Math.exp((17.67 * deviceTempInCelsius) / (deviceTempInCelsius + 243.5)) * relativeHumidity * 2.1674) 
+        BigDecimal denominator = deviceTempInCelsius + 273.15 
+        BigDecimal absHumidity = numerator / denominator
+        String cubeChar = String.valueOf((char)(179))
+        absHumidity = absHumidity.setScale(1, BigDecimal.ROUND_HALF_UP)
+        logging("Sending Absolute Humidity event (Absolute Humidity: ${absHumidity}g/m${cubeChar})", 100)
+        sendEvent( name: "absoluteHumidity", value: absHumidity, unit: "g/m${cubeChar}", descriptionText: "Absolute Humidity Is ${absHumidity} g/m${cubeChar}" )
     }
 }
 

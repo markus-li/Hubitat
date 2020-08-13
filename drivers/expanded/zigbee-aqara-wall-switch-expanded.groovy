@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0801
+ *  Version: v0.8.1.0814
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -119,6 +119,9 @@ metadata {
         // END:  getDefaultMetadataPreferencesForDeviceTemperature()
         input(name: "powerOffset", type: "decimal", title: styling_addTitleDiv("Power Offset"), description: styling_addDescriptionDiv("Power Measurement Offset in Watt (-5000 to 5000, default: 0)"), defaultValue: "0", range: "-5000..5000")
         input(name: "powerMinimum", type: "decimal", title: styling_addTitleDiv("Power Minimum"), description: styling_addDescriptionDiv("Power Measurement Minimum in Watt, less than this amount is considered 0 (applied AFTER offset), default: 0)"), defaultValue: "0", range: "0..5000")
+        input(name: "pingType", type: "enum", title: styling_addTitleDiv("Ping Type"), 
+            description: styling_addDescriptionDiv("Try this if response times are slow, it MIGHT help. (default = Disabled)"),
+            options: ["Disabled", "Read Attribute"], defaultValue: "Disabled")
 	}
 }
 
@@ -161,7 +164,7 @@ Integer refresh(boolean connectButtons=false) {
             physicalButtons = 1
             break
         case "lumi.ctrl_neutral2":
-            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara Switch (QBKG03LM) detected: set to 6 buttons (physical 2)")
+            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Aqara Switch (QBKG03LM) detected: set to 5 buttons (physical 2)")
             physicalButtons = 2
             buttonCombos = 1
             break
@@ -223,6 +226,12 @@ Integer refresh(boolean connectButtons=false) {
             break
     }
 
+    if(pingType == "Read Attribute") {
+        Random rnd = new Random()
+        schedule("${rnd.nextInt(59)} ${rnd.nextInt(29)}/29 * * * ? *", 'ping')
+        ping()
+    }
+
     cmd += zigbee.readAttribute(0x000, 0x0005)
     logging("refresh cmd: $cmd", 1)
     sendZigbeeCommands(cmd)
@@ -240,6 +249,24 @@ void installed() {
     logging("installed()", 100)
     Integer physicalButtons = refresh(connectButtons=true)
     configureDevice(physicalButtons)
+}
+
+void ping() {
+    logging("ping()", 100)
+    /* If additional Ping types are needed, please contact the Developer */
+    List<String> cmd = []
+    switch(pingType) {
+        case "Read Attribute":
+            cmd += zigbee.readAttribute(CLUSTER_BASIC, 0x0004)
+            break
+        case null:
+        case "Disabled":
+        default:
+            unschedule("ping")
+            break
+    }
+    
+    sendZigbeeCommands(cmd)
 }
 
 void configureDevice(Integer physicalButtons) {
@@ -745,7 +772,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0801"
+    String version = "v0.8.1.0814"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1452,6 +1479,11 @@ void reconnectEvent(BigDecimal forcedMinutes=null) {
 }
 
 void recoveryEvent(BigDecimal forcedMinutes=null) {
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        log.warn("Stopping Recovery feature due to Platform bug in 2.2.3!")
+        unschedule('recoveryEvent')
+        unschedule('reconnectEvent')
+    } else {
     try {
         recoveryEventDeviceSpecific()
     } catch(Exception e) {
@@ -1464,6 +1496,7 @@ void recoveryEvent(BigDecimal forcedMinutes=null) {
         if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
         unschedule('recoveryEvent')
         unschedule('reconnectEvent')
+    }
     }
 }
 
@@ -1490,6 +1523,10 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 
 void checkEventInterval(boolean displayWarnings=true) {
     logging("recoveryMode: $recoveryMode", 1)
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        recoveryMode = "Disabled";
+        log.warn("Disabling the Recovery feature due to Platform bug in 2.2.3!")
+    }
     if(recoveryMode == "Disabled") {
         unschedule('checkEventInterval')
     } else {
@@ -1963,6 +2000,37 @@ private List sensor_data_getAdjustedTempAlternative(BigDecimal value) {
 	   return [tempUnit, (value + new BigDecimal(tempOffset)).setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
 	} else {
        return [tempUnit, value.setScale(res, BigDecimal.ROUND_HALF_UP), rawValue]
+    }
+}
+
+private BigDecimal currentTemperatureInCelsiusAlternative(BigDecimal providedCurrentTemp = null) {
+    String currentTempUnitDisplayed = tempUnitDisplayed
+    BigDecimal currentTemp = providedCurrentTemp != null ? providedCurrentTemp : device.currentValue('temperature')
+    if(currentTempUnitDisplayed == null || currentTempUnitDisplayed == "0") {
+        if(location.temperatureScale == "C") {
+            currentTempUnitDisplayed = "1"
+        } else {
+            currentTempUnitDisplayed = "2"
+        }
+    }
+
+    if (currentTempUnitDisplayed == "2") {
+        currentTemp = fahrenheitToCelsius(currentTemp)
+    } else if (currentTempUnitDisplayed == "3") {
+        currentTemp = currentTemp - 273.15
+    }
+    return currentTemp
+}
+
+void sendAbsoluteHumidityEvent(BigDecimal deviceTempInCelsius, BigDecimal relativeHumidity) {
+    if(relativeHumidity != null && deviceTempInCelsius != null) {
+        BigDecimal numerator = (6.112 * Math.exp((17.67 * deviceTempInCelsius) / (deviceTempInCelsius + 243.5)) * relativeHumidity * 2.1674) 
+        BigDecimal denominator = deviceTempInCelsius + 273.15 
+        BigDecimal absHumidity = numerator / denominator
+        String cubeChar = String.valueOf((char)(179))
+        absHumidity = absHumidity.setScale(1, BigDecimal.ROUND_HALF_UP)
+        logging("Sending Absolute Humidity event (Absolute Humidity: ${absHumidity}g/m${cubeChar})", 100)
+        sendEvent( name: "absoluteHumidity", value: absHumidity, unit: "g/m${cubeChar}", descriptionText: "Absolute Humidity Is ${absHumidity} g/m${cubeChar}" )
     }
 }
 

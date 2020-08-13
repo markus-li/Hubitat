@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0801
+ *  Version: v0.8.1.0814
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,11 +65,15 @@ metadata {
 
         fingerprint deviceJoinName:"Iris 3210-L Plug", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0B04,0B05,FC03", outClusters:"0019", model:"3210-L", manufacturer:"CentraLite"
 
+        fingerprint model:"3320-L", manufacturer:"CentraLite", profileId:"0104", endpointId:"01", inClusters:"0000,0001,0003,0020,0402,0500,0B05", outClusters:"0019"
+
         fingerprint deviceJoinName:"Sylvania Outlet", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0B05,FC01,FC08", outClusters:"0003,0019", model:"PLUG", manufacturer:"LEDVANCE"
 
         fingerprint deviceJoinName:"Sylvania Outlet", profileId:"C05E", endpointId:"03", inClusters:"1000,0000,0003,0004,0005,0006,0B04,FC0F", outClusters:"0019", model:"Plug 01", manufacturer:"OSRAM"
 
         fingerprint model:"SP 222", manufacturer:"innr", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0008,0B05,1000,FC82", outClusters:"000A,0019", application:"10"
+
+        fingerprint model:"outlet", manufacturer:"Samjin", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0004,0005,0006,0009,0B04,0B05", outClusters:"0003,0019", application:"11"
 
     }
 
@@ -128,6 +132,7 @@ ArrayList<String> refresh() {
 
 void ping() {
     if(enablePing == false) {
+        logging("ping() is DISABLED in Preferences", 100)
         unschedule('ping')
     } else if(hasCorrectCheckinEvents(25, false) == false){
         logging("ping()", 100)
@@ -141,6 +146,8 @@ void ping() {
             }
         }
         sendZigbeeCommands(cmd)
+    } else {
+        logging("SKIPPING ping() since there has been events received during the last 25 minutes...", 100)
     }
 }
 
@@ -326,7 +333,7 @@ ArrayList<String> off() {
 private String getDriverVersion() {
     comment = "Works with Generic Outlets (please report your fingerprints)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0801"
+    String version = "v0.8.1.0814"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1033,6 +1040,11 @@ void reconnectEvent(BigDecimal forcedMinutes=null) {
 }
 
 void recoveryEvent(BigDecimal forcedMinutes=null) {
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        log.warn("Stopping Recovery feature due to Platform bug in 2.2.3!")
+        unschedule('recoveryEvent')
+        unschedule('reconnectEvent')
+    } else {
     try {
         recoveryEventDeviceSpecific()
     } catch(Exception e) {
@@ -1045,6 +1057,7 @@ void recoveryEvent(BigDecimal forcedMinutes=null) {
         if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
         unschedule('recoveryEvent')
         unschedule('reconnectEvent')
+    }
     }
 }
 
@@ -1071,6 +1084,10 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 
 void checkEventInterval(boolean displayWarnings=true) {
     logging("recoveryMode: $recoveryMode", 1)
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        recoveryMode = "Disabled";
+        log.warn("Disabling the Recovery feature due to Platform bug in 2.2.3!")
+    }
     if(recoveryMode == "Disabled") {
         unschedule('checkEventInterval')
     } else {

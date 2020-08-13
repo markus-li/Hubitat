@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0801T
+ *  Version: v1.0.3.0814T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -163,6 +163,18 @@ TreeMap getDeviceConfigurations() {
          template: '{"NAME":"CESmartHLA-WF7","GPIO":[0,56,0,17,134,132,0,0,131,57,21,0,0],"FLAG":0,"BASE":18}',
          installCommands: [],
          deviceLink: 'https://templates.blakadder.com/ce_smart_home_LA-WF7.html'],
+
+        [typeId: 'mirebella-genio-i002741-light',
+         name: 'Mirabella Genio I002741 RGB+CCT Light',
+         template: '{"NAME":"GenioDLightRGB","GPIO":[0,0,0,0,38,37,0,0,41,39,40,0,0],"FLAG":0,"BASE":18}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/mirabella_genio_I002741.html'],
+
+        [typeId: 'mirebella-genio-i002742-light',
+         name: 'Mirabella Genio I002742 CCT Light',
+         template: '{"NAME":"GenioDLightCCT","GPIO":[0,0,0,0,0,0,0,0,47,0,37,0,0],"FLAG":0,"BASE":48}',
+         installCommands: [],
+         deviceLink: 'https://templates.blakadder.com/mirabella_genio_I002742.html'],
 
         [typeId: 'awp02l-n-plug',
          name: 'AWP02L-N Plug',
@@ -367,6 +379,13 @@ TreeMap getDeviceConfigurations() {
         installCommands: [["TuyaMCU", "11,1"], ["TuyaMCU", "12,2"], 
                           ["TuyaMCU", "13,3"], ["TuyaMCU", "14,4"]],
         deviceLink: ''],
+
+        [typeId: 'feit-electric-dimmer',
+        name: 'Feit Electric Dimmer',
+        module: 54,
+        installCommands: [["TuyaMCU", "11,1"], ["TuyaMCU", "21,2"], 
+                          ["DimmerRange", "10,1000"]],
+        deviceLink: 'https://templates.blakadder.com/feit_electric-DIM-WIFI.html'],
 
         [typeId: 'sonoff-powr2', 
         name: 'Sonoff POW R2',
@@ -1592,7 +1611,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.3.0801T"
+    String version = "v1.0.3.0814T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

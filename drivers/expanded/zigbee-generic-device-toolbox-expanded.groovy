@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0801
+ *  Version: v0.8.1.0814
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -318,7 +318,7 @@ void getRouteTable() {
 private String getDriverVersion() {
     comment = "Used to clean device data and get Zigbee device fingerprints"
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0801"
+    String version = "v0.8.1.0814"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1025,6 +1025,11 @@ void reconnectEvent(BigDecimal forcedMinutes=null) {
 }
 
 void recoveryEvent(BigDecimal forcedMinutes=null) {
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        log.warn("Stopping Recovery feature due to Platform bug in 2.2.3!")
+        unschedule('recoveryEvent')
+        unschedule('reconnectEvent')
+    } else {
     try {
         recoveryEventDeviceSpecific()
     } catch(Exception e) {
@@ -1037,6 +1042,7 @@ void recoveryEvent(BigDecimal forcedMinutes=null) {
         if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
         unschedule('recoveryEvent')
         unschedule('reconnectEvent')
+    }
     }
 }
 
@@ -1063,6 +1069,10 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 
 void checkEventInterval(boolean displayWarnings=true) {
     logging("recoveryMode: $recoveryMode", 1)
+    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
+        recoveryMode = "Disabled";
+        log.warn("Disabling the Recovery feature due to Platform bug in 2.2.3!")
+    }
     if(recoveryMode == "Disabled") {
         unschedule('checkEventInterval')
     } else {

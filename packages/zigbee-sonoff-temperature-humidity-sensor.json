@@ -2,7 +2,7 @@
   "packageName": "Sonoff Temperature & Humidity Sensor",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-08-01",
+  "dateReleased": "2020-08-14",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-temperature-humidity-sensor-beta.json",
   "apps": [],
   "drivers": [
@@ -10,7 +10,7 @@
       "id": "d24d46ec-ee9f-56da-8a11-05793946b2bf",
       "internalId": 1604,
       "name": "Zigbee - Sonoff Temperature & Humidity Sensor",
-      "version": "v0.6.1.0801",
+      "version": "v0.6.1.0814",
       "namespace": "markusl",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-sonoff-temperature-humidity-sensor-expanded.groovy",
       "required": true
