@@ -914,6 +914,8 @@ def main():
         #{'id': 163, 'file': 'tasmota-connect-test.groovy' },
         {'id': 289, 'id_2': 66, 'file': 'tasmota-device-manager.groovy', 'required': True, 'oauth': False, 'publish': True },
 
+        # Data API
+        {'id': 641, 'id_2': 0, 'file': 'data-api.groovy', 'required': True, 'oauth': True, 'publish': False },
         # Dashboard Apps
         {'id': 481, 'id_2': 97, 'file': 'smartly-enhanced-dashboard.groovy', 'required': True, 'oauth': True, 'publish': False },
         {'id': 513, 'id_2': 0, 'file': 'smartly-enhanced-dashboard-background-image.groovy', 'required': True, 'oauth': True,
