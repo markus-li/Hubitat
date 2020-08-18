@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.6.2.0814b
+ *  Version: v0.6.2.0818b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ metadata {
         capability "Sensor"
         capability "PresenceSensor"
         capability "Initialize"
+        capability "Refresh"
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
         capability "Battery"
@@ -136,6 +137,8 @@ ArrayList<String> refreshActual(String newModelToSet) {
 
     ArrayList<String> cmd = []
     logging("refresh cmd: $cmd", 1)
+    /* refreshEvents() just sends all current states again, it's a hack for HubConnect */
+    refreshEvents()
     return cmd
 }
 
@@ -466,7 +469,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with model SNZB-01."
     if(comment != "") state.comment = comment
-    String version = "v0.6.2.0814b"
+    String version = "v0.6.2.0818b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -640,6 +643,14 @@ private getCOMMAND_PAUSE() { 0x02 }
 private getENCODING_SIZE() { 0x39 }
 
 void updateNeededSettings() {
+}
+
+void refreshEvents() {
+    List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
+    currentStatesList.each {
+        sendEvent(name: it.name, value: it.value, unit: it.unit, isStateChange: true, descriptionText: "Refresh Command")
+        
+    }
 }
 
 ArrayList<String> zigbeeCommand(Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {

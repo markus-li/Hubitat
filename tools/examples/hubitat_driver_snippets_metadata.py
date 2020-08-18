@@ -28,6 +28,7 @@ def getDefaultMetadataCapabilitiesForZigbeeDevices():
 capability "Sensor"
 capability "PresenceSensor"
 capability "Initialize"
+capability "Refresh"
 """
 
 def getDefaultMetadataCapabilitiesForEnergyMonitor():

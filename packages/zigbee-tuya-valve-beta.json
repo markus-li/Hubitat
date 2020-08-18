@@ -2,14 +2,14 @@
   "packageName": "Tuya Valve",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-08-14",
+  "dateReleased": "2020-08-18",
   "apps": [],
   "drivers": [
     {
       "id": "1259ac47-0295-5af6-8bf9-000385448e9b",
       "internalId": 1633,
       "name": "Zigbee - Tuya Valve",
-      "betaVersion": "v0.8.2.0814b",
+      "betaVersion": "v0.8.2.0818b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-tuya-valve-expanded.groovy",
       "required": true

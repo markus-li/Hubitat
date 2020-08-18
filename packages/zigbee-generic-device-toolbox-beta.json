@@ -2,14 +2,14 @@
   "packageName": "Generic Device Toolbox",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-08-14",
+  "dateReleased": "2020-08-18",
   "apps": [],
   "drivers": [
     {
       "id": "1d2aa518-1b0e-50d9-b0af-e1377cf52160",
       "internalId": 1698,
       "name": "Zigbee - Generic Device Toolbox",
-      "betaVersion": "v0.8.2.0814b",
+      "betaVersion": "v0.8.2.0818b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-device-toolbox-expanded.groovy",
       "required": true
