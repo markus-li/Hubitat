@@ -2,7 +2,7 @@
   "packageName": "Xiaomi/Aqara Plug/Outlet",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-08-29",
+  "dateReleased": "2020-08-30",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-plug-outlet-beta.json",
   "apps": [],
   "drivers": [
@@ -10,7 +10,7 @@
       "id": "794b9bb5-41d2-5917-ad46-79b0f211c8d0",
       "internalId": 1185,
       "name": "Zigbee - Xiaomi/Aqara Plug/Outlet",
-      "version": "v0.8.1.0829",
+      "version": "v0.8.1.0830",
       "namespace": "markusl",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-xiaomi-aqara-plug-outlet-expanded.groovy",
       "required": true
