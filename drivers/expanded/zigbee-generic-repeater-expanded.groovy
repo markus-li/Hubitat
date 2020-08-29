@@ -485,11 +485,7 @@ void updateNeededSettings() {
 }
 
 void refreshEvents() {
-    List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
-    currentStatesList.each {
-        sendEvent(name: it.name, value: it.value, unit: it.unit, isStateChange: true, descriptionText: "Refresh Command")
         
-    }
 }
 
 ArrayList<String> zigbeeCommand(Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {
