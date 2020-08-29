@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0829T
+ *  Version: v1.0.3.0830T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -651,7 +651,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.3.0829T"
+    String version = "v1.0.3.0830T"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -1333,6 +1333,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 

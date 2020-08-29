@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0829
+ *  Version: v0.8.1.0830
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -776,7 +776,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0829"
+    String version = "v0.8.1.0830"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -850,6 +850,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 
@@ -953,11 +961,7 @@ void updateNeededSettings() {
 }
 
 void refreshEvents() {
-    List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
-    currentStatesList.each {
-        sendEvent(name: it.name, value: it.value, unit: it.unit, isStateChange: true, descriptionText: "Refresh Command")
         
-    }
 }
 
 ArrayList<String> zigbeeCommand(Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {
@@ -1786,14 +1790,6 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 
 void refresh(String cmd) {
     deviceCommand(cmd)
-}
-
-void toggle() {
-    if(device.currentValue('switch') == 'on') {
-        off()
-    } else {
-        on()
-    }
 }
 
 def installedDefault() {

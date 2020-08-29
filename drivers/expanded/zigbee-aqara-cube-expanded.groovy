@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0829b
+ *  Version: v0.8.2.0830b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -89,6 +89,8 @@ metadata {
         fingerprint deviceJoinName: "Aqara Cube", profileId: "0104", inClusters: "0000,0003,0019,0012", outClusters: "0000,0004,0003,0005,0019,0012"
         fingerprint deviceJoinName: "Aqara Cube", profileId: "0104", inClusters: "0000,0003,0019,0012", outClusters: "0000,0004,0003,0005,0019,0012", model: "lumi.sensor_cube"
         fingerprint deviceJoinName: "Aqara Cube", profileId: "0104", deviceId: "5F01", inClusters: "0000,0003,0019,0012", outClusters: "0000,0004,0003,0005,0019,0012", model: "lumi.sensor_cube"
+
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0001,0012,0006", outClusters:"0000,0003,0019", model:"lumi.remote.cagl01", manufacturer:"LUMI" 
 
     }
 
@@ -228,6 +230,7 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
+    logging("msgMap: ${msgMap}", 100)
 
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_FF01":
@@ -566,7 +569,7 @@ String firstToUppercase(String text) {
 private String getDriverVersion() {
     comment = "Works with model MFKZQ01LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0829b"
+    String version = "v0.8.2.0830b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -640,6 +643,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 
@@ -743,11 +754,7 @@ void updateNeededSettings() {
 }
 
 void refreshEvents() {
-    List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
-    currentStatesList.each {
-        sendEvent(name: it.name, value: it.value, unit: it.unit, isStateChange: true, descriptionText: "Refresh Command")
         
-    }
 }
 
 ArrayList<String> zigbeeCommand(Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {
@@ -1576,14 +1583,6 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 
 void refresh(String cmd) {
     deviceCommand(cmd)
-}
-
-void toggle() {
-    if(device.currentValue('switch') == 'on') {
-        off()
-    } else {
-        on()
-    }
 }
 
 def installedDefault() {

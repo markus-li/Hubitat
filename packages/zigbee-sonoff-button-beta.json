@@ -2,14 +2,14 @@
   "packageName": "Sonoff Button",
   "minimumHEVersion": "2.1.9",
   "author": "Markus",
-  "dateReleased": "2020-08-29",
+  "dateReleased": "2020-08-30",
   "apps": [],
   "drivers": [
     {
       "id": "959d015b-32b4-5acf-a31c-01c71b48d746",
       "internalId": 1601,
       "name": "Zigbee - Sonoff Button",
-      "betaVersion": "v0.6.2.0829b",
+      "betaVersion": "v0.6.2.0830b",
       "namespace": "markusl",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-button-expanded.groovy",
       "required": true

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.1.0829
+ *  Version: v0.8.1.0830
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ metadata {
         fingerprint deviceJoinName: "Aqara Motion Sensor (RTCGQ11LM) v1", model: "lumi.sensor_motion.aq2", endpointId: "01", profileId: "0104", deviceId: "0107", inClusters: "0000,FFFF,0406,0400", outClusters: "0000,0019", manufacturer: "LUMI"
 		fingerprint deviceJoinName: "Aqara Motion Sensor (RTCGQ11LM) v2", model: "lumi.sensor_motion.aq2", endpointId: "01", profileId: "0104", deviceId: "0107", inClusters: "0000,FFFF,0406,0400,0500,0001,0003", outClusters: "0000,0019", manufacturer: "LUMI"
 
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0406,0003,0001", outClusters:"0003,0019", model:"lumi.motion.agl02", manufacturer:"LUMI" 
     }
 
     preferences {
@@ -116,11 +117,17 @@ ArrayList<String> refresh() {
     setLogsOffTask(noLogWarning=true)
     state.remove("prefsSetCount")
     
-    setCleanModelName(newModelToSet=null, acceptedModels=[
+    String model = setCleanModelName(newModelToSet=null, acceptedModels=[
+        "lumi.motion.agl02",
         "lumi.sensor_motion.aq2",
         "lumi.sensor_motion.agl01",
         "lumi.sensor_motion"
     ])
+
+    if(model == "lumi.motion.agl02") {
+        logging("T1 Motion Sensor Init", 100)
+        bindAndRetrieveT1SensorData()
+    }
 
     ArrayList<String> cmd = []
     
@@ -128,6 +135,18 @@ ArrayList<String> refresh() {
     /* refreshEvents() just sends all current states again, it's a hack for HubConnect */
     refreshEvents()
     return cmd
+}
+
+void bindAndRetrieveT1SensorData() {
+    ArrayList<String> cmd = []
+    String endpoint = '01'
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0003 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0406 {${device.zigbeeId}} {}", "delay 200",]
+    
+    cmd += ["zdo send ${device.deviceNetworkId} 0x$endpoint 0x01", "delay 200"]
+    
+    cmd += zigbee.readAttribute(0x0406, 0x0000)
+    sendZigbeeCommands(cmd)
 }
 
 void initialize() {
@@ -205,6 +224,7 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
+    logging("msgMap: ${msgMap}", 100)
     
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_FF01":
@@ -273,13 +293,23 @@ ArrayList<String> parse(String description) {
             break
         default:
             switch(msgMap["clusterId"]) {
+                case "0003":
+                    logging("Button press, re-binding T1 sensor clusters.", 100)
+                    bindAndRetrieveT1SensorData()
+
+                    break
                 case "0013":
                     //logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 0)
+                    if(getDeviceDataByName('model') == "lumi.motion.agl02") {
+                        logging("T1 Motion Sensor Init", 100)
+                        bindAndRetrieveT1SensorData()
+                    }
 
                     break
                 case "8004":
                     //logging("BROADCAST EVENT 8004 - description:${description} | parseMap:${msgMap}", 0)
                     break
+                case "8021":
                 case "8032":
                     //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
                     break
@@ -351,7 +381,7 @@ void resetToInactive() {
 private String getDriverVersion() {
     comment = "Works with models RTCGQ01LM & RTCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.1.0829"
+    String version = "v0.8.1.0830"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -425,6 +455,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 
@@ -528,11 +566,7 @@ void updateNeededSettings() {
 }
 
 void refreshEvents() {
-    List<com.hubitat.hub.domain.State> currentStatesList = device.getCurrentStates()
-    currentStatesList.each {
-        sendEvent(name: it.name, value: it.value, unit: it.unit, isStateChange: true, descriptionText: "Refresh Command")
         
-    }
 }
 
 ArrayList<String> zigbeeCommand(Integer cluster, Integer command, Map additionalParams, int delay = 200, String... payload) {
@@ -1361,14 +1395,6 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 
 void refresh(String cmd) {
     deviceCommand(cmd)
-}
-
-void toggle() {
-    if(device.currentValue('switch') == 'on') {
-        off()
-    } else {
-        on()
-    }
 }
 
 def installedDefault() {
