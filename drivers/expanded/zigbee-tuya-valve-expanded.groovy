@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0829b
+ *  Version: v0.8.2.0830b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -336,7 +336,7 @@ Integer valveCommandDirection(Integer originalCommand) {
 private String getDriverVersion() {
     comment = "Works with Tuya Valves."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0829b"
+    String version = "v0.8.2.0830b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -410,6 +410,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 
@@ -1346,14 +1354,6 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 
 void refresh(String cmd) {
     deviceCommand(cmd)
-}
-
-void toggle() {
-    if(device.currentValue('switch') == 'on') {
-        off()
-    } else {
-        on()
-    }
 }
 
 def installedDefault() {

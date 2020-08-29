@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0829b
+ *  Version: v0.8.2.0830b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -74,6 +74,8 @@ metadata {
 		fingerprint deviceJoinName: "Aqara Button (WXKG11LM) - 2018",                model: "lumi.remote.b1acn01",    inClusters: "0000,0012,0003",      outClusters: "0000", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
         
 		fingerprint deviceJoinName: "Aqara Button (WXKG12LM)",                       model: "lumi.sensor_switch.aq3", inClusters: "0000,0012,0006,0001", outClusters: "0000", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
+
+        fingerprint model:"lumi.remote.b1acn02", manufacturer:"LUMI", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0001", outClusters:"0003,0019,0006", application:"1E"
 
 		fingerprint deviceJoinName: "Aqara 1-button Light Switch (WXKG03LM) - 2016", model: "lumi.sensor_86sw1lu",    inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
 		fingerprint deviceJoinName: "Aqara 1-button Light Switch (WXKG03LM) - 2016", model: "lumi.sensor_86sw1",      inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
@@ -191,6 +193,10 @@ ArrayList<String> refreshActual(String newModelToSet) {
             sendEvent(name:"numberOfButtons", value: 4, isStateChange: false, descriptionText: "Aqara Button (WXKG12LM) detected: set to 4 buttons")
             updateDataValue("physicalButtons", "1")
             break
+        case "lumi.remote.b1acn02":
+            sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara Button (WXKG13LM) detected: set to 3 buttons")
+            updateDataValue("physicalButtons", "1")
+            break
         case "lumi.sensor_86sw1lu":
         case "lumi.sensor_86sw1":
             sendEvent(name:"numberOfButtons", value: 3, isStateChange: false, descriptionText: "Aqara 1-button Light Switch (WXKG03LM - 2016) detected: set to 3 buttons")
@@ -255,6 +261,7 @@ String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
         "lumi.sensor_switch.aq2",
         "lumi.sensor_switch",
         "lumi.remote.b1acn01",
+        "lumi.remote.b1acn02",
         "lumi.sensor_86sw1lu",
         "lumi.sensor_86sw1",
         "lumi.sensor_86sw2Un",
@@ -289,6 +296,7 @@ boolean isNonOppleModel(String model=null) {
         case "lumi.sensor_switch":
         case "lumi.sensor_switch.aq2":
         case "lumi.remote.b1acn01":
+        case "lumi.remote.b1acn02":
         case "lumi.sensor_switch.aq3":
         case "lumi.sensor_86sw1lu":
         case "lumi.sensor_86sw1":
@@ -322,6 +330,7 @@ boolean isNonSwitchModel(String model=null) {
         case "lumi.sensor_switch":
         case "lumi.sensor_switch.aq2":
         case "lumi.remote.b1acn01":
+        case "lumi.remote.b1acn02":
         case "lumi.sensor_switch.aq3":
             return true
             break
@@ -389,6 +398,7 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
+    logging("msgMap: ${msgMap}", 100)
 
     String cModel = getDeviceDataByName('model')
     
@@ -467,6 +477,10 @@ ArrayList<String> parse(String description) {
             }
             
             refreshActual(model)
+            break
+        case "0001_0020":
+            logging("Battery Voltage Received - description:${description} | parseMap:${msgMap}", 1)
+            parseAndSendBatteryStatus(msgMap["valueParsed"] / 10.0)
             break
         case "0006_0000":
         case "0006_8000":
@@ -705,7 +719,7 @@ void parseOppoButtonEvent(Map msgMap) {
 private String getDriverVersion() {
     comment = "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0829b"
+    String version = "v0.8.2.0830b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -779,6 +793,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 
@@ -1715,14 +1737,6 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 
 void refresh(String cmd) {
     deviceCommand(cmd)
-}
-
-void toggle() {
-    if(device.currentValue('switch') == 'on') {
-        off()
-    } else {
-        on()
-    }
 }
 
 def installedDefault() {

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0829b
+ *  Version: v0.8.2.0830b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -71,6 +71,8 @@ metadata {
 
         fingerprint deviceJoinName: "Aqara Contact Sensor (MCCGQ11LM)", model: "lumi.sensor_magnet.aq2", profileId: "0104", deviceId: "5F01", inClusters: "0000,0003,FFFF,0006", outClusters: "0000,0004,FFFF", manufacturer: "LUMI"
 
+        fingerprint model:"lumi.magnet.agl02", manufacturer:"LUMI", profileId:"0104", endpointId:"01", inClusters:"0000,0003,0500,0001", outClusters:"0019", application:"1C"
+
         }
 
     preferences {
@@ -124,11 +126,17 @@ ArrayList<String> refresh() {
     setLogsOffTask(noLogWarning=true)
     state.remove("prefsSetCount")
     
-    setCleanModelName(newModelToSet=null, acceptedModels=[
+    String model = setCleanModelName(newModelToSet=null, acceptedModels=[
+        "lumi.magnet.agl02",
         "lumi.sensor_magnet.aq2",
         "lumi.sensor_magnet.agl01",
         "lumi.sensor_magnet"
     ])
+
+    if(model == "lumi.magnet.agl02") {
+        logging("T1 Sensor Init", 100)
+        bindAndRetrieveT1SensorData()
+    }
 
     ArrayList<String> cmd = []
     
@@ -136,6 +144,19 @@ ArrayList<String> refresh() {
     /* refreshEvents() just sends all current states again, it's a hack for HubConnect */
     refreshEvents()
     return cmd
+}
+
+void bindAndRetrieveT1SensorData() {
+    ArrayList<String> cmd = []
+    String endpoint = '01'
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0003 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0500 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["he cr 0x${device.deviceNetworkId} ${endpointId} 0x0001 0 0x10 0 0xE10 {}", "delay 200"]
+    
+    cmd += ["zdo send ${device.deviceNetworkId} 0x$endpoint 0x01", "delay 200"]
+    
+    cmd += zigbee.readAttribute(0x0500, 0x0000)
+    sendZigbeeCommands(cmd)
 }
 
 void initialize() {
@@ -225,6 +246,7 @@ ArrayList<String> parse(String description) {
     }
     logging("msgMap: ${msgMap}", 1)
     // END:  getGenericZigbeeParseHeader(loglevel=1)
+    logging("msgMap: ${msgMap}", 100)
 
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_FF01":
@@ -309,6 +331,10 @@ ArrayList<String> parse(String description) {
                     break
                 case "0013":
                     logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
+                    if(getDeviceDataByName('model') == "lumi.magnet.agl02") {
+                        logging("T1 Motion Sensor Init", 100)
+                        bindAndRetrieveT1SensorData()
+                    }
 
                     break
                 case "8004":
@@ -367,7 +393,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models MCCGQ01LM & MCCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0829b"
+    String version = "v0.8.2.0830b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -441,6 +467,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 
@@ -1377,14 +1411,6 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 
 void refresh(String cmd) {
     deviceCommand(cmd)
-}
-
-void toggle() {
-    if(device.currentValue('switch') == 'on') {
-        off()
-    } else {
-        on()
-    }
 }
 
 def installedDefault() {

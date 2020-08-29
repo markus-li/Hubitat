@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0829b
+ *  Version: v0.8.2.0830b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ metadata {
 
         fingerprint deviceJoinName: "Keen Temperature, Humidity & Pressure Sensor (RS-THP-MP-1.0)", model: "RS-THP-MP-1.0", modelType: "Keen RS-THP-MP-1.0", endpointId: 01, application: 0x0A, inClusters: "0000,0003,0001,0020", outClusters: "0000,0004,0003,0005,0019,0402,0405,0403,0020", manufacturer: "LUMI"
 
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0402,0405,0403,0001", outClusters:"0019", model:"lumi.sensor_ht.agl02", manufacturer:"LUMI" 
     }
 
     preferences {
@@ -136,17 +137,36 @@ ArrayList<String> refresh() {
         "RS-THP-MP-1.0"
     ])
 
-    if(model == "lumi.weather" || model == "RS-THP-MP-1.0") {
+    if(model == "lumi.weather" || "lumi.sensor_ht.agl02" || model == "RS-THP-MP-1.0") {
         updateDataValue("hasPressure", "True")
     }
-    
+
     ArrayList<String> cmd = []
+
+    if(model == "lumi.sensor_ht.agl02") {
+        bindAndRetrieveT1SensorData()
+        cmd = []
+    }
     
     logging("refresh cmd: $cmd", 1)
     logging("Recovery Mode set as: $recoveryMode", 100)
     /* refreshEvents() just sends all current states again, it's a hack for HubConnect */
     refreshEvents()
     return cmd
+}
+
+void bindAndRetrieveT1SensorData() {
+    ArrayList<String> cmd = []
+    String endpoint = '01'
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0402 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0403 {${device.zigbeeId}} {}", "delay 200",]
+    cmd += ["zdo bind ${device.deviceNetworkId} 0x$endpoint 0x01 0x0405 {${device.zigbeeId}} {}", "delay 200",]
+
+    cmd += ["zdo send ${device.deviceNetworkId} 0x$endpoint 0x01", "delay 200"]
+    cmd += zigbee.readAttribute(0x0402, 0x0000)
+    cmd += zigbee.readAttribute(0x0403, 0x0000)
+    cmd += zigbee.readAttribute(0x0405, 0x0000)
+    sendZigbeeCommands(cmd)
 }
 
 void initialize() {
@@ -224,6 +244,7 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
+    logging("msgMap: ${msgMap}", 100)
 
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
         case "0000_0005":
@@ -287,6 +308,11 @@ ArrayList<String> parse(String description) {
             break
         default:
             switch(msgMap["clusterId"]) {
+                case "0003":
+                    logging("Button press, re-binding for temperature, humidity and pressure events.", 100)
+                    bindAndRetrieveT1SensorData()
+
+                    break
                 case "0013":
                     logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
 
@@ -348,7 +374,7 @@ void recoveryEventDeviceSpecific() {
 private String getDriverVersion() {
     comment = "Works with models WSDCGQ01LM & WSDCGQ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0829b"
+    String version = "v0.8.2.0830b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -422,6 +448,14 @@ void setLogsOffTask(boolean noLogWarning=false) {
             }
         }
         runIn(1800, "logsOff")
+    }
+}
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
     }
 }
 
@@ -1445,14 +1479,6 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 
 void refresh(String cmd) {
     deviceCommand(cmd)
-}
-
-void toggle() {
-    if(device.currentValue('switch') == 'on') {
-        off()
-    } else {
-        on()
-    }
 }
 
 def installedDefault() {
