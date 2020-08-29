@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0818b
+ *  Version: v0.8.2.0829b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ metadata {
         // BEGIN:getCommandsForZigbeePresence()
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
+        command "toggle"
 
         fingerprint model:"lumi.ctrl_86plug.aq1", profileId:"0104", endpointId:"01", inClusters:"0000,0004,0003,0006,0010,0005,000A,0001,0002,0400,0402,0405,0406", outClusters:"0019,000A", manufacturer:"LUMI"
 
@@ -335,7 +336,7 @@ ArrayList<String> off() {
 private String getDriverVersion() {
     comment = "Works with models ZNCZ02LM, ZNCZ12LM(needs testing) & QBCZ11LM."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0818b"
+    String version = "v0.8.2.0829b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1049,26 +1050,32 @@ void reconnectEvent(BigDecimal forcedMinutes=null) {
     recoveryEvent(forcedMinutes)
 }
 
+void disableRecoveryDueToBug() {
+    log.warn("Stopping Recovery feature due to Platform bug! Disabling the feature in Preferences. To use it again when the platform is stable, Enable it in Device Preferences.")
+    unschedule('recoveryEvent')
+    unschedule('reconnectEvent')
+    device.updateSetting('recoveryMode', 'Disabled')
+}
+
 void recoveryEvent(BigDecimal forcedMinutes=null) {
-    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
-        log.warn("Stopping Recovery feature due to Platform bug in 2.2.3!")
-        unschedule('recoveryEvent')
-        unschedule('reconnectEvent')
-    } else {
     try {
         recoveryEventDeviceSpecific()
     } catch(Exception e) {
         logging("recoveryEvent()", 1)
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
-    checkPresence(displayWarnings=false)
-    Integer mbe = getMaximumMinutesBetweenEvents(forcedMinutes=forcedMinutes)
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
-        if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
-        unschedule('recoveryEvent')
-        unschedule('reconnectEvent')
+    try {
+        checkPresence(displayWarnings=false)
+        Integer mbe = getMaximumMinutesBetweenEvents(forcedMinutes=forcedMinutes)
+        if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe, displayWarnings=false) == true) {
+            if(presenceWarningEnable == null || presenceWarningEnable == true) log.warn("Event interval normal, recovery mode DEACTIVATED!")
+            unschedule('recoveryEvent')
+            unschedule('reconnectEvent')
+        }
+    } catch(Exception e) {
+        disableRecoveryDueToBug()
     }
-    }
+    
 }
 
 void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
@@ -1094,19 +1101,19 @@ void scheduleRecoveryEvent(BigDecimal forcedMinutes=null) {
 
 void checkEventInterval(boolean displayWarnings=true) {
     logging("recoveryMode: $recoveryMode", 1)
-    if(location.hub.firmwareVersionString.startsWith('2.2.3') == true) {
-        recoveryMode = "Disabled";
-        log.warn("Disabling the Recovery feature due to Platform bug in 2.2.3!")
-    }
     if(recoveryMode == "Disabled") {
         unschedule('checkEventInterval')
     } else {
         prepareCounters()
         Integer mbe = getMaximumMinutesBetweenEvents()
-        if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
-            recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
-            if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
-            scheduleRecoveryEvent()
+        try {
+            if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=mbe) == false) {
+                recoveryMode = recoveryMode == null ? "Normal" : recoveryMode
+                if(displayWarnings == true && (presenceWarningEnable == null || presenceWarningEnable == true)) log.warn("Event interval INCORRECT, recovery mode ($recoveryMode) ACTIVE! If this is shown every hour for the same device and doesn't go away after three times, the device has probably fallen off and require a quick press of the reset button or possibly even re-pairing. It MAY also return within 24 hours, so patience MIGHT pay off.")
+                scheduleRecoveryEvent()
+            }
+        } catch(Exception e) {
+            disableRecoveryDueToBug()
         }
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
@@ -1340,6 +1347,15 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 void refresh(String cmd) {
     deviceCommand(cmd)
 }
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
+    }
+}
+
 def installedDefault() {
 	logging("installedDefault()", 100)
     

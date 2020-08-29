@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.4.0720Tb
+ *  Version: v1.0.4.0829Tb
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ metadata {
         capability "ChangeLevel"
         capability "Sensor"
         capability "Refresh"
+
+        command "toggle"
 
         // BEGIN:getDefaultMetadataCapabilitiesForEnergyMonitor()
         capability "VoltageMeasurement"
@@ -159,7 +161,7 @@ void stopLevelChange() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.4.0720Tb"
+    String version = "v1.0.4.0829Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

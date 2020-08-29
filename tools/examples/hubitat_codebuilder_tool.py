@@ -395,7 +395,7 @@ def main():
              
         {'id': 1122, 'id_2': 367, 'id_3': 0, 'file': 'zigbee-xiaomi-mijia-smart-light-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with model GZCGQ01LM.' },
-        {'id': 1121, 'id_2': 363, 'id_3': 0, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': default_zigbee_version,
+        {'id': 1121, 'id_2': 363, 'id_3': 353, 'file': 'zigbee-xiaomi-aqara-opple-button-switch-remote.groovy', 'version': default_zigbee_version,
          'comment': 'Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM.' },
         {'id': 1153, 'id_2': 322, 'file': 'zigbee-xiaomi-aqara-contact-sensor.groovy', 'version': default_zigbee_version,
          'comment': 'Works with models MCCGQ01LM & MCCGQ11LM.' },
@@ -420,13 +420,13 @@ def main():
          'comment': 'Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)', 'publish': False },
         
         # Zigbee - Sonoff
-        {'id': 1601, 'id_2': 424, 'id_3': 0, 'file': 'zigbee-sonoff-button.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1601, 'id_2': 424, 'id_3': 385, 'file': 'zigbee-sonoff-button.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-01.' },
-        {'id': 1602, 'id_2': 425, 'id_3': 0, 'file': 'zigbee-sonoff-contact-sensor.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1602, 'id_2': 425, 'id_3': 386, 'file': 'zigbee-sonoff-contact-sensor.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-04.' },
-        {'id': 1603, 'id_2': 426, 'id_3': 0, 'file': 'zigbee-sonoff-motion-sensor.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1603, 'id_2': 426, 'id_3': 387, 'file': 'zigbee-sonoff-motion-sensor.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-03.' },
-        {'id': 1604, 'id_2': 427, 'id_3': 0, 'file': 'zigbee-sonoff-temperature-humidity-sensor.groovy', 'version': default_zigbee_version_sonoff,
+        {'id': 1604, 'id_2': 427, 'id_3': 388, 'file': 'zigbee-sonoff-temperature-humidity-sensor.groovy', 'version': default_zigbee_version_sonoff,
          'comment': 'Works with model SNZB-02.' },
 
         # Zigbee - Tuya
@@ -648,6 +648,14 @@ def main():
     driver_files_active_3 = [
         #{'id': 801}, {'id': 547},
         #{'id': 865}, {'id': 866}, # Universal Drivers RELEASE
+
+        {'id': 1121}, # Xiaomi/Aqara Button/Switch
+
+        # Zigbee - Sonoff
+        {'id': 1601}, # Sonoff Button
+        {'id': 1602}, # Sonoff Contact
+        {'id': 1603}, # Sonoff Motion
+        {'id': 1604}, # Sonoff T&H
     ]
     expected_num_drivers = 1
 
