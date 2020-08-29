@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0720T
+ *  Version: v1.0.3.0829T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ metadata {
         capability "Switch"
         capability "Light"
         capability "Refresh"
+
+        command "toggle"
 
         // BEGIN:getMinimumChildAttributes()
         attribute   "driver", "string"
@@ -120,7 +122,7 @@ void off() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.3.0720T"
+    String version = "v1.0.3.0829T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

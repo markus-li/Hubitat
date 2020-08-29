@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0814T
+ *  Version: v1.0.3.0829T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ metadata {
         // BEGIN:getCommandsForPresence()
         command "resetRestoredCounter"
         // END:  getCommandsForPresence()
+        command "toggle"
         command "sendCommand", [[name:"Command*", type: "STRING", description: "Tasmota Command"],
             [name:"Argument", type: "STRING", description: "Argument (optional)"]]
         
@@ -1611,7 +1612,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.3.0814T"
+    String version = "v1.0.3.0829T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -2191,6 +2192,15 @@ String getDEGREE() { return String.valueOf((char)(176)) }
 void refresh(String cmd) {
     deviceCommand(cmd)
 }
+
+void toggle() {
+    if(device.currentValue('switch') == 'on') {
+        off()
+    } else {
+        on()
+    }
+}
+
 def installedDefault() {
 	logging("installedDefault()", 100)
     
@@ -2787,6 +2797,8 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
 
 String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
     String childDeviceNameRoot = getDeviceInfoByName('name')
+    String parentDeviceLabel = device.getLabel()
+    if(parentDeviceLabel != null) childDeviceNameRoot = parentDeviceLabel
     if(childDeviceNameRoot.toLowerCase().endsWith(' (parent)')) {
         childDeviceNameRoot = childDeviceNameRoot.substring(0, childDeviceNameRoot.length()-9)
     } else if(childDeviceNameRoot.toLowerCase().endsWith(' parent')) {

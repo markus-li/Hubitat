@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0814T
+ *  Version: v1.0.3.0829T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -651,7 +651,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.0.3.0814T"
+    String version = "v1.0.3.0829T"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -2230,6 +2230,8 @@ void tasmota_configureChildDevices(hubitat.scheduling.AsyncResponse asyncRespons
 
 String tasmota_getChildDeviceNameRoot(boolean keepType=false) {
     String childDeviceNameRoot = getDeviceInfoByName('name')
+    String parentDeviceLabel = device.getLabel()
+    if(parentDeviceLabel != null) childDeviceNameRoot = parentDeviceLabel
     if(childDeviceNameRoot.toLowerCase().endsWith(' (parent)')) {
         childDeviceNameRoot = childDeviceNameRoot.substring(0, childDeviceNameRoot.length()-9)
     } else if(childDeviceNameRoot.toLowerCase().endsWith(' parent')) {
