@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v1.0.3.0830T
+ *  Version: v1.0.3.0914T
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ String getDeviceInfoByName(infoName) {
 void parse(List<Map> description) {
     description.each {
         if (it.name in ["switch"]) {
+            sendEvent(it)
             it.name = "contact"
             it.value = (it.value == "on" ? "open" : "closed")
             logging(it.descriptionText, 100)
@@ -144,7 +145,7 @@ void close() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.0.3.0830T"
+    String version = "v1.0.3.0914T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

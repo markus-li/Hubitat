@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0914b
+ *  Version: v0.8.1.0914
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,11 +19,6 @@
  *
  */
 
-/* 
-   Some code is inspired by code from veeceeoh, it is however heavily modified. It comes from this driver:
-   github.com/veeceeoh/xiaomi-hubitat/blob/master/devicedrivers/xiaomi-cube-controller-hubitat.src/xiaomi-aqara-wireless-switch.groovy
- */
-
 // BEGIN:getDefaultImports()
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
@@ -33,7 +28,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-    definition (name: "Zigbee - Aqara Cube", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-cube-expanded.groovy") {
+	definition (name: "Zigbee - NOT WORKING IKEA Tradfri On/Off Switch", namespace: "markusl", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-ikea-tradfri-on-off-switch-expanded.groovy") {
         // BEGIN:getDefaultMetadataCapabilitiesForZigbeeDevices()
         capability "Sensor"
         capability "PresenceSensor"
@@ -42,15 +37,10 @@ metadata {
         // END:  getDefaultMetadataCapabilitiesForZigbeeDevices()
         
         capability "Battery"
-        capability "AccelerationSensor"
-        capability "ContactSensor"
-        capability "ThreeAxis"
         capability "PushableButton"
-
-        capability "Actuator"
-        capability "Switch"
-        capability "Light"
-        capability "SwitchLevel"
+		capability "HoldableButton"
+        capability "DoubleTapableButton"
+        capability "ReleasableButton"
         
         // BEGIN:getDefaultMetadataAttributes()
         attribute   "driver", "string"
@@ -64,9 +54,9 @@ metadata {
         // BEGIN:getZigbeeBatteryMetadataAttributes()
         attribute "batteryLastReplaced", "String"
         // END:  getZigbeeBatteryMetadataAttributes()
-        attribute "angle", "NUMBER"
-        attribute "face", "NUMBER"
 
+        attribute "lastHoldEpoch", "String"
+        
         // BEGIN:getZigbeeBatteryCommands()
         command "resetBatteryReplacedDate"
         // END:  getZigbeeBatteryCommands()
@@ -77,26 +67,12 @@ metadata {
         command "forceRecoveryMode", [[name:"Minutes*", type: "NUMBER", description: "Maximum minutes to run in Recovery Mode"]]
         // END:  getCommandsForZigbeePresence()
 
-        command "setFace", [[name:"Face*", type: "ENUM", description: "Cube Face Number", constraints: ["0", "1", "2", "3", "4", "5"]]]
-        command "flip90"
-        command "flip180"
-        command "slide"
-        command "knock"
-        command "rotateR"
-        command "rotateL"
-        command "shake"
+        command "initIKEAButton"
 
-        fingerprint deviceJoinName: "Aqara Cube", profileId: "0104", inClusters: "0000,0003,0019,0012", outClusters: "0000,0004,0003,0005,0019,0012"
-        fingerprint deviceJoinName: "Aqara Cube", profileId: "0104", inClusters: "0000,0003,0019,0012", outClusters: "0000,0004,0003,0005,0019,0012", model: "lumi.sensor_cube"
-        fingerprint deviceJoinName: "Aqara Cube", profileId: "0104", deviceId: "5F01", inClusters: "0000,0003,0019,0012", outClusters: "0000,0004,0003,0005,0019,0012", model: "lumi.sensor_cube"
-
-        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0001,0012,0006", outClusters:"0000,0003,0019", model:"lumi.remote.cagl01", manufacturer:"LUMI" 
-
-    }
+        fingerprint profileId:"0104", endpointId:"01", inClusters:"0000,0003,0001", outClusters:"0006,0003", model:"WB01", manufacturer:"eWeLink", application:"04"
+	}
 
     preferences {
-        input(name: "cubeMode", title: styling_addTitleDiv("Cube Mode"), description: styling_addDescriptionDiv("Select how many buttons to control"), type: "enum", options: [0: "Simple - 7 buttons", 1: "Advanced - 36 buttons", 2: "Combined - 43 buttons", 3: "Simple - 7 buttons (Legacy order)", 4: "Advanced - 36 buttons (Legacy order)", 5: "Combined - 43 buttons (Legacy order)"], defaultValue: 0, required: true)
-        input(name: "changePerDegree", type: "decimal", title: styling_addTitleDiv("Level Change per Degree"), description: styling_addDescriptionDiv("Amount of change in Level per degree turned (default = 0.5)"), defaultValue: "0.5", range: "0.1..10.0")
         // BEGIN:getDefaultMetadataPreferences(includeCSS=True, includeRunReset=False)
         input(name: "debugLogging", type: "bool", title: styling_addTitleDiv("Enable debug logging"), description: ""  + styling_getDefaultCSS(), defaultValue: false, submitOnChange: true, displayDuringSetup: false, required: false)
         input(name: "infoLogging", type: "bool", title: styling_addTitleDiv("Enable info logging"), description: "", defaultValue: true, submitOnChange: true, displayDuringSetup: false, required: false)
@@ -110,18 +86,21 @@ metadata {
         // BEGIN:getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
         input(name: "recoveryMode", type: "enum", title: styling_addTitleDiv("Recovery Mode"), description: styling_addDescriptionDiv("Select Recovery mode type (default: Normal)<br/>NOTE: The \"Insane\" and \"Suicidal\" modes may destabilize your mesh if run on more than a few devices at once!"), options: ["Disabled", "Slow", "Normal", "Insane", "Suicidal"], defaultValue: "Normal")
         // END:  getMetadataPreferencesForRecoveryMode(defaultMode="Normal")
-        // BEGIN:getMetadataPreferencesForZigbeeDevicesWithBattery()
-        input(name: "vMinSetting", type: "decimal", title: styling_addTitleDiv("Battery Minimum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 0% (default = 2.5V)"), defaultValue: "2.5", range: "2.1..2.8")
-        input(name: "vMaxSetting", type: "decimal", title: styling_addTitleDiv("Battery Maximum Voltage"), description: styling_addDescriptionDiv("Voltage when battery is considered to be at 100% (default = 3.0V)"), defaultValue: "3.0", range: "2.9..3.4")
-        // END:  getMetadataPreferencesForZigbeeDevicesWithBattery()
+        input(name: "enableReleaseEvents", type: "bool", title: styling_addTitleDiv("Enable Release Events"), description: styling_addDescriptionDiv("Records button Release events (default: enabled)"), defaultValue: true)
+        Integer physicalButtons = getDeviceDataByName('physicalButtons') != null ? getDeviceDataByName('physicalButtons').toInteger() :  0
+        List btnDeviceInputs = []
+        btnDeviceInputs += [name: "btnDevice1", type: "enum", title: styling_addTitleDiv("Child Device for button 1"), 
+            description: styling_addDescriptionDiv("Create a child device for button 1."),
+            options: ["None", "1 virtual switch", "1 virtual momentary switch"], defaultValue: "None"]
         
-    }
+        btnDeviceInputs.reverse().each { input(it) }
+	}
 }
 
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Zigbee - Aqara Cube', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-cube-expanded.groovy']
+    Map deviceInfo = ['name': 'Zigbee - NOT WORKING IKEA Tradfri On/Off Switch', 'namespace': 'markusl', 'author': 'Markus Liljergren', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-ikea-tradfri-on-off-switch-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -130,24 +109,35 @@ String getDeviceInfoByName(infoName) {
 /* These functions are unique to each driver */
 
 ArrayList<String> refresh() {
-    logging("refresh() model='${getDeviceDataByName('model')}'", 10)
-    
+    return refreshActual(null)
+}
+
+ArrayList<String> refreshActual(String newModelToSet) {
+    logging("refreshActual() model=$newModelToSet", 1)
+
+    sendEvent(name:"pushed", value: 0, isStateChange: false, descriptionText: "Refresh of pushed state")
+    sendEvent(name:"held", value: 0, isStateChange: false, descriptionText: "Refresh of held state")
+    sendEvent(name:"lastHoldEpoch", value: 0, isStateChange: false, descriptionText: "Refresh of lastHoldEpoch")
+    sendEvent(name:"doubleTapped", value: 0, isStateChange: false, descriptionText: "Refresh of double-tapped state")
+
     getDriverVersion()
-    configurePresence()
-    startCheckEventInterval()
     resetBatteryReplacedDate(forced=false)
     setLogsOffTask(noLogWarning=true)
-    
-    setCleanModelName(newModelToSet=null, acceptedModels=[
-        "lumi.sensor_cube"
-    ])
 
-    setNumberOfButtons()
-    state.remove("cubeMode")
-    state.remove("prefsSetCount")
+    String model = setCleanModelNameWithAcceptedModels(newModelToSet=newModelToSet)
+    switch(model) {
+        case "WB01":
+            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Xiaomi Button (WXKG01LM) detected: set to 5 buttons")
+            updateDataValue("physicalButtons", "1")
+            break
+        
+        default:
+            sendEvent(name:"numberOfButtons", value: 0, isStateChange: false, descriptionText: "UNKNOWN Button detected: set to 1 button")
+    }
+    configurePresence()
+    startCheckEventInterval()
 
     ArrayList<String> cmd = []
-    
     logging("refresh cmd: $cmd", 1)
     /* refreshEvents() just sends all current states again, it's a hack for HubConnect */
     refreshEvents()
@@ -157,18 +147,53 @@ ArrayList<String> refresh() {
 void initialize() {
     logging("initialize()", 100)
     unschedule()
-    refresh()
+    refreshActual(null)
+    configureDevice()
 }
 
 void installed() {
     logging("installed()", 100)
-    sendEvent(name:"level", value: 0, isStateChange: true)
-    refresh()
+    refreshActual(null)
+    configureDevice()
 }
 
 void updated() {
     logging("updated()", 100)
-    refresh()
+    createAllButtonChildren()
+    refreshActual(null)
+}
+
+void configureDevice() {
+    Integer endpointId = 1
+    ArrayList<String> cmd = []
+    cmd += zigbee.readAttribute(0x0000, [0x0001, 0x0004, 0x0005, 0x0006])
+    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0001 {${device.zigbeeId}} {}", "delay 200"]
+    cmd += ["zdo bind 0x${device.deviceNetworkId} ${endpointId} 0x01 0x0006 {${device.zigbeeId}} {}", "delay 200"]
+    cmd += zigbee.readAttribute(0x0001, [0x0020, 0x0021])
+    cmd += ["he cr 0x${device.deviceNetworkId} ${endpointId} 0x0001 0 0x10 0 0xE10 {}", "delay 200"]
+
+    sendZigbeeCommands(cmd)
+}
+
+String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
+    return setCleanModelName(newModelToSet=newModelToSet, acceptedModels=[
+        "TRADFRI on/off switch"
+    ])
+}
+
+boolean isSwitchModel(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "TRADFRI on/off switch":
+            return true
+            break
+        default:
+            return false
+    }
+}
+
+Integer getMINUTES_BETWEEN_EVENTS() {
+    return 140
 }
 
 ArrayList<String> parse(String description) {
@@ -230,52 +255,68 @@ ArrayList<String> parse(String description) {
     }
     //logging("msgMap: ${msgMap}", 0)
     // END:  getGenericZigbeeParseHeader(loglevel=0)
-    logging("msgMap: ${msgMap}", 100)
 
+    //logging("Parse START: description:${description} | parseMap:${msgMap}", 0)
+    
     switch(msgMap["cluster"] + '_' + msgMap["attrId"]) {
-        case "0000_FF01":
-        case "0000_FF02":
-            switch(msgMap["encoding"]) {
-                case "x4C":
-                    logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 4C) - description:${description} | parseMap:${msgMap}", 100)
-                    parseAndSendBatteryStatus(msgMap['value'][1] / 1000.0)
-                    break
-                case "42":
-                case "41":
-                    logging("KNOWN event (Xiaomi/Aqara specific data structure with battery data - 42) - description:${description} | parseMap:${msgMap}", 100)
-                    if(msgMap["value"].containsKey("battery")) {
-                        parseAndSendBatteryStatus(msgMap["value"]["battery"] / 1000.0)
-                    }
-                    break
-                default:
-                    log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
-                    break
-            }
-            break
-        case "0000_0005":
-            logging("Reset button pressed - description:${description} | parseMap:${msgMap}", 100)    
-            setCleanModelName(newModelToSet=msgMap["value"])
+        case "0000_0001":
+            logging("Application ID Received", 1)
+            updateApplicationId(msgMap['value'])
             
             break
-        case "0012_0055":
-            logging("Shake, Flip, Knock or Slide EVENT - description:${description} | parseMap:${msgMap}", 1)
-            sendMotionEvents(msgMap["value"])
+        case "0000_0004":
+            logging("Manufacturer Name Received (from readAttribute command) - description:${description} | parseMap:${msgMap}", 1)
+            
             break
-        case "000C_FF05":
-            if(msgMap.containsKey("additionalAttrs")) {
-                msgMap["additionalAttrs"][0]["valueParsed"] = zigbee_generic_decodeZigbeeData(msgMap["additionalAttrs"][0]["value"], msgMap["additionalAttrs"][0]["encoding"])
-                sendRotationEvents(Math.round(msgMap["additionalAttrs"][0]["valueParsed"]).intValue())
-            }
-            logging("Rotation 90/180 EVENT - description:${description} | parseMap:${msgMap}", 1)
+        case "0001_0020":
+        case "0001_0021":
+            logging("Battery data - description:${description} | parseMap:${msgMap}", 100)
+            zigbee_sonoff_parseBatteryData(msgMap)
+            
             break
         default:
             switch(msgMap["clusterId"]) {
-                case "0000":
-                    logging("BASIC CLUSTER COMMAND CONFIRMATION EVENT - description:${description} | parseMap:${msgMap}", 100)
-                break
+                case "0001":
+                    //logging("Broadcast catchall - description:${description} | parseMap:${msgMap}", 0)
+                    
+                    break
+                case "0006":
+                    logging("On/OFF Cluster Button Press Catchall (value: ${msgMap["value"]}, attrId: ${msgMap["attrId"]})", 1)
+                    Integer taps = 0
+                    switch(msgMap["command"]) {
+                        case "00":
+                            taps = 3
+                            sendEvent(name:"held", value: 1, isStateChange: true, descriptionText: "Button 1 was held")
+                            buttonHeld(1)
+                            break
+                        case "01":
+                            taps = 2
+                            sendEvent(name:"doubleTapped", value: 1, isStateChange: true, descriptionText: "Button 1 was double tapped")
+                            buttonDoubleTapped(1)
+                            break
+                        case "02":
+                            taps = 1
+                            buttonPushed(1)
+                            break
+                        default:
+                            log.warn "Unhandled Command PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
+                    }
+                    if(taps < 3) {
+                        sendEvent(name:"pushed", value: taps, isStateChange: true, descriptionText: "Button 1 was tapped $taps time(s)")
+                    } else {
+                        sendEvent(name:"pushed", value: taps, isStateChange: true, descriptionText: "Button 1 was held")
+                    }
+
+                    break
                 case "0013":
-                    logging("MULTISTATE CLUSTER EVENT - description:${description} | parseMap:${msgMap}", 100)
-                break
+                    //logging("Device Announcement Cluster - description:${description} | parseMap:${msgMap}", 0)
+                    
+                    configureDevice()
+
+                    break
+                case "8021":
+                    //logging("General catchall - description:${description} | parseMap:${msgMap}", 0)
+                    break
                 default:
                     log.warn "Unhandled Event PLEASE REPORT TO DEV - description:${description} | msgMap:${msgMap}"
                     break
@@ -283,7 +324,7 @@ ArrayList<String> parse(String description) {
             break
     }
 
-    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=90) == false) {
+    if(hasCorrectCheckinEvents(maximumMinutesBetweenEvents=140) == false) {
         sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
     }
     sendlastCheckinEvent(minimumMinutesToRepeat=30)
@@ -295,262 +336,138 @@ ArrayList<String> parse(String description) {
     // END:  getGenericZigbeeParseFooter(loglevel=0)
 }
 
-void setNumberOfButtons() {
-    List<Integer> numButtons = [7, 36, 43, 7, 36, 43]
-    if(cubeMode == null) {
-        device.updateSetting("cubeMode",[value:0,type:"number"])
-    }
-    Integer cubeModeNumber = getCurrentCubeMode()
-    logging("cubeMode 2: $cubeMode, cubeModeNumber: $cubeModeNumber", 1)
-    sendEvent(name: "numberOfButtons", value: numButtons[cubeModeNumber])
-    logging("Number of buttons set to ${numButtons[cubeModeNumber]}", 100)
-}
-
-Integer getCurrentFace() {
-    Integer faceNumber = device.currentValue("face")
-    return faceNumber == null ? 0 : faceNumber
-}
-
-Integer getCurrentCubeMode() {
-    return cubeMode == null ? 0 : Integer.parseInt(cubeMode)
-}
-
-void setFace(Integer faceId) {
-    Integer prevFaceId = getCurrentFace()
-    if(prevFaceId == faceId) {
-        sendFlipEvents(faceId, 0)
-    } else if(flipped180(prevFaceId, faceId) == true){
-        sendFlipEvents(faceId, 180)
+boolean sendReleaseEvent(Integer btn, String logText=null, String descriptionText=null) {
+    if(enableReleaseEvents == null || enableReleaseEvents == true) {
+        logText = logText == null ? "Button $btn was released (same push event as held)" : logText
+        descriptionText = descriptionText == null ? "Button $btn was released" : descriptionText
+        logging(logText, 100)
+        sendEvent(name:"released", value: btn, isStateChange: true, descriptionText: descriptionText)
+        return true
     } else {
-        sendFlipEvents(faceId, 90)
+        return false
     }
 }
 
-void sendMotionEvents(String value) {
-    String motionType = value[0..1]
-    String binaryValue = hexToBin(value[2..3])
-    Integer sourceFace = Integer.parseInt(binaryValue[2..4],2)
-    Integer targetFace = Integer.parseInt(binaryValue[5..7],2)
-    logging("motionType: $motionType, binaryValue: $binaryValue, sourceFace: $sourceFace, targetFace: $targetFace", 100)
-    switch(motionType) {
-        case "00":
-            switch(binaryValue[0..1]) {
-                case "00":
-                    if (targetFace == 0) {
-                        sendShakeEvents()
-                    }
-                    break
-                case "01":
-                    sendFlipEvents(targetFace, 90)
-                    break
-                case "10":
-                    sendFlipEvents(targetFace, 180)
-                    break
-            }
-            break
-        case "01":
-            sendSlideEvents(targetFace)
-            break
-        case "02":
-            sendKnockEvents(targetFace)
-            break
-        default:
-            log.warn("Unknown Motion Type!")
-            break
-    }
-}
+void parseButtonEvent(Map msgMap) {
+    Integer btn = Integer.parseInt(msgMap['value'], 16)
+    Integer endpoint = Integer.parseInt(msgMap['endpoint'], 16)
+    //logging("parseButtonEvent() (btn: ${btn}, attrId: ${msgMap["attrId"]}, endpoint: $endpoint, msgMap: $msgMap)", 0)
+    btn = btn == 18 ? 4 : btn
 
-void sendMotionPush(String type, Integer button, Integer face, String rotation = null, Integer angle = null) {
-    String descText = null
-    switch(type) {
-        case "flip":
-            if(rotation != null) {
-                descText = "Flip: $rotation$DEGREE (button: $button pushed, face: #$face)"
+    Integer totalButtons = device.currentValue('numberOfButtons')
+    Integer physicalButtons = getDeviceDataByName("physicalButtons") != null ? getDeviceDataByName("physicalButtons").toInteger() : 1
+    Integer btnModified = endpoint + ((btn-1) * physicalButtons)
+    logging("parseButtonEvent() (btn: $btn, btnModified: $btnModified, endpoint: $endpoint, physicalButtons: $physicalButtons, attrId: ${msgMap["attrId"]}, msgMap: $msgMap)", 1)
+    if((btn <= 4 && btn != 0 && ((isSwitchModel() && msgMap['attrId'] == '0000') || msgMap['attrId'] == '0055')) || (msgMap['attrId'] == '8000')) {
+        btnModified = btn <= 8 ? btnModified : 5
+        logging("Button $btnModified was pushed (t1)", 100)
+        if(btnModified <= physicalButtons) buttonPushed(btnModified)
+        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button was clicked $btn times")
+        if(btn == 2) {
+            logging("Button $endpoint was double tapped", 100)
+            buttonDoubleTapped(endpoint)
+            sendEvent(name:"doubleTapped", value: endpoint, isStateChange: true, descriptionText: "Button $endpoint was double tapped")
+        }
+    } else if(isSwitchModel() && btn == 0) {
+        btnModified = endpoint + (2 * physicalButtons)
+        logging("Button $endpoint was held (push event: $btnModified)", 100)
+        buttonHeld(endpoint)
+        sendEvent(name:"held", value: endpoint, isStateChange: true, descriptionText: "Button $endpoint was held")
+        sendReleaseEvent(endpoint)
+        logging("Button $btnModified was pushed (t2)", 100)
+        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $endpoint was held")
+    } else {
+        if(btn == 0 || btn == 16) {
+            if(getDeviceDataByName('model') == "lumi.sensor_switch.aq2") {
+                logging("Button 1 was pushed (t4)", 100)
+                buttonPushed(1)
+                sendEvent(name:"pushed", value: 1, isStateChange: true, descriptionText: "Button 1 was pushed")     
             } else {
-                descText = "Flip to face #$face (button: $button pushed)"
+                buttonDown(1)
+                sendEvent(name: "lastHoldEpoch", value: now(), isStateChange: true)
             }
-            break
-        case "rotation":
-            descText = "Rotation: $rotation (button: $button pushed, face: #$face, angle: $angle$DEGREE)"
-            break
-        case "shake":
-        case "slide":
-        case "knock":
-            descText = "${firstToUppercase(type)} detected with face #$face up (button: $button pushed)"
-            break
-        default:
-            descText = "Unknown Motion Push type '$type' (face: #$face, button: $button pushed)!"
-            log.warn(descText)
-            break
-    }
-    sendEvent([name: "pushed", value: button, descriptionText: descText, isStateChange: true])
-    logging(descText, 100)
-}
-
-boolean flipped180(Integer prevFaceId, targetFace) {
-    switch((prevFaceId * 0x10) + targetFace) {
-        case 0x03:
-        case 0x14:
-        case 0x25:
-        case 0x30:
-        case 0x41:
-        case 0x52:
-            return true
-            break
-        default:
-            return false
-            break
-    }
-}
-
-void sendFlipEvents(Integer targetFace, Integer flipType) {
-    if(flipType > 0) {
-        sendMotionPush("flip", Math.round((flipType / 90) + 1).intValue(), targetFace, "$flipType")
-    }
-
-    sendEvent([name: 'face', value: targetFace, isStateChange: true])
-    
-    sendMotionEvents("flip", targetFace, null, 1, 8)
-    
-    List<String> threeAxisValues = [
-        "[x:0,y:-1000,z:0]", 
-        "[x:-1000,y:0,z:0]",
-        "[x:0,y:0,z:1000]",
-        "[x:1000,y:0,z:0]",
-        "[x:0,y:1000,z:0]",
-        "[x:0,y:0,z:-1000]"]
-    sendEvent([name: "threeAxis", value: threeAxisValues[targetFace]])
-}
-
-void sendRotationPush(Integer button, String rotation, Integer face, Integer angle) {
-    sendMotionPush("rotation", button, face, rotation, angle)
-}
-
-void sendMotionEvents(String type, Integer targetFace, Integer mode0Button, Integer mode1Button, Integer mode2Button, String rotation = null, Integer angle = null) {
-    if(type != "flip" && targetFace != getCurrentFace()) {
-        logging("Stale face data! Updating...", 100)
-        setFace(targetFace)
-    }
-    Integer cubeModeNumber = getCurrentCubeMode()
-    if(mode0Button != null && cubeModeNumber in [0, 2, 3, 5]) {
-        sendMotionPush(type, mode0Button, targetFace, rotation, angle)
-    }
-    switch(cubeModeNumber) {
-        case 1:
-        case 4:
-            sendMotionPush(type, targetFace + mode1Button, targetFace, rotation, angle)
-            break
-        case 2:
-        case 5:
-            sendMotionPush(type, targetFace + mode2Button, targetFace, rotation, angle)
-            break
-        default:
-            break
-    }
-}
-
-void sendRotationEvents(Integer angle) {
-    sendEvent([name: "angle", value: angle, isStateChange: true])
-    Integer lastLevel = device.currentValue('level', true)
-    lastLevel = lastLevel != null ? lastLevel : 100
-    Double changePerDegreeAdjusted = changePerDegree == null ? 0.5 : changePerDegree
-    Integer levelChange = Math.round(angle * changePerDegreeAdjusted)
-    Integer newLevel = lastLevel + levelChange
-    logging("lastLevel = $lastLevel, levelChange = $levelChange, newLevel = $newLevel", 100)
-    newLevel = newLevel < 0 ? 0 : newLevel > 100 ? 100 : newLevel
-    setLevel(newLevel)
-
-    Integer targetFace = getCurrentFace()
-    if(getCurrentCubeMode() in [0, 1, 2]) {
-        if(angle > 0) {
-            sendMotionEvents("rotation", targetFace, 7, 25, 32, "Right", angle)
         } else {
-            sendMotionEvents("rotation", targetFace, 6, 19, 26, "Left", angle)
-        }
-    } else {
-        if(angle > 0) {
-            sendMotionEvents("rotation", targetFace, 6, 19, 26, "Right", angle)
-        } else {
-            sendMotionEvents("rotation", targetFace, 7, 25, 32, "Left", angle)
+            Long lastHold = 0
+            String lastHoldEpoch = device.currentValue('lastHoldEpoch', true) 
+            if(lastHoldEpoch != null) lastHold = lastHoldEpoch.toLong()
+            sendEvent(name: "lastHoldEpoch", value: 0, isStateChange: true)
+            Long millisHeld = now() - lastHold
+            Long millisForHoldLong = millisForHold == null ? 1000 : millisForHold.toLong()
+            if(lastHold == 0) millisHeld = 0
+            logging("millisHeld = $millisHeld, millisForHold = $millisForHoldLong", 1)
+            if(millisHeld > millisForHoldLong) {
+                if(useTimerForHeld != true) {
+                    logging("Button 1 was held", 100)
+                    buttonHeld(1)
+                    sendEvent(name:"held", value: 1, isStateChange: true, descriptionText: "Button 1 was held")
+                    String model = model != null ? model : getDeviceDataByName('model')
+                    Integer heldButton = 3
+                    if(model == "lumi.sensor_switch") {
+                        heldButton = 6
+                    }
+                    sendReleaseEvent(1)
+                    logging("Button $heldButton was pushed (from hold event)", 100)
+                    sendEvent(name:"pushed", value: heldButton, isStateChange: true, descriptionText: "Button $heldButton was pushed (from hold event)")
+                }
+            } else {
+                logging("Button 1 was pushed (t3)", 100)
+                buttonPushed(1)
+                sendEvent(name:"pushed", value: 1, isStateChange: true, descriptionText: "Button 1 was pushed")                
+            }
         }
     }
 }
 
-void sendShakeEvents() {
-    sendMotionEvents("shake", getCurrentFace(), 1, 32, 38)
+void setButtonAsHeld(Map data) {
+
 }
 
-void sendSlideEvents(Integer targetFace) {
-    sendMotionEvents("slide", targetFace, 4, 7, 14)
-}
-
-void sendKnockEvents(Integer targetFace) {
-    sendMotionEvents("knock", targetFace, 5, 13, 20)
-}
-
-/* Driver Command Methods */
-void flip90() {
-    Map<Integer,Integer> flipMap = [0:5, 1:2, 2:0, 3:2, 4:5, 5:3]
-    sendFlipEvents(flipMap[getCurrentFace()], 90)
-}
-
-void flip180() {
-    Map<Integer,Integer> flipMap = [0:3, 1:4, 2:5, 3:0, 4:1, 5:2]
-    sendFlipEvents(flipMap[getCurrentFace()], 180)
-}
-
-void rotateL() {
-    sendRotationEvents(-90)
-}
-
-void rotateR() {
-    sendRotationEvents(90)
-}
-
-void slide() {
-    sendSlideEvents(getCurrentFace())
-}
-
-void knock() {
-    sendKnockEvents(getCurrentFace())
-}
-
-void shake() {
-    sendShakeEvents()
-}
-
-void on() {
-    logging("on()", 1)
-    Integer lastLevel = device.currentValue('level', true)
-    if(lastLevel == null || lastLevel < 10) {
-        sendEvent(name:"level", value: 10, isStateChange: false)
+void parseOppoButtonEvent(Map msgMap) {
+    Integer btn = Integer.parseInt(msgMap['endpoint'], 16)
+    Integer type = Integer.parseInt(msgMap['value'], 16)
+    type = type == 0 ? 4 : type == 255 ? 5 : type
+    Integer physicalButtons = getDeviceDataByName("physicalButtons") != null ? getDeviceDataByName("physicalButtons").toInteger() : 1
+    Integer btnModified = btn + ((type - 1) * physicalButtons)
+    logging("parseOppoButtonEvent() (btn: $btn, btnModified: $btnModified, type: $type, physicalButtons: $physicalButtons)", 1)
+    
+    if(type == 2) {
+        logging("Button $btn was double tapped", 100)
+        buttonDoubleTapped(btn)
+        sendEvent(name:"doubleTapped", value: btn, isStateChange: true, descriptionText: "Button $btn was double tapped")
     }
-    sendEvent(name:"switch", value: 'on')
-}
-
-void off() {
-    logging("off()", 1)
-    sendEvent(name:"switch", value: 'off')
-}
-
-void setLevel(Integer level, Integer duration=null) {
-    logging("setLevel(level: ${level})", 1)
-    sendEvent(name:"level", value: level, isStateChange: false)
-    if(level == 0) {
-        sendEvent(name:"switch", value: 'off')
-    } else {
-        sendEvent(name:"switch", value: 'on')
+    if(type >= 1 && type <= 3) {
+        logging("Button $btn was pushed $type time(s) (push event: $btnModified)", 100)
+        if(type == 1) buttonPushed(btn)
+        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $btn was pushed $type time(s)")
+    } else if(type == 4) {
+        logging("Button $btn was held (push event: $btnModified)", 100)
+        buttonHeld(btn)
+        sendEvent(name:"held", value: btn, isStateChange: true, descriptionText: "Button $btn was held")
+        sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $btn was held")
+    } else if(type == 5) {
+        if(sendReleaseEvent(btn, "Button $btn was released (push event: $btnModified)")) {
+            sendEvent(name:"pushed", value: btnModified, isStateChange: true, descriptionText: "Button $btn was released")
+        }
     }
 }
 
-/* Utilities */
-String hexToBin(String b, Integer size = 8) {
-    String v = new BigInteger(b, 16).toString(2);
-    return String.format("%${size}s", v).replace(' ', '0')
-}
-
-String firstToUppercase(String text) {
-    return text[0].toUpperCase() + text.substring(1).toLowerCase()
+/**
+ *  --------- WRITE ATTRIBUTE METHODS ---------
+ */
+def initIKEAButton() {
+    logging("initIKEAButton1()", 100)
+    Integer msDelay = 50
+    sendZigbeeCommands(zigbeeCommand(endpoint, 0x0006, 0x01))
+    sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0005))
+    ArrayList<String> cmd = [
+    ]
+    cmd += zigbeeReadAttribute(0x0000, 0x0001, [:], delay = 1)
+    /*cmd += [zigbeeWriteAttribute(0xFC7C, 0x0009, 0x20, 0x01, [mfgCode: "0x115F"])[0], 
+            "delay 3000", 
+    zigbeeWriteAttribute(0xFC7C, 0x0009, 0x20, 0x01, [mfgCode: "0x115F"])[0],
+            "delay 3000", 
+    zigbeeWriteAttribute(0xFC7C, 0x0009, 0x20, 0x01, [mfgCode: "0x115F"])[0]]*/
+    sendZigbeeCommands(cmd)
 }
 
 /**
@@ -567,9 +484,9 @@ String firstToUppercase(String text) {
 
 // BEGIN:getDefaultFunctions()
 private String getDriverVersion() {
-    comment = "Works with model MFKZQ01LM."
+    comment = "Works with model E1743."
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0914b"
+    String version = "v0.8.1.0914"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
@@ -1521,6 +1438,25 @@ void getInfo(boolean ignoreMissing=false, Map<String,String> sdi = [:]) {
 }
 // END:  getHelperFunctions('zigbee-generic')
 
+// BEGIN:getHelperFunctions('zigbee-sonoff')
+void zigbee_sonoff_parseBatteryData(Map msgMap) {
+    BigDecimal bat = null
+    if(msgMap["attrId"] == "0021") {
+        bat = msgMap['valueParsed'] / 2.0
+    } else if(msgMap.containsKey("additionalAttrs") == true) {
+        msgMap["additionalAttrs"].each() {
+            if(it.containsKey("attrId") == true && it['attrId'] == "0021") {
+                bat = Integer.parseInt(it['value'], 16) / 2.0
+            }
+        }
+    }
+    if(bat != null) {
+        bat = bat.setScale(1, BigDecimal.ROUND_HALF_UP)
+        sendEvent(name:"battery", value: bat , unit: "%", isStateChange: false)
+    }
+}
+// END:  getHelperFunctions('zigbee-sonoff')
+
 // BEGIN:getHelperFunctions('styling')
 String styling_addTitleDiv(title) {
     return '<div class="preference-title">' + title + '</div>'
@@ -1760,3 +1696,424 @@ void resetRestoredCounter() {
     sendEvent(name: "restoredCounter", value: 0, descriptionText: "Reset restoredCounter to 0" )
 }
 // END:  getHelperFunctions('driver-default')
+
+// BEGIN:getHelperFunctions('virtual-child-device-for-button')
+void createAllButtonChildren() {
+    if(btnDevice1 != null && btnDevice1 != "None") {
+        logging("btnDevice1 = $btnDevice1", 1)
+        createButtonChildDevice("1", null, btnDevice1)
+    }
+    if(btnDevice1and2 != null && btnDevice1and2 != "None") {
+        logging("btnDevice1and2 = $btnDevice1and2", 1)
+        createButtonChildDevice("1", "2", btnDevice1and2)
+    }
+    if(btnDevice3and4 != null && btnDevice3and4 != "None") {
+        logging("btnDevice3and4 = $btnDevice3and4", 1)
+        createButtonChildDevice("3", "4", btnDevice3and4)
+    }
+    if(btnDevice5and6 != null && btnDevice5and6 != "None") {
+        logging("btnDevice5and6 = $btnDevice5and6", 1)
+        createButtonChildDevice("5", "6", btnDevice5and6)
+    }
+}
+
+void createButtonChildDevice(String id1, String id2, String type) {
+    String driver = null
+    String name = null
+    String id = null
+    if(useDimmerChildSet(type) == true) {
+        driver = "Generic Component Dimmer"
+        name = "Virtual Dimmer"
+        id = "${id1}_$id2"
+    } else if(useMomentarySwitchChildSet(type) == true) {
+        driver = "Generic Component Switch"
+        name = "Virtual Momentary Switch"
+        id = id1
+        if(id2 != null) {
+            createButtonChildDevice(id2, null, type)
+        }
+    } else if(useVirtualButtonChildSet(type) == true) {
+        driver = "Generic Component Button Controller"
+        name = "Virtual Button"
+        id = id1
+        if(id2 != null) {
+            createButtonChildDevice(id2, null, type)
+        }
+    } else {
+        driver = "Generic Component Switch"
+        name = "Virtual Switch"
+        id = id1
+        if(id2 != null) {
+            createButtonChildDevice(id2, null, type)
+        }
+    }
+    try {
+        logging("Making device with type $type and id $device.id-$id", 100)
+        com.hubitat.app.DeviceWrapper cd = addChildDevice("hubitat", driver, "$device.id-$id", [name: "$name $id", label: "$name $id", isComponent: false])
+        if(useDimmerChildSet(type) == true) {
+            cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Switch Initialized as OFF"]])
+            cd.parse([[name: "level", value: 0, isStateChange: true, descriptionText: "Level Initialized as 0"]])
+        } else if(useVirtualButtonChildSet(type) == true) {
+            cd.parse([[name: "numberOfButtons ", value: 4, isStateChange: true, descriptionText: "Number of Buttons set to 4"]])
+            cd.parse([[name: "held", value: 0, isStateChange: true, descriptionText: "Held Initialized as 0"]])
+            cd.parse([[name: "pushed", value: 0, isStateChange: true, descriptionText: "Pushed Initialized as 0"]])
+            cd.parse([[name: "doubleTapped", value: 0, isStateChange: true, descriptionText: "Double Tapped Initialized as 0"]])
+            cd.parse([[name: "released", value: 0, isStateChange: true, descriptionText: "Released Initialized as 0"]])
+        } else {
+            cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Switch Initialized as OFF"]])
+        }
+    } catch (com.hubitat.app.exception.UnknownDeviceTypeException e) {
+        log.error "'$driver' driver can't be found! This is supposed to be built-in! Is your hub broken?"
+    } catch (java.lang.IllegalArgumentException e) {
+        logging("Do nothing - The device already exists", 100)
+    }
+}
+
+String buildChildDeviceId(String type) {
+    return "$device.id-$type"
+}
+
+boolean useSwitchChildSet(String btnSetting) {
+    if(btnSetting == "2 virtual switches" || btnSetting == "1 virtual switch") {
+        return true
+    } else {
+        return false
+    }
+}
+
+boolean useMomentarySwitchChildSet(String btnSetting) {
+    if(btnSetting == "2 virtual momentary switches" || btnSetting == "1 virtual momentary switch") {
+        return true
+    } else {
+        return false
+    }
+}
+
+boolean useVirtualButtonChildSet(String btnSetting) {
+    if(btnSetting == "2 virtual buttons" || btnSetting == "1 virtual button") {
+        return true
+    } else {
+        return false
+    }
+}
+
+boolean useDimmerChildSet(String btnSetting) {
+    if(btnSetting == "1 virtual dimmer" || btnSetting == "dimmer") {
+        return true
+    } else {
+        return false
+    }
+}
+
+void toggleChildSwitch(String deviceID) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    String cSwitch = cd.currentState("switch", true)?.value
+    if(cSwitch == "on") {
+        cd.parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch toggled OFF"]])
+    } else {
+        cd.parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch toggled ON"]])
+    }
+}
+
+void setChildSwitch(String deviceID, String state, boolean levelChange = true) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    cd.parse([[name: "switch", value: state, isStateChange: false, descriptionText: "Switch set to ${state.toUpperCase()}"]])
+    if(levelChange == true && state == "on") {
+        String cLevelStr = cd.currentState("level", true)?.value
+        Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
+        if(cLevel != null && cLevel == 0) {
+            cd.parse([[name: "level", value: 10, isStateChange: false, descriptionText: "Current level was 0, level set to 10."]])
+        }
+    }
+}
+
+void activateMomentarySwitch(String deviceID) {
+    setMomentarySwitch(deviceID)
+    runInMillis(600, "releaseMomentarySwitch", [data: ['deviceID': deviceID]])
+}
+
+void setMomentarySwitch(String deviceID) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    cd.parse([[name: "switch", value: 'on', isStateChange: true, descriptionText: "Momentary Switch set to ON"]])
+}
+
+void releaseMomentarySwitch(String deviceID) {
+    releaseMomentarySwitch(['deviceID': deviceID])
+}
+
+void releaseMomentarySwitch(Map data) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(data["deviceID"])
+    cd.parse([[name: "switch", value: 'off', isStateChange: true, descriptionText: "Momentary Switch set to OFF"]])
+}
+
+void sendButtonEvent(String deviceID, String name, Integer button) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    cd.parse([[name: name, value: button, isStateChange: true, descriptionText: "Virtual button event '$name' for button $button"]])
+    if(name == 'held') {
+        cd.parse([[name: 'pushed', value: 2, isStateChange: true, descriptionText: "Virtual button event 'pushed' for button 2 (from '$name')"]])
+    }
+}
+
+Map getChildDeviceConfig() {
+    logging("getChildDeviceConfig()", 1)
+    Map childDeviceConfig = [
+        1: ['switch': useSwitchChildSet(btnDevice1) == true || useSwitchChildSet(btnDevice1and2) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice1) == true || useMomentarySwitchChildSet(btnDevice1and2) == true,
+            'dimmer': useDimmerChildSet(btnDevice1and2) == true,
+            'button': useVirtualButtonChildSet(btnDevice1) == true],
+        2: ['switch': useSwitchChildSet(btnDevice1and2) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice1and2) == true,
+            'dimmer': useDimmerChildSet(btnDevice1and2) == true,
+            'button': false],
+        3: ['switch': useSwitchChildSet(btnDevice3and4) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice3and4) == true,
+            'dimmer': useDimmerChildSet(btnDevice3and4) == true,
+            'button': false],
+        4: [:],
+        5: ['switch': useSwitchChildSet(btnDevice5and6) == true,
+            'switchMomentary': useMomentarySwitchChildSet(btnDevice5and6) == true,
+            'dimmer': useDimmerChildSet(btnDevice5and6) == true,
+            'button': false],
+        6: [:],
+    ]
+    childDeviceConfig[4] = childDeviceConfig[3]
+    childDeviceConfig[6] = childDeviceConfig[5]
+    return childDeviceConfig
+}
+
+String getChildDeviceComboId(Integer button) {
+    logging("getChildDeviceComboId(button=$button)", 1)
+    if(button >= 1) {
+        return button % 2 == 0 ? "${button - 1}_${button}" : "${button}_${button + 1}"
+    } else {
+        return null
+    }
+}
+
+boolean buttonDown(Integer button, boolean useEvent=false) {
+    boolean active = false
+    if(useEvent == true) {
+        logging("buttonDown(button=$button)", 100)
+        Map childDeviceConfig = getChildDeviceConfig()
+        if(childDeviceConfig[button]['switchMomentary'] == true) {
+            setMomentarySwitch(buildChildDeviceId("$button"))
+            active = true
+        } else if(childDeviceConfig[button]['button'] == true) {
+            sendButtonEvent(buildChildDeviceId("$button"), "pushed", 1)
+            active = true
+        }
+    } else {
+        logging("buttonDown(button=$button) UNUSED EVENT", 1)
+    }
+    return active
+}
+
+boolean buttonPushed(Integer button, boolean momentaryRelease=false) {
+    logging("buttonPushed(button=$button)", 100)
+    boolean active = false
+    Map childDeviceConfig = getChildDeviceConfig()
+    if(childDeviceConfig[button]['switch'] == true) {
+        toggleChildSwitch(buildChildDeviceId("$button"))
+        active = true
+    } else if(childDeviceConfig[button]['switchMomentary'] == true) {
+        active = true
+        if(momentaryRelease == true) {
+            releaseMomentarySwitch(buildChildDeviceId("$button"))
+        } else {
+            activateMomentarySwitch(buildChildDeviceId("$button"))
+        }
+    } else if(childDeviceConfig[button]['dimmer'] == true) {
+        active = true
+        stepLevel(buildChildDeviceId(getChildDeviceComboId(button)), button % 2 == 0 ? "up" : "down")
+    } else if(childDeviceConfig[button]['button'] == true) {
+        if(momentaryRelease == false) {
+            sendButtonEvent(buildChildDeviceId("$button"), "pushed", 1)
+        } else {
+            sendButtonEvent(buildChildDeviceId("$button"), "released", 1)
+        }
+        active = true
+    }
+    return active
+}
+
+boolean buttonHeld(Integer button) {
+    logging("buttonHeld(button=$button)", 100)
+    boolean active = false
+    Map childDeviceConfig = getChildDeviceConfig()
+    if(childDeviceConfig[button]['switch'] == true) {
+        active = true
+        setChildSwitch(buildChildDeviceId("$button"), "off")
+    } else if(childDeviceConfig[button]['dimmer'] == true) {
+        active = true
+        setChildSwitch(buildChildDeviceId(getChildDeviceComboId(button)), button % 2 == 0 ? "on" : "off")
+    } else if(childDeviceConfig[button]['button'] == true) {
+        sendButtonEvent(buildChildDeviceId("$button"), "held", 1)
+        active = true
+    }
+    return active
+}
+
+boolean buttonDoubleTapped(Integer button) {
+    logging("buttonDoubleTapped(button=$button)", 100)
+    boolean active = false
+    Map childDeviceConfig = getChildDeviceConfig()
+    if(childDeviceConfig[button]['switch'] == true) {
+        active = true
+        setChildSwitch(buildChildDeviceId("$button"), "on")
+    } else if(childDeviceConfig[button]['dimmer'] == true) {
+        active = true
+        prepareStartLevelChange(buildChildDeviceId(getChildDeviceComboId(button)), button % 2 == 0 ? "up" : "down")
+    }
+    return active
+}
+
+void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentRefresh() from $cd.deviceNetworkId", 1)
+}
+
+void componentOn(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOn() from $cd.deviceNetworkId", 1)
+    getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "on", isStateChange: false, descriptionText: "Switch turned ON"]])
+}
+
+void componentOff(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentOff() from $cd.deviceNetworkId", 1)
+    getChildDevice(cd.deviceNetworkId).parse([[name: "switch", value: "off", isStateChange: false, descriptionText: "Switch turned OFF"]])
+}
+
+void componentStopLevelChange(com.hubitat.app.DeviceWrapper cd) {
+    logging("componentStopLevelChange() from $cd.deviceNetworkId", 1)
+    unschedule("runLevelChange_${cd.deviceNetworkId.split("-")[1]}")
+}
+
+void componentStartLevelChange(com.hubitat.app.DeviceWrapper cd, String direction) {
+    logging("componentStartLevelChange() from $cd.deviceNetworkId (direction=$direction)", 1)
+    prepareStartLevelChange(cd.deviceNetworkId, direction)
+}
+
+void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
+    componentSetLevel(cd, level, null)
+}
+
+void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level, BigDecimal duration) {
+    level = level > 100 ? 100 : level < 0 ? 0 : level
+    logging("componentSetLevel() from $cd.deviceNetworkId (level=$level, duration=$duration)", 1)
+    prepareLevelChange(cd.deviceNetworkId, level, duration)
+}
+
+void prepareStartLevelChange(String deviceID, String direction) {
+    logging("prepareStartLevelChange() from $deviceID (direction=$direction)", 1)
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    String cLevelStr = cd.currentState("level", true)?.value
+    logging("cLevelStr = $cLevelStr", 1)
+    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
+    logging("cLevel = $cLevel", 1)
+    if(direction == "up") {
+        prepareLevelChange(cd.deviceNetworkId, 100, (20 / 100.0) * (100 - cLevel))
+    } else {
+        prepareLevelChange(cd.deviceNetworkId, 0, (20 / 100.0) * cLevel)
+    }
+}
+
+void stepLevel(String deviceID, String direction) {
+    logging("runLevelChange() from $deviceID (direction=$direction)", 1)
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    unschedule("runLevelChange_${deviceID.split("-")[1]}")
+    String cLevelStr = cd.currentState("level", true)?.value
+    logging("cLevelStr = $cLevelStr", 1)
+    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : 50
+    if(direction == "up") {
+        cLevel = cLevel + 5 > 100 ? 100 : cLevel + 5
+        prepareLevelChange(cd.deviceNetworkId, cLevel, 0)
+    } else {
+        cLevel = cLevel - 5 < 0 ? 0 : cLevel - 5
+        prepareLevelChange(cd.deviceNetworkId, cLevel, 0)
+    }
+    logging("cLevel = $cLevel", 1)
+}
+
+void prepareLevelChange(String deviceID, BigDecimal level, BigDecimal duration) {
+    level = level > 100 ? 100 : level < 0 ? 0 : level
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    if(duration == null || duration <= 1) {
+        cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Level set to $level"]])
+    } else {
+        String cLevelStr = cd.currentState("level", true)?.value
+        Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
+        logging("cLevel = $cLevel, level = $level, duration = $duration", 1)
+        if(cLevel == null || level == cLevel) {
+            cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Current level was null, level set to $level"]])
+        } else {
+            Integer levelDiff = Math.abs(cLevel - level)
+            duration = duration > 3600 ? 3600 : duration
+            BigDecimal changePerStep = levelDiff / duration
+            Integer numSteps = duration
+            Integer timeBetweenSteps = 1
+            if(changePerStep > 0 && changePerStep < 1) {
+                timeBetweenSteps = (1 / changePerStep).intValue()
+                changePerStep = 1
+                numSteps = duration / timeBetweenSteps
+            }
+            changePerStep = changePerStep.setScale(2, BigDecimal.ROUND_HALF_UP)
+            changePerStepInt = changePerStep.intValue()
+            changePerStepInt = level < cLevel ? changePerStepInt * -1 : changePerStepInt
+            Integer missingSteps = levelDiff - (numSteps * changePerStepInt)
+             
+            runIn(timeBetweenSteps, "runLevelChange_${deviceID.split("-")[1]}", [data: [deviceID: deviceID, level:level, changePerStep:changePerStepInt, timeBetweenSteps:timeBetweenSteps]])
+        }
+        
+    }
+}
+
+void runLevelChange_1_2(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange_1_2", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange_3_4(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange_3_4", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange_5_6(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange_5_6", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange(Map data) {
+     
+    runLevelChange(data["deviceID"], "runLevelChange", data["level"], data["changePerStep"], data["timeBetweenSteps"])
+}
+
+void runLevelChange(String deviceID, String methodName, BigDecimal level, Integer changePerStep, Integer timeBetweenSteps) {
+    com.hubitat.app.DeviceWrapper cd = getChildDevice(deviceID)
+    String cLevelStr = cd.currentState("level", true)?.value
+    Integer cLevel = cLevelStr != null ? cLevelStr.toInteger() : null
+    if(cLevel == null) {
+        cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Current level was null, can't use duration, level set to $level"]])
+        if(level == 0) {
+            setChildSwitch(cd.deviceNetworkId, "off")
+        } else {
+            setChildSwitch(cd.deviceNetworkId, "on")
+        }
+    } else {
+        Integer nextLevel = cLevel + changePerStep
+        if(changePerStep > 0) {
+            nextLevel = nextLevel > level ? level : nextLevel
+        } else {
+            nextLevel = nextLevel < level ? level : nextLevel
+        }
+        if(nextLevel == 0) {
+            setChildSwitch(cd.deviceNetworkId, "off")
+        } else {
+            setChildSwitch(cd.deviceNetworkId, "on")
+        }
+        if(nextLevel == level) {
+            cd.parse([[name: "level", value: level, isStateChange: false, descriptionText: "Levelchange done, level set to $level"]])
+        } else {
+            cd.parse([[name: "level", value: nextLevel, isStateChange: false, descriptionText: "Levelchange in progress, level set to $nextLevel"]])
+            runIn(timeBetweenSteps, methodName, [data: [deviceID: deviceID, level:level, changePerStep:changePerStep, timeBetweenSteps:timeBetweenSteps]])
+        }
+    }
+}
+// END:  getHelperFunctions('virtual-child-device-for-button')
