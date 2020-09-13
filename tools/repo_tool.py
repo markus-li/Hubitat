@@ -15,8 +15,10 @@ import glob
 import shutil
 import pygit2
 import logging
+import os
 
 log = logging.getLogger(__name__)
+
 
 def is_clean(repo):
     status = repo.status()
@@ -29,6 +31,10 @@ def is_clean(repo):
 
 def copy_files_by_wildcard(source_path, target_path):
     for file in glob.glob(source_path):
-        log.info(file)
+        log.info(file + ':' + target_path)
+        if (not os.path.exists(target_path)):
+            (head, tail) = os.path.split(target_path)
+            if(not '.' in tail):
+                log.warn('Creating folder: ' + target_path)
+                os.makedirs(target_path)
         shutil.copy(file, target_path)
-        

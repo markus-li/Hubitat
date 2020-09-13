@@ -72,6 +72,7 @@ String getDeviceInfoByName(infoName) {
 void parse(List<Map> description) {
     description.each {
         if (it.name in ["switch"]) {
+            sendEvent(it)
             it.name = "contact"
             it.value = (it.value == "on" ? "open" : "closed")
             logging(it.descriptionText, 100)

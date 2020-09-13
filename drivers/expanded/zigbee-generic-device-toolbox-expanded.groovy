@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.8.2.0830b
+ *  Version: v0.8.2.0914b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -318,7 +318,7 @@ void getRouteTable() {
 private String getDriverVersion() {
     comment = "Used to clean device data and get Zigbee device fingerprints"
     if(comment != "") state.comment = comment
-    String version = "v0.8.2.0830b"
+    String version = "v0.8.2.0914b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

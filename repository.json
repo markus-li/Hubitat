@@ -3,6 +3,13 @@
   "gitHubUrl": "https://github.com/markus-li/Hubitat",
   "packages": [
     {
+      "name": "Smartly Injector",
+      "category": "Utility",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/smartly-injection-driver.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/smartly-injection-driver-beta.json",
+      "description": "Enables Smartly JavaScript on the Dashboard!"
+    },
+    {
       "name": "Aqara Smart Curtain Motor",
       "category": "Integrations",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-smart-curtain-motor.json",
@@ -50,6 +57,13 @@
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-switch.json",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-switch-beta.json",
       "description": "Works with Generic Switches (this includes many multi-relay ones, like Nue. Please report your fingerprints)"
+    },
+    {
+      "name": "NOT WORKING IKEA Tradfri On/Off Switch",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-ikea-tradfri-on-off-switch.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-ikea-tradfri-on-off-switch-beta.json",
+      "description": "Works with model E1743."
     },
     {
       "name": "Sonoff Button",

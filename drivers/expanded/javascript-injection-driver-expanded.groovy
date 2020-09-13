@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.1.0.0718b
+ *  Version: v0.1.0.0910b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 import java.util.Date
 
 metadata {
-    definition(name: "JavaScript Injector", namespace: "markus-li", author: "Markus Liljergren") {
+    definition (name: "JavaScript Injector", namespace: "markus-li", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/javascript-injection-driver-expanded.groovy") {
         capability "TemperatureMeasurement"
         capability "Refresh"
 

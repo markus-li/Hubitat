@@ -15,6 +15,7 @@
   Snippets used by hubitat-driver-helper-tool
 """
 
+
 def getGenericTasmotaNewParseHeader():
     return """// parse() Generic Tasmota-device header BEGINS here
 //logging("Parsing: ${description}", 0)
@@ -45,8 +46,9 @@ if (body && body != "") {
         // parse() Generic header ENDS here
         """
 
+
 def getGenericTasmotaNewParseFooter():
-    
+
     return """// parse() Generic Tasmota-device footer BEGINS here
     result = null
 } else {
@@ -77,6 +79,7 @@ descMap = null
 body = null
 // parse() Generic footer ENDS here"""
 
+
 def getTasmotaNewParserForStatusSTS():
     return """
 // Get some Maps out to where we need them
@@ -85,6 +88,7 @@ if (result.containsKey("StatusSTS")) {
     result << result.StatusSTS
 }
 """
+
 
 def getTasmotaNewParserForBasicData():
     return """
@@ -177,6 +181,7 @@ if (result.containsKey("Uptime")) {
 }
 """
 
+
 def getTasmotaNewParserForWifi():
     return """
 // Standard Wifi Data parsing
@@ -201,6 +206,7 @@ if (result.containsKey("Wifi")) {
     }
 }
 """
+
 
 def getTasmotaNewParserForParentSwitch():
     return """
@@ -233,6 +239,7 @@ if (result.containsKey("POWER")  == true && result.containsKey("POWER1") == fals
 }
 """
 
+
 def getTasmotaNewParserForFanMode():
     return """
 // Fan Mode parsing
@@ -254,6 +261,7 @@ if (result.containsKey("FanSpeed")) {
 }
 """
 
+
 def getTasmotaNewParserForShutter():
     return """
 // Shutter parsing
@@ -262,6 +270,7 @@ if (result.containsKey("Shutter1")) {
     missingChild = callChildParseByTypeId("SHUTTER", [[name:"shutter", value:result.Shutter1.clone()]], missingChild)
 }
 """
+
 
 def getTasmotaNewParserForEnergyMonitor():
     return """
@@ -329,6 +338,7 @@ if (result.containsKey("ENERGY")) {
 // StatusPTH:[PowerDelta:0, PowerLow:0, PowerHigh:0, VoltageLow:0, VoltageHigh:0, CurrentLow:0, CurrentHigh:0]
 """
 
+
 def getTasmotaNewParserForSensors():
     return """
 // Standard Sensor Data parsing
@@ -391,6 +401,7 @@ for ( r in result ) {
 }
 """
 
+
 def getTasmotaNewParserForRGBWDevice():
     return """
 // Standard RGBW Device Data parsing
@@ -439,6 +450,7 @@ if(true) {
 }
 """
 
+
 def getTasmotaNewParserForDimmableDevice():
     return """
 // Standard Dimmable Device Data parsing
@@ -464,6 +476,7 @@ if(true) {
     }
 }
 """
+
 
 def getTasmotaNewParserForRGBWIRRemote():
     return """
@@ -495,14 +508,16 @@ if (result.containsKey("IrReceived")) {
 }
 """
 
-def getGenericZigbeeParseHeader():
-    return """// parse() Generic Zigbee-device header BEGINS here
-logging("Parsing: ${description}", 0)
-Map msgMap = zigbee.parseDescriptionAsMap(description)
-logging("msgMap: ${msgMap}", 0)
-// parse() Generic header ENDS here"""
 
-def getGenericZigbeeParseFooter():
-    return """// parse() Generic Zigbee-device footer BEGINS here
-msgMap = null
-// parse() Generic footer ENDS here"""
+# def getGenericZigbeeParseHeader(loglevel=0):
+#     return """// parse() Generic Zigbee-device header BEGINS here
+# logging("Parsing: ${description}", 0)
+# Map msgMap = zigbee.parseDescriptionAsMap(description)
+# logging("msgMap: ${msgMap}", 0)
+# // parse() Generic header ENDS here"""
+
+
+# def getGenericZigbeeParseFooter(loglevel=0):
+#     return """// parse() Generic Zigbee-device footer BEGINS here
+# msgMap = null
+# // parse() Generic footer ENDS here"""
