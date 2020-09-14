@@ -462,7 +462,7 @@ def main():
         {'id': 962, 'file': 'javascript-injection-driver.groovy',
             'version': 'v0.1.0.MMDDb'},
         {'id': 1890, 'file': 'smartly-injection-driver.groovy', 'publish': True,
-            'version': 'v0.1.3.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
+            'version': 'v0.1.4.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
 
         # The following can be overwritten:
     ]
@@ -822,7 +822,8 @@ def main():
 
                 smartly_pkg.addDriver(newD['nameFull'], newD['version'], newD['namespace'],
                                       base_raw_repo_url + newD['file'], True, newD['id'], id=None)
-                files = ['smartly.js', 'smartly-injected.min.css']
+                files = ['smartly.js',
+                         'smartly-injected.min.css', 'usermode.json']
                 for f in files:
                     smartly_pkg.addFile(
                         f, newD['version'], base_raw_url_root + 'assets/' + f)
