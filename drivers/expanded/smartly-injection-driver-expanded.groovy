@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.1.1.0914
+ *  Version: v0.1.2.0914
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.util.Date
 metadata {
     definition (name: "Smartly Injector", namespace: "markus-li", author: "Markus Liljergren", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/smartly-injection-driver-expanded.groovy") {
         capability "Refresh"
-
         command "clear"
         
         attribute "javascript", "string"

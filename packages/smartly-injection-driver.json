@@ -10,7 +10,7 @@
       "id": "ddb0e3c1-77c8-56d1-9bef-da10c15ffaab",
       "internalId": 1890,
       "name": "Smartly Injector",
-      "version": "v0.1.1.0914",
+      "version": "v0.1.2.0914",
       "namespace": "markus-li",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/smartly-injection-driver-expanded.groovy",
       "required": true
@@ -20,13 +20,13 @@
     {
       "id": "0f211437-fff7-592d-bd7d-4c0524cfeeb7",
       "name": "smartly.js",
-      "version": "v0.1.1.0914",
+      "version": "v0.1.2.0914",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/assets/smartly.js"
     },
     {
       "id": "a08eec5a-f464-51de-bd7c-5a9b622676d7",
       "name": "smartly-injected.min.css",
-      "version": "v0.1.1.0914",
+      "version": "v0.1.2.0914",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/assets/smartly-injected.min.css"
     }
   ]
