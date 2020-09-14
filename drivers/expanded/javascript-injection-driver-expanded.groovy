@@ -81,47 +81,46 @@ left: 400px;
   
   String jsInjectionWithReInsert = '''
 <img src="n" onerror='
-function lJ(callback) {
-    var urlParams = new URLSearchParams(window.location.search);
-    var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType("application/json");
-    xobj.open("GET", window.location.pathname + "/layout", true);
-    xobj.withCredentials = true;
-    xobj.setRequestHeader("Authorization","Bearer " + urlParams.get("access_token"));
-    xobj.onreadystatechange = function () {
-          if (xobj.readyState == 4 && xobj.status == "200") {
-            callback(xobj.responseText);
-          }
-    };
-    xobj.send(null);  
+function l() {var h = function (c, r) {
+    var u = new URLSearchParams(window.location.search);
+    var x = new XMLHttpRequest();
+    x.overrideMimeType("application/json");
+    x.open("GET", r, true);
+    x.withCredentials = true;
+    x.setRequestHeader("Authorization","Bearer " + u.get("access_token"));
+    x.onreadystatechange = function () {
+          if (x.readyState == 4 && x.status == "200" && "customJS" in JSON.parse(x.responseText)) {
+            c(x.responseText);
+          } else if (r.split('').pop() !== "n") {
+            h(c, "/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json")
+          }};
+    x.send(null);  
  }
-lJ(function(response) {
-  console.log(1);
+h(function(response) {
       var data = JSON.parse(response);
       var body = document.getElementsByTagName("body")[0];
-      var div = document.getElementById("inserted-bootstrap-html");
+      var div = document.getElementById("ibh");
       var hasDiv = div != null;
       if(!hasDiv) {
           div = document.createElement("div");
-          div.setAttribute("id", "inserted-bootstrap-html");
+          div.setAttribute("id", "ibh");
       }
       div.innerHTML = data.customHTML;
       if(!hasDiv) {
           body.prepend(div);
       }
 
-      var script = document.getElementById("inserted-bootstrap-script");
+      var script = document.getElementById("ibs");
       var hasScript = script != null;
       if(script != null) {
           script.remove();
       }
       script = document.createElement("script");
-      script.setAttribute("id", "inserted-bootstrap-script")
+      script.setAttribute("id", "ibs")
       script.type = "text/javascript";
       script.innerHTML = data.customJS;
       body.prepend(script);
-console.log("1E");
-    });
+    }, window.location.pathname + "/layout")};l();
 ' />'''
 
   String jsInjectionWithoutReInsert = '''
