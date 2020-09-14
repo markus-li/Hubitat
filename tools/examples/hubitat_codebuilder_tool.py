@@ -462,7 +462,7 @@ def main():
         {'id': 962, 'file': 'javascript-injection-driver.groovy',
             'version': 'v0.1.0.MMDDb'},
         {'id': 1890, 'file': 'smartly-injection-driver.groovy', 'publish': True,
-            'version': 'v0.1.2.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
+            'version': 'v0.1.3.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
 
         # The following can be overwritten:
     ]
@@ -1093,10 +1093,19 @@ def main():
     repo_private_path = "."
     repo_public_path = "../Hubitat-Public"
     repo_internal_path = "../Hubitat-Internal"
+    repo_smartly_typescript_path = "../smartly-typescript"
+
+    import subprocess
+    process = subprocess.Popen(
+        'git pull', shell=True, stdout=subprocess.PIPE, cwd=repo_smartly_typescript_path)
+    process.wait()
 
     repo_private = Repository(repo_private_path)
     repo_public = Repository(repo_public_path)
     repo_internal = Repository(repo_internal_path)
+    # repo_smartly_typescript = Repository(repo_smartly_typescript_path)
+    # repo_smartly_typescript.remotes[0].fetch()
+    # repo_smartly_typescript.checkout_head()
 
     if(repo_public.head.shorthand != repo_private.head.shorthand):
         repo_public.checkout(repo_public.lookup_reference(
@@ -1118,7 +1127,9 @@ def main():
 
         # Public Files
         repo_tool.copy_files_by_wildcard(
-            repo_private_path + "/assets/smartly-inject/*.*", repo_public_path + "/assets")
+            repo_smartly_typescript_path + "/dist/*.*", repo_public_path + "/assets")
+        repo_tool.copy_files_by_wildcard(
+            repo_smartly_typescript_path + "/injection/dist/usermode.json", repo_public_path + "/assets")
 
         if(repo_private.head.shorthand == "development"):
             # Internal Drivers
