@@ -1108,6 +1108,8 @@ def main():
 
         # Public Drivers
         repo_tool.copy_files_by_wildcard(
+            repo_private_path + "/drivers/expanded/smartly-injection-driver-expanded.groovy", repo_public_path + "/drivers/expanded")
+        repo_tool.copy_files_by_wildcard(
             repo_private_path + "/drivers/expanded/javascript-injection-driver-expanded.groovy", repo_public_path + "/drivers/expanded")
         repo_tool.copy_files_by_wildcard(
             repo_private_path + "/drivers/expanded/tasmota-*-expanded.groovy", repo_public_path + "/drivers/expanded")
