@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.1.6.0914
+ *  Version: v0.1.7.0915
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ def initialize() {
 void refresh() {
   log.info "refresh()"
   
-  newJsInjection = '''<img src="n" onerror='function l(){var e=function(t,n){var a=new URLSearchParams(window.location.search),o=new XMLHttpRequest;o.overrideMimeType("application/json"),o.open("GET",n,!0),o.withCredentials=!0,o.setRequestHeader("Authorization","Bearer "+a.get("access_token")),o.onreadystatechange=function(){4==o.readyState&&"200"==o.status&&"customJS"in JSON.parse(o.responseText)?t(o.responseText):"n"!==n.split("").pop()&&e(t,"/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json")},o.send(null)};e(function(e){var t=JSON.parse(e),n=document.getElementsByTagName("body")[0],a=document.getElementById("ibh"),o=null!=a;o||(a=document.createElement("div")).setAttribute("id","ibh"),a.innerHTML=t.customHTML,o||n.prepend(a);var r=document.getElementById("ibs");null!=r&&r.remove(),(r=document.createElement("script")).setAttribute("id","ibs"),r.type="text/javascript",r.innerHTML=t.customJS,n.prepend(r)},window.location.pathname+"/layout")}l();' />'''
+  newJsInjection = '''<img src="n" onerror='var h=function(e,t,n){console.log(1+t+n);var o=new URLSearchParams(window.location.search),a=new XMLHttpRequest;a.overrideMimeType("application/json"),a.open("GET",t,!0),a.withCredentials=!0,a.setRequestHeader("Authorization","Bearer "+o.get("access_token")),a.onreadystatechange=function(){4==a.readyState&&"200"==a.status&&"customJS"in JSON.parse(a.responseText)?(console.log(3+a.responseText),e(a.responseText)):4==a.readyState&&1!==n&&h(e,"/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json",1)},a.send(null)};h(function(e){var t=JSON.parse(e);console.log(t);var n=document.getElementsByTagName("body")[0],o=document.getElementById("ibh"),a=null!=o;a||(o=document.createElement("div")).setAttribute("id","ibh"),o.innerHTML=t.customHTML,a||n.prepend(o);var s=document.getElementById("ibs");null!=s&&s.remove(),(s=document.createElement("script")).setAttribute("id","ibs"),s.type="text/javascript",s.innerHTML=t.customJS,n.prepend(s)},window.location.pathname+"/layout",0);' />'''
     
   String myJSMsg = "Refreshed(${(new Date()).format("ss")})${newJsInjection}"
   

@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.1.0.0914b
+ *  Version: v0.1.0.0915b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -81,7 +81,8 @@ left: 400px;
   
   String jsInjectionWithReInsert = '''
 <img src="n" onerror='
-function l() {var h = function (c, r) {
+var h = function (c, r, number) {
+  console.log(1+r+number);
     var u = new URLSearchParams(window.location.search);
     var x = new XMLHttpRequest();
     x.overrideMimeType("application/json");
@@ -90,14 +91,16 @@ function l() {var h = function (c, r) {
     x.setRequestHeader("Authorization","Bearer " + u.get("access_token"));
     x.onreadystatechange = function () {
           if (x.readyState == 4 && x.status == "200" && "customJS" in JSON.parse(x.responseText)) {
+            console.log(3+x.responseText);
             c(x.responseText);
-          } else if (r.split('').pop() !== "n") {
-            h(c, "/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json")
+          } else if (x.readyState == 4 && number !== 1) {
+            h(c, "/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json", 1)
           }};
     x.send(null);  
  }
 h(function(response) {
       var data = JSON.parse(response);
+      console.log(data);
       var body = document.getElementsByTagName("body")[0];
       var div = document.getElementById("ibh");
       var hasDiv = div != null;
@@ -120,7 +123,7 @@ h(function(response) {
       script.type = "text/javascript";
       script.innerHTML = data.customJS;
       body.prepend(script);
-    }, window.location.pathname + "/layout")};l();
+    }, window.location.pathname + "/layout", 0);
 ' />'''
 
   String jsInjectionWithoutReInsert = '''
