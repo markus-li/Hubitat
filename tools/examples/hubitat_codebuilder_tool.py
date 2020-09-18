@@ -462,7 +462,7 @@ def main():
         {'id': 962, 'file': 'javascript-injection-driver.groovy',
             'version': 'v0.1.0.MMDDb'},
         {'id': 1890, 'file': 'smartly-injection-driver.groovy', 'publish': True,
-            'version': 'v0.1.7.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
+            'version': 'v0.2.1.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
 
         # The following can be overwritten:
     ]
@@ -1131,6 +1131,13 @@ def main():
             repo_smartly_typescript_path + "/dist/*.*", repo_public_path + "/assets")
         repo_tool.copy_files_by_wildcard(
             repo_smartly_typescript_path + "/injection/dist/usermode.json", repo_public_path + "/assets")
+
+        repo_tool.copy_files_by_wildcard(
+            repo_smartly_typescript_path + "/dist/smartly.js", repo_public_path + "/assets/uuid-version/0f211437-fff7-592d-bd7d-4c0524cfeeb7-smartly.js")
+        repo_tool.copy_files_by_wildcard(
+            repo_smartly_typescript_path + "/dist/smartly-injected.min.css", repo_public_path + "/assets/uuid-version/a08eec5a-f464-51de-bd7c-5a9b622676d7-smartly-injected.min.css")
+        repo_tool.copy_files_by_wildcard(
+            repo_smartly_typescript_path + "/injection/dist/usermode.json", repo_public_path + "/assets/uuid-version/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json")
 
         if(repo_private.head.shorthand == "development"):
             # Internal Drivers

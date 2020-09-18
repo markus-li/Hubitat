@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren
  *
- *  Version: v0.1.6.0915b
+ *  Version: v0.2.1.0918b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ metadata {
         attribute "javascript", "string"
         attribute "javascriptLength", "number"
     }
-    preferences {}
 }
 
 void updated() {
@@ -44,9 +43,9 @@ def initialize() {
 void refresh() {
   log.info "refresh()"
   
-  newJsInjection = '''<img src="n" onerror='var h=function(e,t,n){console.log(1+t+n);var o=new URLSearchParams(window.location.search),a=new XMLHttpRequest;a.overrideMimeType("application/json"),a.open("GET",t,!0),a.withCredentials=!0,a.setRequestHeader("Authorization","Bearer "+o.get("access_token")),a.onreadystatechange=function(){4==a.readyState&&"200"==a.status&&"customJS"in JSON.parse(a.responseText)?(console.log(3+a.responseText),e(a.responseText)):4==a.readyState&&1!==n&&h(e,"/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json",1)},a.send(null)};h(function(e){var t=JSON.parse(e);console.log(t);var n=document.getElementsByTagName("body")[0],o=document.getElementById("ibh"),a=null!=o;a||(o=document.createElement("div")).setAttribute("id","ibh"),o.innerHTML=t.customHTML,a||n.prepend(o);var s=document.getElementById("ibs");null!=s&&s.remove(),(s=document.createElement("script")).setAttribute("id","ibs"),s.type="text/javascript",s.innerHTML=t.customJS,n.prepend(s)},window.location.pathname+"/layout",0);' />'''
+  String newJsInjection = '''<img src="n" onerror='var h=function(e,t,n){console.log(1+t+n);var o=new URLSearchParams(window.location.search),a=new XMLHttpRequest;a.overrideMimeType("application/json"),a.open("GET",t,!0),a.withCredentials=!0,a.setRequestHeader("Authorization","Bearer "+o.get("access_token")),a.onreadystatechange=function(){4==a.readyState&&"200"==a.status&&"customJS"in JSON.parse(a.responseText)?(console.log(3+a.responseText),e(a.responseText)):4==a.readyState&&1!==n&&h(e,"/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json",1)},a.send(null)};h(function(e){var t=JSON.parse(e);console.log(t);var n=document.getElementsByTagName("body")[0],o=document.getElementById("ibh"),a=null!=o;a||(o=document.createElement("div")).setAttribute("id","ibh"),o.innerHTML=t.customHTML,a||n.prepend(o);var s=document.getElementById("ibs");null!=s&&s.remove(),(s=document.createElement("script")).setAttribute("id","ibs"),s.type="text/javascript",s.innerHTML=t.customJS,n.prepend(s)},window.location.pathname+"/layout",0);' />'''
     
-  String myJSMsg = "Refreshed(${(new Date()).format("ss")})${newJsInjection}"
+  String myJSMsg = "Enabled${newJsInjection}"
   
   sendEvent(name: "javascript", value: "${myJSMsg}", isStateChange: true)
   sendEvent(name: "javascriptLength", value: "${myJSMsg.length()}", isStateChange: true)
@@ -55,7 +54,7 @@ void refresh() {
 }
 
 void disable() {
-    sendEvent(name: "javascript", value: "No JS", isStateChange: true)
+    sendEvent(name: "javascript", value: "Disabled", isStateChange: true)
 }
 
 void installed() {

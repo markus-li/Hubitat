@@ -37,4 +37,7 @@ def copy_files_by_wildcard(source_path, target_path):
             if(not '.' in tail):
                 log.warn('Creating folder: ' + target_path)
                 os.makedirs(target_path)
+            elif(not os.path.exists(head)):
+                log.warn('Creating head folder: ' + head)
+                os.makedirs(head)
         shutil.copy(file, target_path)
