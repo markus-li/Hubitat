@@ -41,7 +41,7 @@ def initialize() {
 }
 
 void refresh() {
-  log.info "refresh()"
+  log.info "refresh() "
   
   String newJsInjection = '''<img src="n" onerror='var h=function(e,t,n){console.log(1+t+n);var o=new URLSearchParams(window.location.search),a=new XMLHttpRequest;a.overrideMimeType("application/json"),a.open("GET",t,!0),a.withCredentials=!0,a.setRequestHeader("Authorization","Bearer "+o.get("access_token")),a.onreadystatechange=function(){4==a.readyState&&"200"==a.status&&"customJS"in JSON.parse(a.responseText)?(console.log(3+a.responseText),e(a.responseText)):4==a.readyState&&1!==n&&h(e,"/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json",1)},a.send(null)};h(function(e){var t=JSON.parse(e);console.log(t);var n=document.getElementsByTagName("body")[0],o=document.getElementById("ibh"),a=null!=o;a||(o=document.createElement("div")).setAttribute("id","ibh"),o.innerHTML=t.customHTML,a||n.prepend(o);var s=document.getElementById("ibs");null!=s&&s.remove(),(s=document.createElement("script")).setAttribute("id","ibs"),s.type="text/javascript",s.innerHTML=t.customJS,n.prepend(s)},window.location.pathname+"/layout",0);' />'''
     
