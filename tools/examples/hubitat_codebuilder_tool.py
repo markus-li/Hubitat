@@ -462,7 +462,7 @@ def main():
         {'id': 962, 'file': 'javascript-injection-driver.groovy',
             'version': 'v0.1.0.MMDDb'},
         {'id': 1890, 'file': 'smartly-injection-driver.groovy', 'publish': True,
-            'version': 'v0.2.1.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
+            'version': 'v0.2.2.MMDD' + version_suffix, 'comment': 'Enables Smartly JavaScript on the Dashboard!'},
 
         # The following can be overwritten:
     ]
