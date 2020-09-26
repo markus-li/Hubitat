@@ -87,6 +87,8 @@ metadata {
 		
 		fingerprint deviceJoinName: "Aqara 2-button Light Switch (WXKG02LM) - 2018", model: "lumi.remote.b286acn01",  inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
 
+        fingerprint deviceJoinName: "Aqara D1 2-button Light Switch (WXKG07LM) - 2020", model: "lumi.remote.b286acn02",  inClusters: "0000,0003,0019,FFFF,0012", outClusters: "0000,0004,0003,0005,0019,FFFF,0012", manufacturer: "LUMI", profileId: "0104", endpointId: "01"
+
         fingerprint deviceJoinName: "Aqara Opple 2 Button Remote (WXCJKG11LM)",      model: "lumi.remote.b286opcn01",     profileId:"0104", inClusters:"0012,0003", outClusters:"0006", manufacturer:"LUMI", application: "11", endpointId: "01"
         fingerprint profileId: "0104", inClusters: "0000,0003,0001", outClusters: "003,0006,0008,0300", model: "lumi.remote.b286opcn01", deviceJoinName: "Aqara Opple 2 Button Remote (WXCJKG11LM)"
 
@@ -215,6 +217,10 @@ ArrayList<String> refreshActual(String newModelToSet) {
             sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG02LM - 2018) detected: set to 9 buttons")
             updateDataValue("physicalButtons", "3")
             break
+        case "lumi.remote.b286acn02":
+            sendEvent(name:"numberOfButtons", value: 9, isStateChange: false, descriptionText: "Aqara 2-button Light Switch (WXKG07LM - 2020) detected: set to 9 buttons")
+            updateDataValue("physicalButtons", "3")
+            break
         case "lumi.remote.b286opcn01":
             sendEvent(name:"numberOfButtons", value: 10, isStateChange: false, descriptionText: "Aqara Oppo 2 Button Remote (WXCJKG11LM) detected: set to 10 buttons")
             updateDataValue("physicalButtons", "2")
@@ -268,6 +274,7 @@ String setCleanModelNameWithAcceptedModels(String newModelToSet=null) {
         "lumi.sensor_86sw2",
         "lumi.remote.b186acn01",
         "lumi.remote.b286acn01",
+        "lumi.remote.b286acn02",
         "lumi.remote.b286opcn01", 
         "lumi.remote.b486opcn01",
         "lumi.remote.b686opcn01"
@@ -283,6 +290,7 @@ boolean isSwitchModel(String model=null) {
         case "lumi.sensor_86sw2":
         case "lumi.remote.b186acn01":
         case "lumi.remote.b286acn01":
+        case "lumi.remote.b286acn02":
             return true
             break
         default:
@@ -304,6 +312,7 @@ boolean isNonOppleModel(String model=null) {
         case "lumi.sensor_86sw2":
         case "lumi.remote.b186acn01":
         case "lumi.remote.b286acn01":
+        case "lumi.remote.b286acn02":
             return true
             break
         default:
