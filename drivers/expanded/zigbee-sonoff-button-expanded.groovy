@@ -125,7 +125,7 @@ ArrayList<String> refreshActual(String newModelToSet) {
     String model = setCleanModelNameWithAcceptedModels(newModelToSet=newModelToSet)
     switch(model) {
         case "WB01":
-            sendEvent(name:"numberOfButtons", value: 5, isStateChange: false, descriptionText: "Xiaomi Button (WXKG01LM) detected: set to 5 buttons")
+            sendEvent(name:"numberOfButtons", value: 1, isStateChange: false, descriptionText: "Sonoff Button (SNZB-01) detected: set to 1 button")
             updateDataValue("physicalButtons", "1")
             break
         
