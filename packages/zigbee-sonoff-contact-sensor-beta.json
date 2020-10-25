@@ -2,15 +2,23 @@
   "packageName": "Sonoff Contact Sensor",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-09-14",
+  "dateReleased": "2020-10-25",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-sonoff-contact-sensor",
+  "communityLink": "https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus",
   "apps": [],
   "drivers": [
     {
       "id": "92a20946-d680-5f98-9aee-d58e7203ce6c",
       "internalId": 1602,
       "name": "Zigbee - Sonoff Contact Sensor",
-      "betaVersion": "v0.6.2.0914b",
-      "namespace": "markusl",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Sonoff Contact Sensor",
+          "namespace": "markus-li"
+        }
+      ],
+      "betaVersion": "v1.0.0.1025b",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-contact-sensor-expanded.groovy",
       "required": true
     }

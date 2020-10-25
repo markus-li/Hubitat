@@ -2,15 +2,23 @@
   "packageName": "Sonoff Temperature & Humidity Sensor",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-09-14",
+  "dateReleased": "2020-10-25",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-sonoff-temperature-humidity-sensor",
+  "communityLink": "https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus",
   "apps": [],
   "drivers": [
     {
       "id": "d24d46ec-ee9f-56da-8a11-05793946b2bf",
       "internalId": 1604,
       "name": "Zigbee - Sonoff Temperature & Humidity Sensor",
-      "betaVersion": "v0.6.2.0914b",
-      "namespace": "markusl",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Sonoff Temperature & Humidity Sensor",
+          "namespace": "markus-li"
+        }
+      ],
+      "betaVersion": "v1.0.0.1025b",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-sonoff-temperature-humidity-sensor-expanded.groovy",
       "required": true
     }

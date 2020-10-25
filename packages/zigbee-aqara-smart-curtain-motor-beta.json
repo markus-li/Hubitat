@@ -2,15 +2,23 @@
   "packageName": "Aqara Smart Curtain Motor",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-09-14",
+  "dateReleased": "2020-10-25",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-aqara-smart-curtain-motor",
+  "communityLink": "https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus",
   "apps": [],
   "drivers": [
     {
       "id": "02033750-0a67-58f2-80cc-d92760d3b593",
       "internalId": 801,
       "name": "Zigbee - Aqara Smart Curtain Motor",
-      "betaVersion": "v1.0.2.0914b",
-      "namespace": "markusl",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Aqara Smart Curtain Motor",
+          "namespace": "markus-li"
+        }
+      ],
+      "betaVersion": "v1.0.2.1025b",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-aqara-smart-curtain-motor-expanded.groovy",
       "required": true
     }

@@ -2,15 +2,23 @@
   "packageName": "Generic Dimmer (with Presence)",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-09-14",
+  "dateReleased": "2020-10-25",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-generic-dimmer",
+  "communityLink": "https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus",
   "apps": [],
   "drivers": [
     {
       "id": "12f1312f-d81f-51c6-8182-e4bf953043a6",
       "internalId": 1730,
       "name": "Zigbee - Generic Dimmer (with Presence)",
-      "betaVersion": "v0.8.2.0914b",
-      "namespace": "markusl",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Generic Dimmer (with Presence)",
+          "namespace": "markus-li"
+        }
+      ],
+      "betaVersion": "v1.0.0.1025b",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-dimmer-expanded.groovy",
       "required": true
     }

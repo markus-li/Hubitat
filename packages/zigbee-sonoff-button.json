@@ -2,16 +2,24 @@
   "packageName": "Sonoff Button",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-09-14",
+  "dateReleased": "2020-10-25",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-button-beta.json",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-sonoff-button",
+  "communityLink": "https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus",
   "apps": [],
   "drivers": [
     {
       "id": "959d015b-32b4-5acf-a31c-01c71b48d746",
       "internalId": 1601,
       "name": "Zigbee - Sonoff Button",
-      "version": "v0.6.1.0830",
-      "namespace": "markusl",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Sonoff Button",
+          "namespace": "markus-li"
+        }
+      ],
+      "version": "v1.0.0.1025",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-sonoff-button-expanded.groovy",
       "required": true
     }

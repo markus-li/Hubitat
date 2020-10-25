@@ -2,16 +2,24 @@
   "packageName": "NOT WORKING IKEA Tradfri On/Off Switch",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-09-14",
+  "dateReleased": "2020-10-25",
   "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-ikea-tradfri-on-off-switch-beta.json",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-ikea-tradfri-on-off-switch",
+  "communityLink": "https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus",
   "apps": [],
   "drivers": [
     {
       "id": "7716205b-4d10-5435-8633-ecdf4b7095cc",
       "internalId": 1858,
       "name": "Zigbee - NOT WORKING IKEA Tradfri On/Off Switch",
-      "version": "v0.8.1.0914",
-      "namespace": "markusl",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "NOT WORKING IKEA Tradfri On/Off Switch",
+          "namespace": "markus-li"
+        }
+      ],
+      "version": "v1.0.0.1025",
       "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/zigbee-ikea-tradfri-on-off-switch-expanded.groovy",
       "required": true
     }

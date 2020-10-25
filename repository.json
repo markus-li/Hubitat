@@ -3,11 +3,11 @@
   "gitHubUrl": "https://github.com/markus-li/Hubitat",
   "packages": [
     {
-      "name": "Smartly Injector",
+      "name": "Smartly Inject",
       "category": "Utility",
-      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/smartly-injection-driver.json",
-      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/smartly-injection-driver-beta.json",
-      "description": "Enables Smartly JavaScript on the Dashboard!"
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/smartly-inject.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/smartly-inject-beta.json",
+      "description": "Enables Smartly JavaScript features in the Dashboard!"
     },
     {
       "name": "Aqara Smart Curtain Motor",

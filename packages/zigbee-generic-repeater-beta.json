@@ -2,15 +2,23 @@
   "packageName": "Generic Repeater (with Presence)",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-09-14",
+  "dateReleased": "2020-10-25",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-generic-repeater",
+  "communityLink": "https://community.hubitat.com/t/release-new-xiaomi-aqara-opple-drivers/41537?u=markus",
   "apps": [],
   "drivers": [
     {
       "id": "2e28d401-0875-549c-81a2-67967e2caf15",
       "internalId": 1634,
       "name": "Zigbee - Generic Repeater (with Presence)",
-      "betaVersion": "v0.8.2.0914b",
-      "namespace": "markusl",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Generic Repeater (with Presence)",
+          "namespace": "markus-li"
+        }
+      ],
+      "betaVersion": "v1.0.0.1025b",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-repeater-expanded.groovy",
       "required": true
     }
