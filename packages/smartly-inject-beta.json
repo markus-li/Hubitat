@@ -2,7 +2,7 @@
   "packageName": "Smartly Inject",
   "minimumHEVersion": "2.2.2",
   "author": "Markus",
-  "dateReleased": "2020-10-25",
+  "dateReleased": "2020-10-26",
   "documentationLink": "https://oh-lalabs.com/docs/smartly-inject",
   "communityLink": "https://oh-lalabs.com/l/smartly-inject-community",
   "apps": [],
@@ -12,10 +12,12 @@
       "internalId": 1890,
       "name": "Smartly Inject",
       "namespace": "oh-lalabs.com",
-      "alternateNames": {
-        "name": "Smartly Injector",
-        "namespace": "markus-li"
-      },
+      "alternateNames": [
+        {
+          "name": "Smartly Injector",
+          "namespace": "markus-li"
+        }
+      ],
       "betaVersion": "v2.0.0.1025b",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/smartly-inject-expanded.groovy",
       "required": true
