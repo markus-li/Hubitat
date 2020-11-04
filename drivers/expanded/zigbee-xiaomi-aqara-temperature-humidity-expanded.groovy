@@ -102,7 +102,7 @@ metadata {
         input(name: "reportAbsoluteHumidity", type: "bool", title: styling_addTitleDiv("Report Absolute Humidity"), description: styling_addDescriptionDiv("Also report Absolute Humidity. Default = Disabled"), defaultValue: false)
         if(getDeviceDataByName('hasPressure') == "True") {
             input(name: "pressureUnitConversion", type: "enum", title: styling_addTitleDiv("Displayed Pressure Unit"), description: styling_addDescriptionDiv("(default: kPa)"), options: ["mbar", "kPa", "inHg", "mmHg", "atm"], defaultValue: "kPa")
-            input(name: "pressureRes", type: "enum", title: styling_addTitleDiv("Humidity Resolution"), description: styling_addDescriptionDiv("Humidity sensor resolution (0..1 = maximum number of decimal places, default: default)"), options: ["default", "0", "1", "2"], defaultValue: "default")
+            input(name: "pressureRes", type: "enum", title: styling_addTitleDiv("Pressure Resolution"), description: styling_addDescriptionDiv("Pressure sensor resolution (0..1 = maximum number of decimal places, default: default)"), options: ["default", "0", "1", "2"], defaultValue: "default")
             input(name: "pressureOffset", type: "decimal", title: styling_addTitleDiv("Pressure Offset"), description: styling_addDescriptionDiv("Adjust the pressure value by this much."), displayDuringSetup: true, required: false, range: "*..*")
         }
         // END:  getDefaultMetadataPreferencesForTHMonitorAlternative1()
