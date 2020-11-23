@@ -1,0 +1,7 @@
+__hubitat_session
+hubitat_hubspider.cfg
+*.cpython-*.pyc
+/DEVELOPER
+/drivers/expanded/tasmota-tuya-wifi-touch-switch-legacy-child-expanded.groovy
+/drivers/OLD_drivers
+/__hubitat_checksums
