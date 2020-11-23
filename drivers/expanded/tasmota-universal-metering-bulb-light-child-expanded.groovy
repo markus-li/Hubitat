@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1123Tb
+ *  Version: v1.1.1.1123T
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import java.security.MessageDigest
 // END:  getDefaultImports()
 
 metadata {
-    definition (name: "Tasmota - Universal Metering Bulb/Light (Child)", namespace: "tasmota", author: "Markus Liljergren", filename: "tasmota-universal-metering-bulb-light-child", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-metering-bulb-light-child-expanded.groovy") {
+    definition (name: "Tasmota - Universal Metering Bulb/Light (Child)", namespace: "tasmota", author: "Markus Liljergren", filename: "tasmota-universal-metering-bulb-light-child", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-metering-bulb-light-child-expanded.groovy") {
         capability "Actuator"
         capability "Switch"
         capability "Light"
@@ -81,7 +81,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Tasmota - Universal Metering Bulb/Light (Child)', 'namespace': 'tasmota', 'author': 'Markus Liljergren', 'filename': 'tasmota-universal-metering-bulb-light-child', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-metering-bulb-light-child-expanded.groovy']
+    Map deviceInfo = ['name': 'Tasmota - Universal Metering Bulb/Light (Child)', 'namespace': 'tasmota', 'author': 'Markus Liljergren', 'filename': 'tasmota-universal-metering-bulb-light-child', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/tasmota-universal-metering-bulb-light-child-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -144,7 +144,7 @@ void off() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.1.1.1123Tb"
+    String version = "v1.1.1.1123T"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

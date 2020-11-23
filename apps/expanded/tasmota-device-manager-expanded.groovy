@@ -1,8 +1,8 @@
-// IMPORT URL: https://raw.githubusercontent.com/markus-li/Hubitat/development/apps/expanded/tasmota-device-manager-expanded.groovy
+// IMPORT URL: https://raw.githubusercontent.com/markus-li/Hubitat/release/apps/expanded/tasmota-device-manager-expanded.groovy
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1123Tb
+ *  Version: v1.1.1.1123T
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -659,7 +659,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.1.1.1123Tb"
+    String version = "v1.1.1.1123T"
     logging("getAppVersion() = ${version}", 50)
     return version
 }

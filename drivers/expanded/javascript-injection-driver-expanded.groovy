@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v0.1.0.1118b
+ *  Version: v0.1.0.1123b
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 import java.util.Date
 
 metadata {
-    definition (name: "JavaScript Injector", namespace: "oh-lalabs.com", author: "Markus Liljergren", filename: "javascript-injection-driver", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/javascript-injection-driver-expanded.groovy") {
+    definition (name: "JavaScript Injector", namespace: "oh-lalabs.com", author: "Markus Liljergren", filename: "javascript-injection-driver", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/javascript-injection-driver-expanded.groovy") {
         capability "TemperatureMeasurement"
         capability "Refresh"
 

@@ -29,7 +29,7 @@ import java.security.MessageDigest
 import hubitat.helper.HexUtils
 
 metadata {
-	definition (name: "Virtual - Valve", namespace: "oh-lalabs.com", author: "Markus Liljergren", filename: "virtual-valve", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/virtual-valve-expanded.groovy") {
+	definition (name: "Virtual - Valve", namespace: "oh-lalabs.com", author: "Markus Liljergren", filename: "virtual-valve", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/virtual-valve-expanded.groovy") {
         capability "Initialize"
         capability "Actuator"
         capability "Switch"
@@ -56,7 +56,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Virtual - Valve', 'namespace': 'oh-lalabs.com', 'author': 'Markus Liljergren', 'filename': 'virtual-valve', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/virtual-valve-expanded.groovy']
+    Map deviceInfo = ['name': 'Virtual - Valve', 'namespace': 'oh-lalabs.com', 'author': 'Markus Liljergren', 'filename': 'virtual-valve', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/virtual-valve-expanded.groovy']
      
     return(deviceInfo[infoName])
 }

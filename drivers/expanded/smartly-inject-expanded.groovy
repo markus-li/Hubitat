@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v2.0.0.1118b
+ *  Version: v2.1.0.1123
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 import java.util.Date
 
 metadata {
-    definition (name: "Smartly Inject", namespace: "oh-lalabs.com", author: "Markus Liljergren", filename: "smartly-inject", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/smartly-inject-expanded.groovy") {
+    definition (name: "Smartly Inject", namespace: "oh-lalabs.com", author: "Markus Liljergren", filename: "smartly-inject", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/smartly-inject-expanded.groovy") {
         capability "Refresh"
         capability "Initialize"
         command "disable"
@@ -42,7 +42,7 @@ metadata {
 // BEGIN:getDeviceInfoFunction()
 String getDeviceInfoByName(infoName) { 
      
-    Map deviceInfo = ['name': 'Smartly Inject', 'namespace': 'oh-lalabs.com', 'author': 'Markus Liljergren', 'filename': 'smartly-inject', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/smartly-inject-expanded.groovy']
+    Map deviceInfo = ['name': 'Smartly Inject', 'namespace': 'oh-lalabs.com', 'author': 'Markus Liljergren', 'filename': 'smartly-inject', 'importUrl': 'https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/smartly-inject-expanded.groovy']
      
     return(deviceInfo[infoName])
 }
@@ -83,7 +83,7 @@ void installed() {
 private String getDriverVersion() {
     comment = "Enables Smartly JavaScript features in the Dashboard!"
     if(comment != "") state.comment = comment
-    String version = "v2.0.0.1118b"
+    String version = "v2.1.0.1123"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
