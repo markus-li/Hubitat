@@ -1,0 +1,31 @@
+{
+  "packageName": "Generic Switch (with Presence)",
+  "minimumHEVersion": "2.2.2",
+  "author": "Markus",
+  "dateReleased": "2020-11-23",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-generic-switch",
+  "communityLink": "https://community.oh-lalabs.com/t/release-xiaomi-aqara-opple-drivers-with-presence/77?u=markus",
+  "apps": [],
+  "drivers": [
+    {
+      "id": "1a35514a-3a07-5cc2-a588-7758cd182214",
+      "internalId": 1666,
+      "name": "Zigbee - Generic Switch (with Presence)",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Zigbee - Generic Switch (with Presence)",
+          "namespace": "markus-li"
+        },
+        {
+          "name": "Generic Switch (with Presence)",
+          "namespace": "markus-li"
+        }
+      ],
+      "betaVersion": "v1.0.1.1123b",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-generic-switch-expanded.groovy",
+      "required": true
+    }
+  ],
+  "files": []
+}

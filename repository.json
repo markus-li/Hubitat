@@ -1,0 +1,160 @@
+{
+  "author": "Markus",
+  "gitHubUrl": "https://github.com/markus-li/Hubitat",
+  "packages": [
+    {
+      "name": "Smartly Inject",
+      "category": "Utility",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/smartly-inject.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/smartly-inject-beta.json",
+      "description": "Enables Smartly JavaScript features in the Dashboard!"
+    },
+    {
+      "name": "Aqara Smart Curtain Motor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-smart-curtain-motor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-aqara-smart-curtain-motor-beta.json",
+      "description": "Works with models ZNCLDJ11LM & ZNCLDJ12LM."
+    },
+    {
+      "name": "Aqara Water Leak Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-aqara-water-leak-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-aqara-water-leak-sensor-beta.json",
+      "description": "Works with model SJCGQ11LM."
+    },
+    {
+      "name": "Generic Device Toolbox",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-device-toolbox.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-device-toolbox-beta.json",
+      "description": "Used to clean device data and get Zigbee device fingerprints"
+    },
+    {
+      "name": "Generic Dimmer (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-dimmer.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-dimmer-beta.json",
+      "description": "Works with Generic Dimmers (only tested with the Nue Dimmer, might need changes for other devices. Please report your fingerprints and progress.)"
+    },
+    {
+      "name": "Generic Outlet (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-outlet.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-outlet-beta.json",
+      "description": "Works with Generic Outlets (please report your fingerprints)"
+    },
+    {
+      "name": "Generic Repeater (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-repeater.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-repeater-beta.json",
+      "description": "Works with most repeater-only devices (Xbee with Send Type set to Bind)"
+    },
+    {
+      "name": "Generic Switch (with Presence)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-generic-switch.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-generic-switch-beta.json",
+      "description": "Works with Generic Switches (this includes many multi-relay ones, like Nue. Please report your fingerprints)"
+    },
+    {
+      "name": "NOT WORKING IKEA Tradfri On/Off Switch",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-ikea-tradfri-on-off-switch.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-ikea-tradfri-on-off-switch-beta.json",
+      "description": "Works with model E1743."
+    },
+    {
+      "name": "Sonoff Button",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-button.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-button-beta.json",
+      "description": "Works with model SNZB-01."
+    },
+    {
+      "name": "Sonoff Contact Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-contact-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-contact-sensor-beta.json",
+      "description": "Works with model SNZB-04."
+    },
+    {
+      "name": "Sonoff Motion Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-motion-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-motion-sensor-beta.json",
+      "description": "Works with model SNZB-03."
+    },
+    {
+      "name": "Sonoff Temperature & Humidity Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-sonoff-temperature-humidity-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-sonoff-temperature-humidity-sensor-beta.json",
+      "description": "Works with model SNZB-02."
+    },
+    {
+      "name": "Tuya Alarm",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-tuya-alarm.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-tuya-alarm-beta.json",
+      "description": "Works with the Tuya Alarm."
+    },
+    {
+      "name": "Tuya Valve",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-tuya-valve.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-tuya-valve-beta.json",
+      "description": "Works with Tuya Valves."
+    },
+    {
+      "name": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-mijia-smart-light-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-mijia-smart-light-sensor-beta.json",
+      "description": "Works with model GZCGQ01LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Contact Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-contact-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-contact-sensor-beta.json",
+      "description": "Works with models MCCGQ01LM & MCCGQ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Motion Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-motion-sensor.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-motion-sensor-beta.json",
+      "description": "Works with models RTCGQ01LM & RTCGQ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Plug/Outlet",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-plug-outlet.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-plug-outlet-beta.json",
+      "description": "Works with models ZNCZ02LM, ZNCZ12LM(needs testing) & QBCZ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara Temperature & Humidity Sensor",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-temperature-humidity.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-temperature-humidity-beta.json",
+      "description": "Works with models WSDCGQ01LM & WSDCGQ11LM."
+    },
+    {
+      "name": "Xiaomi/Aqara/Opple Button/Switch/Remote",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packages/zigbee-xiaomi-aqara-opple-button-switch-remote.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/zigbee-xiaomi-aqara-opple-button-switch-remote-beta.json",
+      "description": "Works with models WXKG01LM, WXKG11LM (2015 & 2018), WXKG12LM, WXKG02LM (2016 & 2018), WXKG03LM (2016 & 2018), WXCJKG11LM, WXCJKG12LM & WXCJKG13LM."
+    },
+    {
+      "name": "Tasmota for Hubitat Elevation",
+      "category": "Integrations",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/packageManifest.json",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packageManifestBeta.json",
+      "description": "Allows you to integrate Tasmota-based devices with Hubitat Elevation."
+    }
+  ]
+}

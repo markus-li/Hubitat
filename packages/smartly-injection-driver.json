@@ -1,0 +1,47 @@
+{
+  "packageName": "Smartly Inject",
+  "minimumHEVersion": "2.2.2",
+  "author": "Markus",
+  "dateReleased": "2020-10-26",
+  "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/packages/smartly-inject-beta.json",
+  "documentationLink": "https://oh-lalabs.com/docs/smartly-inject",
+  "communityLink": "https://oh-lalabs.com/l/smartly-inject-community",
+  "apps": [],
+  "drivers": [
+    {
+      "id": "ddb0e3c1-77c8-56d1-9bef-da10c15ffaab",
+      "internalId": 1890,
+      "name": "Smartly Inject",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Smartly Injector",
+          "namespace": "markus-li"
+        }
+      ],
+      "version": "v2.0.0.1025",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/smartly-inject-expanded.groovy",
+      "required": true
+    }
+  ],
+  "files": [
+    {
+      "id": "0f211437-fff7-592d-bd7d-4c0524cfeeb7",
+      "name": "smartly.js",
+      "version": "v2.0.0.1025",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/assets/smartly.js"
+    },
+    {
+      "id": "a08eec5a-f464-51de-bd7c-5a9b622676d7",
+      "name": "smartly-injected.min.css",
+      "version": "v2.0.0.1025",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/assets/smartly-injected.min.css"
+    },
+    {
+      "id": "3e258ced-82e0-5387-90c2-aa78743abff5",
+      "name": "usermode.json",
+      "version": "v2.0.0.1025",
+      "location": "https://raw.githubusercontent.com/markus-li/Hubitat/release/assets/usermode.json"
+    }
+  ]
+}

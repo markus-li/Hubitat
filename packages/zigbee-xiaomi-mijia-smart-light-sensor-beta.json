@@ -1,0 +1,31 @@
+{
+  "packageName": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
+  "minimumHEVersion": "2.2.2",
+  "author": "Markus",
+  "dateReleased": "2020-11-23",
+  "documentationLink": "https://oh-lalabs.com/docs/zigbee-xiaomi-mijia-smart-light-sensor",
+  "communityLink": "https://community.oh-lalabs.com/t/release-xiaomi-aqara-opple-drivers-with-presence/77?u=markus",
+  "apps": [],
+  "drivers": [
+    {
+      "id": "93a1e235-91b2-5320-9c30-25802b26ac5d",
+      "internalId": 1122,
+      "name": "Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
+      "namespace": "oh-lalabs.com",
+      "alternateNames": [
+        {
+          "name": "Zigbee - Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
+          "namespace": "markus-li"
+        },
+        {
+          "name": "Xiaomi Mijia Smart Light Sensor (Zigbee 3.0)",
+          "namespace": "markus-li"
+        }
+      ],
+      "betaVersion": "v1.0.1.1123b",
+      "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/zigbee-xiaomi-mijia-smart-light-sensor-expanded.groovy",
+      "required": true
+    }
+  ],
+  "files": []
+}
