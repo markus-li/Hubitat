@@ -1292,7 +1292,7 @@ void zigbee_sonoff_parseBatteryData(Map msgMap) {
         }
     }
     if(bat != null) {
-        bat = bat.setScale(1, BigDecimal.ROUND_HALF_UP)
+        bat = bat.setScale(0, BigDecimal.ROUND_HALF_UP)
         sendEvent(name:"battery", value: bat , unit: "%", isStateChange: false)
     }
 }
