@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1123Tb
+ *  Version: v1.1.1.1212Tb
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -121,15 +121,15 @@ void refresh() {
     def metaConfig = clearThingsToHide()
     metaConfig = setDatasToHide(['metaConfig', 'isComponent', 'preferences', 'label', 'name'], metaConfig=metaConfig)
     // END:  getChildComponentMetaConfigCommands()
-    parent?.componentRefresh(this.device)
+    parent?.componentRefresh(device)
 }
 
 void on() {
-    parent?.componentOn(this.device)
+    parent?.componentOn(device)
 }
 
 void off() {
-    parent?.componentOff(this.device)
+    parent?.componentOff(device)
 }
 
 /**
@@ -144,7 +144,7 @@ void off() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.1.1.1123Tb"
+    String version = "v1.1.1.1212Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

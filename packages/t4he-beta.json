@@ -55,7 +55,7 @@
       "name": "Tasmota - Universal Curtain (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-curtain-child-expanded.groovy",
       "required": false
     },
@@ -65,7 +65,7 @@
       "name": "Tasmota - Universal Dimmer (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-dimmer-child-expanded.groovy",
       "required": false
     },
@@ -75,7 +75,7 @@
       "name": "Tasmota - Universal Fan Control (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-fancontrol-child-expanded.groovy",
       "required": false
     },
@@ -85,7 +85,7 @@
       "name": "Tasmota - Universal Metering Bulb/Light (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-metering-bulb-light-child-expanded.groovy",
       "required": false
     },
@@ -95,7 +95,7 @@
       "name": "Tasmota - Universal Metering Dimmer (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-metering-dimmer-child-expanded.groovy",
       "required": false
     },
@@ -105,7 +105,7 @@
       "name": "Tasmota - Universal Metering Plug/Outlet (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-metering-plug-outlet-child-expanded.groovy",
       "required": false
     },
@@ -115,7 +115,7 @@
       "name": "Tasmota - Universal Multi Sensor (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-multi-sensor-child-expanded.groovy",
       "required": true
     },
@@ -125,7 +125,7 @@
       "name": "Tasmota - Universal Plug/Outlet (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-plug-outlet-child-expanded.groovy",
       "required": false
     },
@@ -135,7 +135,7 @@
       "name": "Tasmota - Universal Switch as Contact Sensor (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-contact-sensor-child-expanded.groovy",
       "required": false
     },
@@ -145,7 +145,7 @@
       "name": "Tasmota - Universal Switch as Garage Door (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-garage-door-child-expanded.groovy",
       "required": false
     },
@@ -155,7 +155,7 @@
       "name": "Tasmota - Universal Switch as Motion Sensor (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-motion-sensor-child-expanded.groovy",
       "required": false
     },
@@ -165,7 +165,7 @@
       "name": "Tasmota - Universal Switch as Presence Sensor (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-presence-sensor-child-expanded.groovy",
       "required": false
     },
@@ -175,7 +175,7 @@
       "name": "Tasmota - Universal Switch as Water Sensor (Child)",
       "namespace": "tasmota",
       "alternateNames": [],
-      "betaVersion": "v1.1.1.1123Tb",
+      "betaVersion": "v1.1.1.1212Tb",
       "betaLocation": "https://raw.githubusercontent.com/markus-li/Hubitat/development/drivers/expanded/tasmota-universal-switch-as-water-sensor-child-expanded.groovy",
       "required": false
     }

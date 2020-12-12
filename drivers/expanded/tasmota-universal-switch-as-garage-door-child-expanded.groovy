@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1123Tb
+ *  Version: v1.1.1.1212Tb
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ void refresh() {
     def metaConfig = clearThingsToHide()
     metaConfig = setDatasToHide(['metaConfig', 'isComponent', 'preferences', 'label', 'name'], metaConfig=metaConfig)
     // END:  getChildComponentMetaConfigCommands()
-    parent?.componentRefresh(this.device)
+    parent?.componentRefresh(device)
 }
 
 void on() {
@@ -122,7 +122,7 @@ void open() {
     String door = device.currentValue("door", true)
     if(door != "open" && door != "opening") {
         if(reportOpeningClosing == true) sendEvent(name: "door", value: "opening")
-        parent?.componentOn(this.device.deviceNetworkId.tokenize("-")[0] + "-POWER1")
+        parent?.componentOn(device.deviceNetworkId.tokenize("-")[0] + "-POWER1")
     }
 }
 
@@ -130,7 +130,7 @@ void close() {
     String door = device.currentValue("door", true)
     if(door != "closed" && door != "closing") {
         if(reportOpeningClosing == true) sendEvent(name: "door", value: "closing")
-        parent?.componentOn(this.device.deviceNetworkId.tokenize("-")[0] + "-POWER1")
+        parent?.componentOn(device.deviceNetworkId.tokenize("-")[0] + "-POWER1")
     }
 }
 
@@ -146,7 +146,7 @@ void close() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.1.1.1123Tb"
+    String version = "v1.1.1.1212Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

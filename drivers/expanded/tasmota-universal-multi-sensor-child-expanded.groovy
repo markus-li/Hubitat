@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1123Tb
+ *  Version: v1.1.1.1212Tb
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@ void refresh() {
     def metaConfig = clearThingsToHide()
     metaConfig = setDatasToHide(['metaConfig', 'isComponent', 'preferences', 'label', 'name'], metaConfig=metaConfig)
     // END:  getChildComponentMetaConfigCommands()
-    parent?.componentRefresh(this.device)
+    parent?.componentRefresh(device)
     if(hideMeasurementAdjustments == true) {
         metaConfig = setPreferencesToHide(["tempOffset", "tempRes", "tempUnitConversion",
                                            "humidityOffset", "pressureOffset", "pressureUnitConversion"], metaConfig=metaConfig)
@@ -170,7 +170,7 @@ void refresh() {
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.1.1.1123Tb"
+    String version = "v1.1.1.1212Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
