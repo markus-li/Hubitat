@@ -1435,7 +1435,12 @@ void childParse(com.hubitat.app.DeviceWrapper cd, event) {
 }
 
 String getDeviceActionType(String childDeviceNetworkId) {
-    return childDeviceNetworkId.tokenize("-")[1]
+    if(childDeviceNetworkId) {
+      return childDeviceNetworkId.tokenize("-")[1]
+    } else {
+      return "1"
+    }
+    
 }
 
 /** Calls FROM Child devices */
@@ -1476,7 +1481,10 @@ void componentOff(String deviceNetworkId) {
 }
 
 void componentOff(com.hubitat.app.DeviceWrapper cd) {
-    componentOff(cd.deviceNetworkId)
+    if(cd) {
+      componentOff(cd.deviceNetworkId)
+    }
+    
 }
 
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
