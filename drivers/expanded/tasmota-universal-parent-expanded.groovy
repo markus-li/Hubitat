@@ -1445,13 +1445,25 @@ String getDeviceActionType(String childDeviceNetworkId) {
 }
 
 /** Calls FROM Child devices */
+boolean isValidChildDevice(com.hubitat.app.DeviceWrapper cd) {
+    if(cd) {
+        return true
+    } else {
+        logging("Child identified itself as $cd! Something went very wrong...")
+        return false
+    }
+}
+
 void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentRefresh(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
     refresh()
+  }
 }
 
 void componentOn(String deviceNetworkId) {
+    
     String actionType = getDeviceActionType(deviceNetworkId)
     if(invertPowerNumber == true) {
         if(actionType == "POWER1") { 
@@ -1465,7 +1477,9 @@ void componentOn(String deviceNetworkId) {
 }
 
 void componentOn(com.hubitat.app.DeviceWrapper cd) {
-    componentOn(cd.deviceNetworkId)
+    if(isValidChildDevice(cd) == true) {
+      componentOn(cd.deviceNetworkId)
+    }
 }
 
 void componentOff(String deviceNetworkId) {
@@ -1482,70 +1496,89 @@ void componentOff(String deviceNetworkId) {
 }
 
 void componentOff(com.hubitat.app.DeviceWrapper cd) {
-    if(cd) {
+    if(isValidChildDevice(cd) == true) {
       componentOff(cd.deviceNetworkId)
     }
-    
 }
 
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level) {
-    String actionType = getDeviceActionType(cd.deviceNetworkId)
-    logging("componentSetLevel(cd=${cd.displayName} (${cd.deviceNetworkId}), level=${level}) actionType=$actionType", 1)
-    tasmota_rgbw_setLevel(level)
+    if(isValidChildDevice(cd) == true) {
+      String actionType = getDeviceActionType(cd.deviceNetworkId)
+      logging("componentSetLevel(cd=${cd.displayName} (${cd.deviceNetworkId}), level=${level}) actionType=$actionType", 1)
+      tasmota_rgbw_setLevel(level)
+    }
 }
 
 void componentSetLevel(com.hubitat.app.DeviceWrapper cd, BigDecimal level, BigDecimal duration) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetLevel(cd=${cd.displayName} (${cd.deviceNetworkId}), level=${level}, duration=${duration}) actionType=$actionType", 1)
     tasmota_rgbw_setLevel(level, duration)
+  }
 }
 
 void componentStartLevelChange(com.hubitat.app.DeviceWrapper cd, String direction) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentStartLevelChange(cd=${cd.displayName} (${cd.deviceNetworkId}), direction=${direction}) actionType=$actionType", 1)
     tasmota_rgbw_startLevelChange(direction)
+  }
 }
 
 void componentStopLevelChange(com.hubitat.app.DeviceWrapper cd) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentStopLevelChange(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
     tasmota_rgbw_stopLevelChange()
+  }
 }
 
 void componentSetColor(com.hubitat.app.DeviceWrapper cd, Map colormap) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetColor(cd=${cd.displayName} (${cd.deviceNetworkId}), colormap=${colormap}) actionType=$actionType", 1)
     rgbw_setColor(colormap)
+  }
 }
 
 void componentSetHue(com.hubitat.app.DeviceWrapper cd, BigDecimal hue) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetHue(cd=${cd.displayName} (${cd.deviceNetworkId}), hue=${hue}) actionType=$actionType", 1)
     rgbw_setHue(hue)
+  }
 }
 
 void componentWhite(com.hubitat.app.DeviceWrapper cd) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentWhite(cd=${cd.displayName} (${cd.deviceNetworkId})) actionType=$actionType", 1)
     rgbw_white()
+  }
 }
 
 void componentSetRGB(com.hubitat.app.DeviceWrapper cd, r, g, b) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetRGB(cd=${cd.displayName} (${cd.deviceNetworkId}), r=${r}, g=${g}, b=${b}) actionType=$actionType", 1)
     tasmota_rgbw_setRGB(r, g, b)
+  }
 }
 
 void componentSetSaturation(com.hubitat.app.DeviceWrapper cd, BigDecimal saturation) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetSaturation(cd=${cd.displayName} (${cd.deviceNetworkId}), saturation=${saturation}) actionType=$actionType", 1)
     rgbw_setSaturation(saturation)
+  }
 }
 
 void componentSetColorTemperature(com.hubitat.app.DeviceWrapper cd, BigDecimal colortemperature) {
+  if(isValidChildDevice(cd) == true) {
     String actionType = getDeviceActionType(cd.deviceNetworkId)
     logging("componentSetColorTemperature(cd=${cd.displayName} (${cd.deviceNetworkId}), colortemperature=${colortemperature}) actionType=$actionType", 1)
     tasmota_rgbw_setColorTemperature(colortemperature)
+  }
 }
 
 void componentSetEffect(com.hubitat.app.DeviceWrapper cd, BigDecimal effectnumber, BigDecimal speed) {
