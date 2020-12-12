@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.0.1.1123b
+ *  Version: v1.0.1.1124b
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -372,7 +372,6 @@ void setLevel(level, duration) {
     if(level < deviceMinLevel()) level = 0
     if(level >= deviceMaxLevel()) level = 100
     logging("setLevel(level: ${level}, adjusted level: $level)", 100)
-    log.info("hello4 ${retrieveEndpointId()}")
     sendZigbeeCommands(zigbeeSetLevel(retrieveEndpointId(), level, duration))
 }
 
@@ -424,7 +423,7 @@ Integer retrieveEndpointId2() {
 private String getDriverVersion() {
     comment = "Works with Generic Dimmers (only tested with the Nue Dimmer, might need changes for other devices. Please report your fingerprints and progress.)"
     if(comment != "") state.comment = comment
-    String version = "v1.0.1.1123b"
+    String version = "v1.0.1.1124b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)

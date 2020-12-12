@@ -2,7 +2,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1123Tb
+ *  Version: v1.1.1.1212Tb
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -659,7 +659,7 @@ Map getTimeStringSinceDateWithMaximum(myDate, maxMillis) {
 
 // BEGIN:getDefaultAppMethods()
 private String getAppVersion() {
-    String version = "v1.1.1.1123Tb"
+    String version = "v1.1.1.1212Tb"
     logging("getAppVersion() = ${version}", 50)
     return version
 }
@@ -2381,14 +2381,14 @@ Integer tasmota_getTelePeriodValue() {
 
 private String tasmota_getHostAddress() {
     Integer port = 80
-    if (getDeviceDataByName("port") != null) {
+    if (!getDeviceDataByName("port")) {
         port = getDeviceDataByName("port").toInteger()
     }
-    if (override == true && ipAddress != null){
+    if (override == true && !ipAddress){
         return "${ipAddress}:$port"
-    } else if(device.currentValue("ip") != null) {
+    } else if(!device.currentValue("ip")) {
         return "${device.currentValue("ip")}:$port"
-    } else if(getDeviceDataByName("ip") != null) {
+    } else if(!getDeviceDataByName("ip")) {
         return "${getDeviceDataByName("ip")}:$port"
     } else {
         log.warn "tasmota_getHostAddress() failed and ran out of fallbacks! If this happens, contact the developer, this is an \"impossible\" scenario!"

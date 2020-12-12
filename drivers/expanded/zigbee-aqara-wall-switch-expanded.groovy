@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.0.1.1123b
+ *  Version: v1.0.1.1208b
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -389,10 +389,39 @@ boolean isKnownModel(String model=null) {
     }
 }
 
+boolean isFullySupportedModel(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "lumi.relay.c2acn01":
+        case "lumi.switch.b2lacn02":
+        case "lumi.switch.b1lacn02":
+        case "lumi.switch.b2lacn02":
+        case "lumi.switch.l3acn3":
+        case "lumi.switch.b1nacn02":
+        case "lumi.switch.b2nacn02":
+        case "lumi.switch.b3nacn02":
+            return true
+            break
+        default:
+            return false
+    }
+}
+
 boolean isLLZKMK11LM(String model=null) {
     model = model != null ? model : getDeviceDataByName('model')
     switch(model) {
         case "lumi.relay.c2acn01":
+            return true
+            break
+        default:
+            return false
+    }
+}
+
+boolean isQBKG22LM(String model=null) {
+    model = model != null ? model : getDeviceDataByName('model')
+    switch(model) {
+        case "lumi.switch.b2lacn02":
             return true
             break
         default:
@@ -473,8 +502,8 @@ ArrayList<String> parse(String description) {
                 logging("Sending request to read attribute 0x0004 from cluster 0x0000...", 100)
                 sendZigbeeCommands(zigbee.readAttribute(CLUSTER_BASIC, 0x0004))
             }
-            if(isKnownModel() == true && isD1Switch() == false) {
-                log.warn("Known model: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}")
+            if(isKnownModel() == true && isFullySupportedModel() == false) {
+                logging("Known model - only partially supported: $model - PLEASE REPORT THIS LOG TO THE DEV - description:${description} | parseMap:${msgMap}", 1)
             } else {
                 logging("KNOWN event (Xiaomi/Aqara specific data structure) - description:${description} | parseMap:${msgMap}", 1)
             }
@@ -509,7 +538,21 @@ ArrayList<String> parse(String description) {
             Integer button = null
             Integer physicalButtons = Integer.parseInt(getDeviceDataByName('physicalButtons'))
             Integer usableButtons = physicalButtons == 1 ? 1 : physicalButtons + 1
-            if(isD1Switch() == true) {
+            if(isQBKG22LM() == true) {
+                logging("Seeing endpoint: $endpoint with valueParsed as ${msgMap['valueParsed']}", 100)
+                if(endpoint == 2 || endpoint == 3) {
+                  if(msgMap['valueParsed'] == true) {
+                        logging("Turning ON relay ${endpoint-1} (endpoint: $endpoint)", 100)
+                    } else {
+                        logging("Turning OFF relay ${endpoint-1} (endpoint: $endpoint)", 100)
+                    }
+                    sendOnOffEvent(endpoint-1, msgMap['valueParsed'])
+                } else {
+                  button = endpoint - 3
+                  logging("Pushed button $button (endpoint: $endpoint)", 100)
+                  sendEvent(name:"pushed", value: button, isStateChange: true, descriptionText: "Button $button was tapped 1 time")
+                }
+            } else if(isD1Switch() == true) {
                 sendOnOffEvent(endpoint, msgMap['valueParsed'])
             } else if(isOldNoNeutralSwitch() == true) {
                 if(endpoint == 2 || endpoint == 3) {
@@ -713,12 +756,18 @@ void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
 void componentOn(com.hubitat.app.DeviceWrapper cd) {
     logging("componentOn() from $cd.deviceNetworkId", 1)
     Integer relayId = getRelayIdFromChildId(cd.deviceNetworkId)
+    if(isQBKG22LM() == true) {
+      relayId += 1
+    }
     sendZigbeeCommands(zigbeeCommand(relayId, 0x0006, 0x01))
 }
 
 void componentOff(com.hubitat.app.DeviceWrapper cd) {
     logging("componentOff() from $cd.deviceNetworkId", 1)
     Integer relayId = getRelayIdFromChildId(cd.deviceNetworkId)
+    if(isQBKG22LM() == true) {
+      relayId += 1
+    }
     sendZigbeeCommands(zigbeeCommand(relayId, 0x0006, 0x00))
 }
 
@@ -742,7 +791,7 @@ void setAsDisconnected(BigDecimal button) {
     button = button < 1 ? 1 : button > 3 ? 3 : button
     Integer attribute = 0xFF21 + button
     Integer value = 0xFE
-    if(isLLZKMK11LM() == true) {
+    if(isLLZKMK11LM() == true || isQBKG22LM() == true) {
         value = 0xFF
     }
     sendZigbeeCommands(zigbeeWriteAttribute(0x0000, attribute, DataType.UINT8, value, [mfgCode: "0x115F"]))
@@ -756,6 +805,9 @@ void setAsConnected(BigDecimal button) {
     Integer value = 0x12 + ((button - 1) * 0x10)
     if(isLLZKMK11LM() == true) {
         value = button == 1 ? 0x2F : 0xF2
+    }
+    if(isQBKG22LM() == true) {
+      value = button == 1 ? 0x12 : 0x22
     }
     sendZigbeeCommands(zigbeeWriteAttribute(0x0000, attribute, DataType.UINT8, value, [mfgCode: "0x115F"]))
     sendEvent(name:"button$button", value: "connected", isStateChange: false)
@@ -777,7 +829,7 @@ void setAsConnected(BigDecimal button) {
 private String getDriverVersion() {
     comment = "Works with model QBKG24LM, QBKG03LM and QBKG04LM, need traffic logs for QBKG11LM, QBKG12LM & LLZKMK11LM etc. (ALL needs testing!)"
     if(comment != "") state.comment = comment
-    String version = "v1.0.1.1123b"
+    String version = "v1.0.1.1208b"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
