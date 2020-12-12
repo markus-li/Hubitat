@@ -2960,14 +2960,14 @@ Integer tasmota_getTelePeriodValue() {
 
 private String tasmota_getHostAddress() {
     Integer port = 80
-    if (!getDeviceDataByName("port")) {
+    if (getDeviceDataByName("port")) {
         port = getDeviceDataByName("port").toInteger()
     }
-    if (override == true && !ipAddress){
+    if (override == true && ipAddress){
         return "${ipAddress}:$port"
-    } else if(!device.currentValue("ip")) {
+    } else if(device.currentValue("ip")) {
         return "${device.currentValue("ip")}:$port"
-    } else if(!getDeviceDataByName("ip")) {
+    } else if(getDeviceDataByName("ip")) {
         return "${getDeviceDataByName("ip")}:$port"
     } else {
         log.warn "tasmota_getHostAddress() failed and ran out of fallbacks! If this happens, contact the developer, this is an \"impossible\" scenario!"
