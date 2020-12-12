@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1123Tb
+ *  Version: v1.1.1.1212Tb
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -186,75 +186,75 @@ void refresh() {
     if(commandsToHide != []) metaConfig = setCommandsToHide(commandsToHide, metaConfig=metaConfig)
 
     sendEvent(name: "lightEffects", value: JsonOutput.toJson(lightEffects))
-    parent?.componentRefresh(this.device)
+    parent?.componentRefresh(device)
 }
 
 void on() {
-    parent?.componentOn(this.device)
+    parent?.componentOn(device)
 }
 
 void off() {
-    parent?.componentOff(this.device)
+    parent?.componentOff(device)
 }
 
 void setLevel(BigDecimal level) {
-    parent?.componentSetLevel(this.device, level)
+    parent?.componentSetLevel(device, level)
 }
 
 void setLevel(BigDecimal level, BigDecimal duration) {
-    parent?.componentSetLevel(this.device, level, duration)
+    parent?.componentSetLevel(device, level, duration)
 }
 
 void startLevelChange(String direction) {
-    parent?.componentStartLevelChange(this.device, direction)
+    parent?.componentStartLevelChange(device, direction)
 }
 
 void stopLevelChange() {
-    parent?.componentStopLevelChange(this.device)
+    parent?.componentStopLevelChange(device)
 }
 
 void setColor(Map colormap) {
-    parent?.componentSetColor(this.device, colormap)
+    parent?.componentSetColor(device, colormap)
 }
 
 void setHue(BigDecimal hue) {
-    parent?.componentSetHue(this.device, hue)
+    parent?.componentSetHue(device, hue)
 }
 
 void setSaturation(BigDecimal saturation) {
-    parent?.componentSetSaturation(this.device, saturation)
+    parent?.componentSetSaturation(device, saturation)
 }
 
 void setColorTemperature(BigDecimal colortemperature) {
-    parent?.componentSetColorTemperature(this.device, colortemperature)
+    parent?.componentSetColorTemperature(device, colortemperature)
 }
 
 void colorWhite() {
-    parent?.componentWhite(this.device)
+    parent?.componentWhite(device)
 }
 
 void colorRed() {
-    parent?.componentSetRGB(this.device, 255, 0, 0)
+    parent?.componentSetRGB(device, 255, 0, 0)
 }
 
 void colorGreen() {
-    parent?.componentSetRGB(this.device, 0, 255, 0)
+    parent?.componentSetRGB(device, 0, 255, 0)
 }
 
 void colorBlue() {
-    parent?.componentSetRGB(this.device, 0, 0, 255)
+    parent?.componentSetRGB(device, 0, 0, 255)
 }
 
 void colorYellow() {
-    parent?.componentSetRGB(this.device, 255, 255, 0)
+    parent?.componentSetRGB(device, 255, 255, 0)
 }
 
 void colorCyan() {
-    parent?.componentSetRGB(this.device, 0, 255, 255)
+    parent?.componentSetRGB(device, 0, 255, 255)
 }
 
 void colorPink() {
-    parent?.componentSetRGB(this.device, 255, 0, 255)
+    parent?.componentSetRGB(device, 255, 0, 255)
 }
 
 void setColorByName(String colorName) {
@@ -287,7 +287,7 @@ void setColorByName(String colorName) {
 
 void setColorByRGBString(String colorRGB) {
     logging("setColorByRGBString(colorRGB ${colorRGB})", 1)
-    parent?.componentSetColorByRGBString(this.device, colorRGB)
+    parent?.componentSetColorByRGBString(device, colorRGB)
 }
 
 void setEffect(BigDecimal effectnumber) {
@@ -320,7 +320,7 @@ void setPreviousEffect() {
 
 void setEffectWithSpeed(BigDecimal effectnumber, BigDecimal speed=3) {
     state.effectnumber = effectnumber
-    parent?.componentSetEffect(this.device, effectnumber, speed)
+    parent?.componentSetEffect(device, effectnumber, speed)
 }
 
 void setNextEffectWithSpeed(BigDecimal speed=3) {
@@ -367,19 +367,19 @@ void modeWakeUp(BigDecimal wakeUpDuration) {
 
 void modeWakeUp(BigDecimal wakeUpDuration, BigDecimal level) {
     state.effectnumber = 1
-    parent?.componentModeWakeUp(this.device, wakeUpDuration, level)
+    parent?.componentModeWakeUp(device, wakeUpDuration, level)
 }
 
 void setPixelColor(String colorRGB, BigDecimal pixel) {
-    parent?.componentSetPixelColor(this.device, colorRGB, pixel)
+    parent?.componentSetPixelColor(device, colorRGB, pixel)
 }
 
 void setAddressablePixels(BigDecimal pixels) {
-    parent?.componentSetAddressablePixels(this.device, pixels)
+    parent?.componentSetAddressablePixels(device, pixels)
 }
 
 void setAddressableRotation(BigDecimal pixels) {
-    parent?.componentSetAddressableRotation(this.device, pixels)
+    parent?.componentSetAddressableRotation(device, pixels)
 }
 
 void setEffectWidth(String pixels) {
@@ -387,7 +387,7 @@ void setEffectWidth(String pixels) {
 }
 
 void setEffectWidth(BigDecimal pixels) {
-    parent?.componentSetEffectWidth(this.device, pixels)
+    parent?.componentSetEffectWidth(device, pixels)
 }
 
 /*
@@ -424,7 +424,7 @@ backlog
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.1.1.1123Tb"
+    String version = "v1.1.1.1212Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
