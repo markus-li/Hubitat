@@ -1438,6 +1438,7 @@ String getDeviceActionType(String childDeviceNetworkId) {
     if(childDeviceNetworkId) {
       return childDeviceNetworkId.tokenize("-")[1]
     } else {
+      log.warn("No Action Type found in the Child ID $childDeviceNetworkId! Defaulting to action 1...")
       return "1"
     }
     
