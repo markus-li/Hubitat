@@ -2479,7 +2479,7 @@ private hubitat.device.HubAction tasmota_postAction(String uri, String data) {
 }
 
 void tasmota_sendCommandParse(hubitat.scheduling.AsyncResponse asyncResponse, data) {
-    if(asyncResponse != null) {
+    if(asyncResponse) {
         try{
             Map r = asyncResponse.getJson()
             logging("tasmota_sendCommandParse(asyncResponse.getJson() = \"${r}\")", 1)
@@ -2501,10 +2501,10 @@ void tasmota_sendCommandParse(hubitat.scheduling.AsyncResponse asyncResponse, da
 
 String tasmota_getCommandString(String command, String value) {
     String uri = "/cm?"
-    if (password != null) {
+    if (password || password == "") {
         uri += "user=admin&password=${tasmota_urlEscape(password)}&"
     }
-	if (value != null && value != "") {
+	if (value) {
 		uri += "cmnd=${tasmota_urlEscape(command)}%20${tasmota_urlEscape(value)}"
 	}
 	else {
@@ -2515,7 +2515,7 @@ String tasmota_getCommandString(String command, String value) {
 
 String tasmota_getMultiCommandString(List<Map> commands) {
     String uri = "/cm?"
-    if (password != null) {
+    if (password || password == "") {
         uri += "user=admin&password=${password}&"
     }
     uri += "cmnd=backlog%20"
@@ -2551,7 +2551,7 @@ private Map tasmota_getHeader(String userpass = null) {
     Map headers = [:]
     headers.put("Host", tasmota_getHostAddress())
     headers.put("Content-Type", "application/x-www-form-urlencoded")
-    if (userpass != null)
+    if (userpass || userpass == "")
        headers.put("Authorization", userpass)
     return headers
 }
