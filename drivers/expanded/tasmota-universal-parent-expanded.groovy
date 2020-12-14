@@ -1,7 +1,7 @@
 /**
  *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v1.1.1.1212Tb
+ *  Version: v1.1.1.1214Tb
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1463,26 +1463,35 @@ void componentRefresh(com.hubitat.app.DeviceWrapper cd) {
 }
 
 void componentOn(String deviceNetworkId) {
-    
-    String actionType = getDeviceActionType(deviceNetworkId)
-    if(invertPowerNumber == true) {
-        if(actionType == "POWER1") { 
-            actionType = "POWER2"
-        } else if(actionType == "POWER2"){
-            actionType = "POWER1"
+    try {
+        String actionType = getDeviceActionType(deviceNetworkId)
+        if(invertPowerNumber == true) {
+            if(actionType == "POWER1") { 
+                actionType = "POWER2"
+            } else if(actionType == "POWER2"){
+                actionType = "POWER1"
+            }
         }
+        logging("componentOn(deviceNetworkId=${deviceNetworkId}), actionType=$actionType", 1)
+        tasmota_getAction(tasmota_getCommandString("$actionType", "1"))
+    } catch(e2) {
+        log.warn(e2)
     }
-    logging("componentOn(deviceNetworkId=${deviceNetworkId}), actionType=$actionType", 1)
-    tasmota_getAction(tasmota_getCommandString("$actionType", "1"))
 }
 
 void componentOn(com.hubitat.app.DeviceWrapper cd) {
-    if(isValidChildDevice(cd) == true) {
-      componentOn(cd.deviceNetworkId)
+    try {
+      if(isValidChildDevice(cd) == true) {
+        componentOn(cd.deviceNetworkId)
+      }
+    } catch(e2) {
+        log.warn(e2)
     }
 }
 
 void componentOff(String deviceNetworkId) {
+  try{
+
     String actionType = getDeviceActionType(deviceNetworkId)
     if(invertPowerNumber == true) {
         if(actionType == "POWER1") { 
@@ -1493,11 +1502,18 @@ void componentOff(String deviceNetworkId) {
     }
     logging("componentOff(deviceNetworkId=${deviceNetworkId}), actionType=$actionType", 1)
     tasmota_getAction(tasmota_getCommandString("$actionType", "0"))
+  } catch(e2) {
+      log.warn(e2)
+  }
 }
 
 void componentOff(com.hubitat.app.DeviceWrapper cd) {
-    if(isValidChildDevice(cd) == true) {
-      componentOff(cd.deviceNetworkId)
+    try{
+        if(isValidChildDevice(cd) == true) {
+          componentOff(cd.deviceNetworkId)
+        }
+    } catch(e2) {
+        log.warn(e2)
     }
 }
 
@@ -1663,7 +1679,7 @@ void componentSetEffectWidth(com.hubitat.app.DeviceWrapper cd, BigDecimal pixels
 private String getDriverVersion() {
     comment = ""
     if(comment != "") state.comment = comment
-    String version = "v1.1.1.1212Tb"
+    String version = "v1.1.1.1214Tb"
     logging("getDriverVersion() = ${version}", 100)
     sendEvent(name: "driver", value: version)
     updateDataValue('driver', version)
